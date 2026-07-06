@@ -2,7 +2,6 @@
 data/
 
 # Openable Excel previews derived from the raw CSVs (regenerate anytime) — don't commit
-previews/
 
 # Virtual environment
 .venv/
