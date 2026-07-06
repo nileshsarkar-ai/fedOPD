@@ -19,7 +19,7 @@ Figures/tables are saved under `reports/figures/`. Notebooks under `notebooks/`.
 | # | Stage | Status | Output |
 |---|-------|--------|--------|
 | 1 | Understand problem & data | ✅ done | this header + data dictionary |
-| 2 | Input & inspect | 🟡 in progress | `notebooks/01_inspect.ipynb` |
+| 2 | Input & inspect (+ provider split) | ✅ done | `notebooks/eda/01_inspect.ipynb`, `notebooks/provider_split/` |
 | 3 | Handle missing data | ⬜ todo | missingness table + rules |
 | 4 | Explore characteristics | ⬜ todo | summary tables |
 | 5 | Transform | ⬜ todo | transform list + rationale |
@@ -41,15 +41,24 @@ Record each working session as a row. Keep it short: **what · why · finding ·
 - **Decision:** RTT only; NHS trusts only; demand = `Part_3`; drop aggregate rows.
 - **Output:** this log + `docs/datasets.md` + `docs/nhs_structure.png`.
 
-### Step 2 — Input & inspect — 🟡 in progress
-- **What:** Load one month, verify schema assumptions before building the full loader.
-- **Why:** Confirm `Part_3` exists, how to separate NHS trusts (`R##` codes), what to drop (`C_999` Total).
-- **Finding:** _(fill in: provider-code length split, #trusts vs independents, Part types seen)_
-- **Decision:** _(fill in: trust filter = 3-char code starting `R`; drop `Treatment Function = C_999`)_
-- **Output:** `notebooks/01_inspect.ipynb`
+### Step 2 — Input & inspect — ✅ 2026-07-06
+- **What:** Loaded the data, verified schema, built the canonical loader (`src/rtt.py`), and
+  split providers into NHS trusts vs independents.
+- **Finding:**
+  - `Part_3` (New RTT Periods) confirmed present = demand signal.
+  - Provider codes: 3-char `R##` = NHS trusts; 5-char = independents.
+  - `C_999 = Total` aggregate specialty confirmed → dropped.
+  - **598 providers** across 60 months → **172 NHS trusts (92.2% of demand)** vs
+    **426 independents (7.8%)**.
+  - Canonical (all providers): 211,428 rows. **Trust-only: 147,986 rows · 60 months · 172 trusts · 23 depts.**
+- **Decision:** Filter to NHS trusts (`R##`); drop `C_999`; demand = `Part_3` `Total All`
+  summed across commissioners. Downstream EDA uses `data/processed/rtt_trusts_canonical.parquet`.
+- **Output:** `notebooks/eda/01_inspect.ipynb`, `notebooks/provider_split/01_split_providers.ipynb`
+  (+ `results/trusts.csv`, `results/independents.csv`), `src/rtt.py`.
 
 ### Step 3 — Handle missing data — ⬜
-- **What:** _..._
+- **What:** On trust-only data, separate true-missing vs structural zeros (dept a trust doesn't
+  offer) vs partial-history trusts (months_present < 60).
 - **Finding:** _..._
 - **Decision:** _..._
 
