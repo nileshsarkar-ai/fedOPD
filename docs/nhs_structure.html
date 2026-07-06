@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How the NHS connects to its hospitals</title>
+<style>
+  :root {
+    --ground: #eef1f4; --panel: #ffffff; --ink: #1b2530; --muted: #5c6875; --line: #d3d9e0;
+    --nhs: #005eb8; --amber: #b06f26; --green: #2c7c58; --violet: #6a4b9c;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--ground); }
+  .wrap { font-family: var(--sans); color: var(--ink); padding: 40px clamp(16px,4vw,40px); }
+  .inner { max-width: 1000px; margin: 0 auto; }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--nhs); margin: 0 0 6px; }
+  h1 { font-size: clamp(22px,3.4vw,30px); font-weight: 750; letter-spacing: -.02em; margin: 0 0 22px; }
+  .board { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 14px; }
+  svg { width: 100%; height: auto; display: block; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 18px; font-size: 13px; }
+  .leg { display: flex; align-items: center; gap: 9px; }
+  .ln { width: 30px; height: 0; flex: none; }
+  .ln.solid { border-top: 3px solid var(--nhs); }
+  .ln.dash  { border-top: 3px dashed var(--amber); }
+  .ln.dot   { border-top: 3px dotted var(--green); }
+  .leg b { font-weight: 650; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="inner">
+    <p class="eyebrow">FedOPD</p>
+    <h1>How the NHS connects to its hospitals</h1>
+
+    <div class="board">
+      <svg viewBox="0 0 1000 600" role="img" aria-label="NHS structure flowchart">
+        <defs>
+          <marker id="aBlue" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#005eb8"/></marker>
+          <marker id="aAmber" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#b06f26"/></marker>
+          <marker id="aGreen" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#2c7c58"/></marker>
+        </defs>
+
+        <!-- ===== edges (drawn first, under boxes) ===== -->
+        <!-- NHS England -> ICB : solid blue -->
+        <line x1="500" y1="100" x2="500" y2="168" stroke="#005eb8" stroke-width="2.5" marker-end="url(#aBlue)"/>
+        <text x="512" y="140" font-size="13" fill="#005eb8" font-family="system-ui">funding &amp; authority</text>
+
+        <!-- ICB -> NHS Trust : solid blue (resources + funding) -->
+        <line x1="418" y1="230" x2="300" y2="404" stroke="#005eb8" stroke-width="2.5" marker-end="url(#aBlue)"/>
+        <text x="238" y="322" font-size="13" fill="#005eb8" font-family="system-ui">resources + funding</text>
+
+        <!-- ICB -> Independent : dashed amber (pays only) -->
+        <line x1="582" y1="230" x2="700" y2="404" stroke="#b06f26" stroke-width="2.5" stroke-dasharray="8 6" marker-end="url(#aAmber)"/>
+        <text x="632" y="322" font-size="13" fill="#b06f26" font-family="system-ui">pays for activity</text>
+
+        <!-- NHS Trust -> NHS England : dotted green (data) -->
+        <line x1="185" y1="404" x2="372" y2="102" stroke="#2c7c58" stroke-width="2.5" stroke-dasharray="1.5 6" stroke-linecap="round" marker-end="url(#aGreen)"/>
+        <text x="120" y="262" font-size="13" fill="#2c7c58" font-family="system-ui">RTT data</text>
+
+        <!-- Independent -> NHS England : dotted green (data) -->
+        <line x1="825" y1="404" x2="632" y2="102" stroke="#2c7c58" stroke-width="2.5" stroke-dasharray="1.5 6" stroke-linecap="round" marker-end="url(#aGreen)"/>
+        <text x="812" y="262" font-size="13" fill="#2c7c58" font-family="system-ui">RTT data</text>
+
+        <!-- ===== nodes ===== -->
+        <!-- NHS England -->
+        <rect x="350" y="42" width="300" height="58" rx="12" fill="#e8f0f9" stroke="#005eb8" stroke-width="2"/>
+        <text x="500" y="77" text-anchor="middle" font-size="18" font-weight="700" fill="#1b2530" font-family="system-ui">NHS England</text>
+
+        <!-- ICB -->
+        <rect x="345" y="170" width="310" height="60" rx="12" fill="#f6ece0" stroke="#b06f26" stroke-width="2"/>
+        <text x="500" y="206" text-anchor="middle" font-size="16" font-weight="700" fill="#1b2530" font-family="system-ui">Integrated Care Board (ICB)</text>
+
+        <!-- NHS Trust (connected / inside) -->
+        <rect x="110" y="404" width="300" height="120" rx="12" fill="#eef4fb" stroke="#005eb8" stroke-width="2"/>
+        <text x="260" y="440" text-anchor="middle" font-size="18" font-weight="700" fill="#1b2530" font-family="system-ui">NHS Trust</text>
+        <text x="260" y="462" text-anchor="middle" font-size="12.5" fill="#5c6875" font-family="system-ui">public &middot; inside the NHS</text>
+        <text x="260" y="500" text-anchor="middle" font-size="12.5" font-weight="600" fill="#2c7c58" font-family="system-ui">&#10003; gets NHS resources + funding</text>
+
+        <!-- Independent (disconnected from resources / outside) -->
+        <rect x="590" y="404" width="310" height="120" rx="12" fill="#ffffff" stroke="#6a4b9c" stroke-width="2" stroke-dasharray="7 5"/>
+        <text x="745" y="440" text-anchor="middle" font-size="18" font-weight="700" fill="#1b2530" font-family="system-ui">Independent hospital</text>
+        <text x="745" y="462" text-anchor="middle" font-size="12.5" fill="#5c6875" font-family="system-ui">private &middot; outside the NHS</text>
+        <text x="745" y="500" text-anchor="middle" font-size="12.5" font-weight="600" fill="#a23b3b" font-family="system-ui">&#10007; no NHS resources &mdash; paid per activity</text>
+      </svg>
+    </div>
+
+    <div class="legend">
+      <span class="leg"><span class="ln solid"></span><span><b>Solid</b> &mdash; NHS resources + funding (connected)</span></span>
+      <span class="leg"><span class="ln dash"></span><span><b>Dashed</b> &mdash; payment only (money, not resources)</span></span>
+      <span class="leg"><span class="ln dot"></span><span><b>Dotted</b> &mdash; RTT data reported upward</span></span>
+    </div>
+  </div>
+</div>
+</body>
+</html>
