@@ -73,7 +73,11 @@ Purchaser–provider split, **not** one owned hospital chain:
   NHS England Trust-ICB attribution; postcode fallback). ICB = `Provider Parent` (already in the file).
 - **Agentic plane** (later): forecasts → strategic decisions, with the trust-vs-independent branching above.
 
-## 8. EDA — plan + status  (register: `docs/EDA_LOG.md`; one notebook per stage in `notebooks/`; figures → `reports/figures/`)
+> **STANDING RULE — always log.** Every work session (EDA, selection, modelling, FL,
+> agentic) gets a dated entry in **`docs/WORKLOG.md`** (*what · why · finding · decision ·
+> output*). No work is "done" until it's recorded there. Code lives in **`.ipynb` notebooks only**.
+
+## 8. EDA — plan + status  (register: `docs/WORKLOG.md`; one notebook per stage in `notebooks/`; figures → `reports/figures/`)
 | # | stage | status |
 |---|---|---|
 | 1 | Understand problem & data | ✅ |
@@ -96,13 +100,13 @@ hierarchy counts (trusts/ICB, ICBs/region) · stability (confirm July-2022 break
 
 ## 10. Repo layout
 ```
-README.md · CLAUDE.md (this) · docs/{EDA_LOG.md, datasets.md, nhs_structure.png}
+README.md · CLAUDE.md (this) · docs/{WORKLOG.md, datasets.md, nhs_structure.png}
 scripts/{fetch_nhs.py, build_rtt_manifest.py, nhs_manifest.json}
 notebooks/ (EDA, one per stage) · reports/figures/ · data/ (git-ignored, re-fetchable)
 ```
 
 ## 11. Immediate next steps
-1. Run `notebooks/01_inspect.ipynb`; log Step 2 in `docs/EDA_LOG.md`.
+1. Run `notebooks/01_inspect.ipynb`; log Step 2 in `docs/WORKLOG.md`.
 2. Build the canonical loader (`notebooks/02_build_canonical.ipynb`) across all 60 months.
 3. Step 4: balanced panel (trusts present all 60 months) + trusts-per-ICB-per-region → day-1 client shortlist.
 4. Forecaster interface (`get_params`/`set_params`) → Flower federated loop.

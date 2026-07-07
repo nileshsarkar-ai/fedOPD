@@ -1,0 +1,24 @@
+dept,offering,full,pct_full,dept_name
+C_110,120,118,0.855072463768116,Trauma and Orthopaedic Service
+X02,125,116,0.8405797101449275,Other - Medical Services
+C_320,116,114,0.8260869565217391,Cardiology Service
+C_502,116,111,0.8043478260869565,Gynaecology Service
+C_100,112,110,0.7971014492753623,General Surgery Service
+C_410,113,108,0.782608695652174,Rheumatology Service
+C_301,113,108,0.782608695652174,Gastroenterology Service
+C_340,117,108,0.782608695652174,Respiratory Medicine Service
+C_101,113,107,0.7753623188405797,Urology Service
+C_120,111,106,0.7681159420289855,Ear Nose and Throat Service
+X04,122,104,0.7536231884057971,Other - Paediatric Services
+C_130,106,98,0.7101449275362319,Ophthalmology Service
+C_430,112,97,0.7028985507246377,Elderly Medicine Service
+X06,121,96,0.6956521739130435,Other - Other Services
+X05,115,95,0.6884057971014492,Other - Surgical Services
+C_140,105,93,0.6739130434782609,Oral Surgery Service
+C_330,102,93,0.6739130434782609,Dermatology Service
+C_400,96,81,0.5869565217391305,Neurology Service
+C_300,112,72,0.5217391304347826,General Internal Medicine Service
+C_160,88,64,0.463768115942029,Plastic Surgery Service
+C_170,68,28,0.2028985507246377,Cardiothoracic Surgery Service
+C_150,47,24,0.17391304347826086,Neurosurgical Service
+X03,59,5,0.036231884057971016,Other - Mental Health Services
