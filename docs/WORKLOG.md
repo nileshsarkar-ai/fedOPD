@@ -111,6 +111,18 @@ Record each working session as a row. Keep it short: **what · why · finding ·
 - **Output:** `notebooks/eda/00_region_lookup.ipynb`, `results/{icb_region_lookup,trust_region_lookup}.csv`,
   `reports/figures/00_trusts_per_region.png`.
 
+### Column selection — which of the 121 columns feed the model — ✅ 2026-07-07
+- **What:** Formalised the column strategy (from `01_inspect` + `src/rtt.py`) into the supervisor brief.
+- **Finding:** raw files are **121 columns**; the loader reads exactly **9** (`USECOLS`): 5 core
+  (`Period`→date, `Provider Org Code`→branch, `Treatment Function Code`→dept, `Total All`→demand,
+  `RTT Part Type`=Part_3 filter) + 4 hierarchy/label (`Provider Parent Org Code`/`Name`→icb,
+  `Provider Org Name`, `Treatment Function Name`). **112 dropped** = 105 weekly wait-band columns
+  (`Gt 00 To 01 … Gt 104 Weeks`, blank on Part_3 = waiting-list *stock*, not demand) + 4 commissioner
+  columns (summed over) + `Total`/`Patients with unknown clock start date`/`RTT Part Description` (redundant).
+- **Decision:** model consumes **one number per (trust×dept×month)** — features are *engineered* from that
+  series (lags + calendar), not extra columns. "Feature selection" ends here; Step 5 is series construction.
+- **Output:** new "Columns — from 121 down to the few that matter" subsection in `reports/fedopd_brief.html`.
+
 ### Step 4 — Explore characteristics + selection — ⬜ (unblocked; region attached)
 - Trusts-per-region ✅ (above). Next: dept **volume** + **regional variation** → lock the 7×10×10 panel.
 

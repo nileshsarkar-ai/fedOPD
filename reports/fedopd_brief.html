@@ -332,8 +332,9 @@
   <div class="wrap">
     <div class="sec-num">02</div>
     <h2>EDA results — what we found</h2>
-    <p class="sec-sub">Steps 1–2 of an 8-step EDA are complete and logged. Data is fetched, verified,
-      reduced to a canonical table, and split into public trusts vs private independents.</p>
+    <p class="sec-sub">Steps 1–3 of an 8-step EDA are complete and logged (+ region attached). Data is fetched,
+      verified, reduced to a canonical table, split into public trusts vs private independents, and its columns and
+      missing-value patterns are characterised.</p>
 
     <div class="stats mt28">
       <div class="stat"><div class="n">60</div><div class="l">monthly files · Apr'21–Mar'26</div></div>
@@ -375,6 +376,57 @@
     <div class="callout good">
       <b>Trust-only canonical dataset:</b> 150,350 rows · 61 months · 172 trusts · 23 departments · 0 missing files,
       0 duplicates → saved to <code>data/processed/rtt_trusts_canonical.parquet</code>. All downstream work reads this.
+    </div>
+
+    <h3 style="margin-top:38px;" id="columns">Columns — from 121 down to the few that matter</h3>
+    <p class="sec-sub" style="margin-top:8px;">Each raw file has <b>121 columns</b>, but a demand forecast doesn't need
+      most of them. The loader reads exactly <b>9</b> (<code>USECOLS</code> in <code>src/rtt.py</code>): four that define the
+      series, one that carries the number, four that give the hierarchy &amp; labels. The other <b>112</b> describe the
+      <i>waiting-time distribution</i> — a different question — so they're dropped.</p>
+
+    <div class="stats mt20">
+      <div class="stat"><div class="n">121</div><div class="l">raw columns / file</div></div>
+      <div class="stat"><div class="n">9</div><div class="l">read · 5 core + 4 hierarchy/label</div></div>
+      <div class="stat"><div class="n">112</div><div class="l">dropped — not demand</div></div>
+      <div class="stat"><div class="n">1</div><div class="l">number the model reads per cell</div></div>
+    </div>
+
+    <div class="tbl-scroll mt28">
+      <table>
+        <thead><tr><th>Raw column(s)</th><th>Role</th><th>Becomes</th></tr></thead>
+        <tbody>
+          <tr><td><code>Period</code></td><td><span class="tag tag-blue">core · when</span></td><td><code>date</code> — the month index</td></tr>
+          <tr><td><code>Provider Org Code</code></td><td><span class="tag tag-blue">core · who</span></td><td><code>branch</code> — the client (trust)</td></tr>
+          <tr><td><code>Treatment Function Code</code></td><td><span class="tag tag-blue">core · what</span></td><td><code>dept</code> — the series (specialty)</td></tr>
+          <tr><td><code>Total All</code></td><td><span class="tag tag-blue">core · value</span></td><td><code>demand</code> — the forecast target</td></tr>
+          <tr><td><code>RTT Part Type</code></td><td><span class="tag tag-coral">filter</span></td><td>keep <code>Part_3</code> rows, then discard the column</td></tr>
+          <tr><td><code>Provider Parent Org Code</code> / <code>Name</code></td><td><span class="tag">enrich</span></td><td><code>icb</code> — the aggregation tier + its label</td></tr>
+          <tr><td><code>Provider Org Name</code>, <code>Treatment Function Name</code></td><td><span class="tag">enrich</span></td><td>human-readable labels — <b>not</b> model inputs</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p style="margin:22px 0 0;color:var(--ink-2);font-size:14px;"><b>Why the other 112 are dropped</b> — they answer
+      "how long are people waiting?", not "how much new demand arrived?". On <code>Part_3</code> (new-referral) rows they're
+      blank anyway.</p>
+    <div class="method mt20">
+      <div class="card" data-k="DROP · 105"><h3 style="margin-top:6px;">Weekly wait-band counts</h3>
+        <p style="margin:4px 0 0;color:var(--ink-2);font-size:14px"><code>Gt 00 To 01 Weeks</code> … <code>Gt 104 Weeks</code> — the
+          wait-time <i>distribution</i> of the standing waiting list (a <code>Part_2</code> stock). On <code>Part_3</code> rows
+          they're <code>NaN</code>. Useful for a waiting-list model, not a demand forecast.</p></div>
+      <div class="card" data-k="DROP · 4"><h3 style="margin-top:6px;">Commissioner columns</h3>
+        <p style="margin:4px 0 0;color:var(--ink-2);font-size:14px">Parent + org code/name of the <i>purchaser</i>. Demand belongs to the
+          provider, so we <b>sum across commissioners</b> to one trust×dept×month figure and drop these four.</p></div>
+      <div class="card" data-k="DROP · 3"><h3 style="margin-top:6px;">Redundant totals</h3>
+        <p style="margin:4px 0 0;color:var(--ink-2);font-size:14px"><code>Total</code> (known-clock subset) and <code>Patients with unknown
+          clock start date</code> already roll into <code>Total All</code>; <code>RTT Part Description</code> just re-labels the part code.</p></div>
+    </div>
+
+    <div class="callout blue">
+      <b>The model only ever sees one number per cell.</b> Each (trust × dept × month) yields a single <code>demand</code> value —
+      the forecaster's <i>inputs</i> aren't other columns, they're engineered from that one series: a window of recent months
+      (lags) + calendar features (month-of-year for seasonality) → next month. So "which columns to use" is settled here; from
+      Step 5 on it's <i>series construction</i>, not column-picking.
     </div>
 
     <h3 style="margin-top:38px;">Step 3 — how we handle missing / empty data</h3>
