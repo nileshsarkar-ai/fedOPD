@@ -8,3 +8,15 @@ venv/
 
 autocommit.log
 .autocommit.pid
+
+# LaTeX build artifacts — the report .tex (source) and .pdf are kept; aux files are not.
+# (tectonic leaves none, but pdflatex/latexmk would.)
+reports/*.aux
+reports/*.log
+reports/*.toc
+reports/*.out
+reports/*.lof
+reports/*.lot
+reports/*.fls
+reports/*.fdb_latexmk
+reports/*.synctex.gz
