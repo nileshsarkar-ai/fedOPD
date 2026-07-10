@@ -5,8 +5,13 @@ Produces the manifest consumed by fetch_nhs.py: one entry per monthly
 "Full CSV data file" (.zip). The download URLs carry unpredictable hashes, so
 they must be scraped from the live pages rather than constructed.
 
-Target window: 60 months (5 financial years) = Apr 2021 -> Mar 2026, i.e. the
-five FY pages 2021-22 .. 2025-26. Adjust FY_PAGES to change the range.
+Target window: 96 months (8 financial years) = Apr 2018 -> Mar 2026, i.e. the
+eight FY pages 2018-19 .. 2025-26. Adjust FY_PAGES to change the range.
+
+NOTE: 2018-04 is the earliest month in the *modern* RTT CSV layout (Period /
+Provider Org Code / RTT Part Type=Part_3 / Total All). Financial years 2016-17
+and 2017-18 use an older "SHA & Self Trusts" structure that the canonical loader
+cannot read; do not add them here without a second parser.
 
     python fetch_scripts/build_rtt_manifest.py            # scrape + write manifest
     python fetch_scripts/build_rtt_manifest.py --no-head  # skip Content-Length probes (faster)
@@ -28,8 +33,14 @@ MANIFEST = os.path.join(HERE, "nhs_manifest.json")
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 BASE = "https://www.england.nhs.uk/statistics/statistical-work-areas/rtt-waiting-times"
 
-# Five financial years = exactly 60 months (Apr 2021 .. Mar 2026).
+# Eight financial years = exactly 96 months (Apr 2018 .. Mar 2026).
+# Extended from 5 to 8 years (2026-07-11) to capture the pre-COVID baseline and the
+# April-2020 demand collapse — the previous window (from 2021-04) started after the dip.
+# 2018-04 is the floor: earlier years use an incompatible older CSV layout (see docstring).
 FY_PAGES = {
+    "2018-19": f"{BASE}/rtt-data-2018-19/",
+    "2019-20": f"{BASE}/rtt-data-2019-20/",
+    "2020-21": f"{BASE}/rtt-data-2020-21/",
     "2021-22": f"{BASE}/rtt-data-2021-22/",
     "2022-23": f"{BASE}/rtt-data-2022-23/",
     "2023-24": f"{BASE}/rtt-data-2023-24/",
@@ -112,8 +123,8 @@ def main() -> None:
     with open(MANIFEST, "w", encoding="utf-8") as fh:
         json.dump(manifest, fh, indent=2)
     print(f"\nWrote {len(files)} entries -> {MANIFEST}")
-    if len(files) != 60:
-        print(f"  ! expected 60, got {len(files)} — check the FY pages before downloading",
+    if len(files) != 96:
+        print(f"  ! expected 96, got {len(files)} — check the FY pages before downloading",
               file=sys.stderr)
 
 

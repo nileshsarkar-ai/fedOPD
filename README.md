@@ -22,11 +22,13 @@ the full, verified schema mapping to the canonical `[date, branch, dept, demand]
 
 | key | collection | grain | fit | window (months) |
 |-----|------------|-------|-----|-----------------|
-| `rtt` | Referral to Treatment waiting times | provider × treatment function × month | multi-site · dept | 2021-04 → 2026-03 (**60**) |
+| `rtt` | Referral to Treatment waiting times | provider × treatment function × month | multi-site · dept | 2018-04 → 2026-03 (**96**) |
 
-That's exactly **5 years of monthly history** (60 points) — enough to train and
-back-test seasonal models. Each month is ~183k rows spanning **533 providers** and
-**24 treatment functions**.
+That's **8 years of monthly history** (96 points) — a ~2-year pre-COVID baseline, the
+April-2020 demand collapse (national new-RTT fell to ~31% of baseline), and the full
+recovery/backlog — enough to train and back-test seasonal, shock-aware models. Each month
+is ~160–196k rows; the provider roster grows over the window (417 → 533 providers, 20 → 24
+treatment functions). See [docs/PROJECT.md](docs/PROJECT.md) for the full picture.
 
 ## Setup
 
@@ -54,7 +56,7 @@ its CSV into a specifically-named, analysis-ready folder. Archives are then opti
 the extracted CSVs are the working data — so `--prune-archives` reclaims that space.
 
 ```bash
-python fetch_scripts/fetch_nhs.py --dataset rtt        # download 60 archives (~217 MB), then unzip (~5 GB)
+python fetch_scripts/fetch_nhs.py --dataset rtt        # download 96 archives (~329 MB), then unzip (~7.7 GB)
 python fetch_scripts/fetch_nhs.py --list               # show the plan; touch nothing
 python fetch_scripts/fetch_nhs.py --prune-archives     # delete archives whose CSV is extracted (reclaim space)
 python fetch_scripts/fetch_nhs.py --extract-only       # (re)unzip from already-downloaded archives
@@ -84,7 +86,7 @@ docs/
 fetch_scripts/
   fetch_nhs.py         idempotent, manifest-driven downloader + unzipper (stdlib only)
   build_rtt_manifest.py  scrapes NHS FY pages -> nhs_manifest.json
-  nhs_manifest.json    verified source URLs + byte sizes for all 60 monthly files
+  nhs_manifest.json    verified source URLs + byte sizes for all 96 monthly files
 data/                  all git-ignored:
   archives/rtt/        raw downloads, preserved as fetched (rtt-YYYY-MM.zip)
   nhs_rtt_referral_to_treatment/   unzipped CSVs: rtt_YYYY-MM.csv

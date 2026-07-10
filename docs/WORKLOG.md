@@ -138,6 +138,22 @@ Record each working session as a row. Keep it short: **what · why · finding ·
 - **Output:** `requirements.txt` (pins `torch==2.11.0+cu128`), fixed `fetch_scripts/*.py`, `previews/` now
   git-ignored, `data/nhs_rtt_referral_to_treatment/` = 60/60 CSVs (5.06 GB), README + CLAUDE.md updated.
 
+### Extend dataset 5→8 years to capture COVID + write PROJECT.md — ✅ 2026-07-11
+- **What:** The 5-year window started at 2021-04, *after* the COVID dip. Extended the RTT
+  fetch tooling and re-fetched so the pre-COVID baseline and the April-2020 collapse are in-frame.
+- **Finding:** NHS publishes Full-CSV back to 2016, but the format is **not uniform**. FY 2016-17
+  and 2017-18 use an older "SHA & Self Trusts" layout with no `Period` / `RTT Part Type` columns —
+  the canonical loader can't read them. The **modern layout starts 2018-04**. So a clean 10-year
+  pull isn't possible without a second parser.
+- **Decision:** fetch **2018-04 → 2026-03 = 96 months (8 FY)** — one uniform schema, fully captures
+  COVID. (2016-17/2017-18 deliberately excluded; documented as the floor.)
+- **Verified (national new-RTT, Part_3, trusts, ex-C_999):** 2018-04 = 1.54M · 2020-02 = 1.49M ·
+  **2020-04 = 0.47M (~31% of baseline)** · 2020-05 = 0.60M · 2026-03 = 1.78M. Dip clearly present.
+  Dataset is **not static**: 69→121 cols, 417→533 providers, 20→24 treatment functions over the window.
+- **Output:** `build_rtt_manifest.py` FY_PAGES → 8 years; regenerated `nhs_manifest.json` (96 entries);
+  fetched 36 new months (idempotent — the existing 60 were not re-downloaded); `data/` = 96/96 CSVs,
+  ~7.7 GB. New `docs/PROJECT.md` (full project explainer). Updated README, CLAUDE.md, datasets.md.
+
 ### Step 4 — Explore characteristics + selection — ⬜ (unblocked; region attached)
 - Trusts-per-region ✅ (above). Next: dept **volume** + **regional variation** → lock the 7×10×10 panel.
 

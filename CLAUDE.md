@@ -41,12 +41,15 @@ Purchaser–provider split, **not** one owned hospital chain:
 | Drop | `C_999` (the `Total` specialty) |
 
 ## 5. Data — DONE & VERIFIED
-- **60 monthly RTT "Full CSV" files, Apr 2021 → Mar 2026** (5 financial years). 0 missing, 0 dupes.
-  ~183k rows × **121 columns** each. **533 providers** (trusts + independents), **24 treatment
-  functions** (incl. `C_999`).
+- **96 monthly RTT "Full CSV" files, Apr 2018 → Mar 2026** (8 financial years). 0 missing, 0 dupes.
+  Extended from 5→8 years on 2026-07-11 to capture the **COVID dip** (2020-04 national new-RTT
+  fell to ~31% of baseline). **2018-04 is the floor** — earlier FYs use an incompatible older
+  "SHA & Self Trusts" layout. The file is **not static**: ~160–196k rows, **69→121 columns**,
+  **417→533 providers**, **20→24 treatment functions** across the window. The 9 canonical
+  columns are stable throughout.
 - Pipeline: `fetch_scripts/build_rtt_manifest.py` scrapes NHS pages → `fetch_scripts/nhs_manifest.json`;
   `fetch_scripts/fetch_nhs.py` downloads + unzips (idempotent, stdlib-only). CSVs at
-  `data/nhs_rtt_referral_to_treatment/rtt_YYYY-MM.csv` (~5 GB, **git-ignored**, re-fetchable).
+  `data/nhs_rtt_referral_to_treatment/rtt_YYYY-MM.csv` (~7.7 GB, **git-ignored**, re-fetchable).
 - **Canonical mapping:** `date` = `Period` (`RTT-March-2026` → `2026-03-01`, parse **case-insensitively**),
   `branch` = `Provider Org Code`, `dept` = `Treatment Function Code`, `demand` = `Total All` where
   `RTT Part Type == 'Part_3'`.
@@ -57,10 +60,10 @@ Purchaser–provider split, **not** one owned hospital chain:
 - Full schema write-up: `docs/datasets.md`.
 
 ## 6. End-to-end pipeline
-1. **NHS England RTT data** — 60 CSVs, fetched + verified.
+1. **NHS England RTT data** — 96 CSVs (2018-04 → 2026-03), fetched + verified.
 2. **Canonical table** — keep `Part_3` · NHS trusts (`R##`) · drop `C_999` · sum commissioner → `[date, branch, dept, demand]`.
 3. **EDA (8 steps)** — coverage · scale (~100× trust spread) · seasonality / COVID ramp · sparsity · hierarchy counts · stability.
-4. **Client selection** — balanced panel (present all 60 months) × within a region / ICB × overlapping departments → federation client set.
+4. **Client selection** — balanced panel (present across the 96-month window) × within a region / ICB × overlapping departments → federation client set.
 5. **Federated forecasting (cross-silo)** — each trust trains a local model; Flower coordinator aggregates (FedAvg / FedProx + personalisation); **raw data never leaves the trust**.
 6. **Agentic decisions** — forecasts → capacity / staffing / service-line allocation; allocate to trusts, buy from independents.
 
@@ -98,26 +101,31 @@ Purchaser–provider split, **not** one owned hospital chain:
 Six analytical questions: coverage (balanced panel) · scale · seasonality/trend · sparsity ·
 hierarchy counts (trusts/ICB, ICBs/region) · stability (confirm July-2022 break is provider-safe).
 
-## 9. Environment (Windows 11, working)
-- **RTX 4060 (8 GB)** · Python 3.12 venv (`.venv`) · **PyTorch 2.11 + CUDA 12.8** (GPU verified).
-- Libs: transformers, datasets, accelerate, **flwr (Flower)**, langgraph/langchain (+anthropic/openai),
-  jupyterlab, pandas, scikit-learn, matplotlib, seaborn.
-- git SSH to GitHub verified. PowerShell gotcha: `$env:PYTHONUTF8="1"` before scripts that print unicode.
+## 9. Environment
+- **Dev box (Windows 11):** RTX 4060 (8 GB) · Python 3.12 venv (`.venv`) · PyTorch 2.11 + CUDA 12.8.
+  PowerShell gotcha: `$env:PYTHONUTF8="1"` before scripts that print unicode.
+- **Server (Linux, A100 80 GB):** Python 3.10 venv (`.venv`) · `requirements.txt` pins
+  `torch==2.11.0+cu128`. ⚠️ GPU currently unusable — **MIG mode enabled with no instances**, so
+  `torch.cuda.is_available()==False`; needs a sysadmin to run `sudo nvidia-smi -mig 0`. CPU-only
+  meanwhile (fine for pandas EDA). Full detail in `docs/PROJECT.md` §12.
+- Libs (both): transformers, datasets, accelerate, **flwr (Flower)**, langgraph/langchain
+  (+anthropic/openai), jupyterlab, pandas, scikit-learn, matplotlib, seaborn.
+- git SSH to GitHub verified.
 
 ## 10. Repo layout
 ```
 README.md · CLAUDE.md (this) · requirements.txt
-docs/{WORKLOG.md, datasets.md, nhs_structure.png}
+docs/{PROJECT.md, WORKLOG.md, datasets.md, nhs_structure.png}
 fetch_scripts/{fetch_nhs.py, build_rtt_manifest.py, nhs_manifest.json}
-data/ (git-ignored, re-fetchable — 60 CSVs, 5.06 GB, present)
+data/ (git-ignored, re-fetchable — 96 CSVs, ~7.7 GB, present)
 ```
 `notebooks/` and `reports/figures/` are to be **created by hand** as the work proceeds.
 
 ## 11. Immediate next steps
 1. Write `notebooks/01_inspect.ipynb` by hand: load one month, inspect the 121 columns,
    confirm the `Period` case quirk (`APRIL` vs `April`); log Step 2 in `docs/WORKLOG.md`.
-2. Write the canonical loader across all 60 months → `[date, branch, dept, demand]` (§4 rules).
-3. Step 4: balanced panel (trusts present all 60 months) + trusts-per-ICB-per-region → day-1 client shortlist.
+2. Write the canonical loader across all 96 months → `[date, branch, dept, demand]` (§4 rules).
+3. Step 4: balanced panel (trusts present across the 96-month window) + trusts-per-ICB-per-region → day-1 client shortlist.
 4. Rebuild the `provider → region` lookup (**not** in the RTT files — see §7; ODS / Trust-ICB attribution).
 5. Forecaster interface (`get_params`/`set_params`) → Flower federated loop.
 

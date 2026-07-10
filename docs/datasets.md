@@ -7,17 +7,28 @@
 - **Landing page:** <https://www.england.nhs.uk/statistics/statistical-work-areas/rtt-waiting-times/>
 - **File used:** the monthly *"Full CSV data file"* (`.zip` containing one CSV)
 - **Licence:** © Crown copyright, NHS England — Open Government Licence v3.0
-- **Window fetched:** 2021-04 → 2026-03 (60 monthly files = 5 financial years)
+- **Window fetched:** 2018-04 → 2026-03 (96 monthly files = 8 financial years)
 
 The per-month download URLs contain unguessable hashes, so they are scraped from the
-five financial-year pages (2021-22 … 2025-26) by `fetch_scripts/build_rtt_manifest.py` and
-recorded verbatim in `fetch_scripts/nhs_manifest.json`.
+eight financial-year pages (2018-19 … 2025-26) by `fetch_scripts/build_rtt_manifest.py` and
+recorded verbatim in `fetch_scripts/nhs_manifest.json`. **2018-04 is the floor:** it is the
+earliest month in the modern RTT CSV layout — FY 2016-17 and 2017-18 use an older "SHA &
+Self Trusts" structure (no `Period` / `RTT Part Type`) that this schema does not cover.
 
-## Raw file shape (verified against `rtt_2026-03.csv`)
+## Raw file shape
 
-- **~183,400 rows per month**, **121 columns**
-- **533** distinct providers (`Provider Org Code`)
-- **24** treatment functions (`Treatment Function Code`), including a `Total` aggregate
+The file grows over the 8-year window — the wait-band columns and the provider roster both
+expand — so the shape is **not** constant. Verified samples:
+
+| month | rows | columns | providers | treatment functions |
+|---|---|---|---|---|
+| 2018-04 | ~196,340 | **69** | 417 | 20 |
+| 2021-04 | ~160,251 | **121** | 431 | 24 |
+| 2026-03 | ~183,400 | **121** | 533 | 24 |
+
+The **9 canonical columns below are present and stable across all 96 months**; only the
+weekly wait-band columns (which the loader ignores) and the provider set change. Each month
+still includes a `C_999` `Total` aggregate treatment function that is dropped.
 - Each row = one `Provider × Commissioner × RTT Part × Treatment Function` combination,
   with counts spread across weekly waiting-time bands.
 
@@ -80,5 +91,7 @@ def load_canonical(demand_part="Part_3"):
     return pd.concat(rows, ignore_index=True)
 ```
 
-This yields the long-format `[date, branch, dept, demand]` table — 60 monthly points per
-`(branch, dept)` series — ready for per-provider federated forecasting.
+This yields the long-format `[date, branch, dept, demand]` table — up to **96** monthly
+points per `(branch, dept)` series (fewer where a trust or department is not present for the
+whole window; the balanced panel is computed, not assumed) — ready for per-provider
+federated forecasting.
