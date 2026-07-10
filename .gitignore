@@ -1,7 +1,8 @@
-# Data (fetched via scripts/fetch_nhs.py; re-fetchable from the manifest) — never commit
+# Data (fetched via fetch_scripts/fetch_nhs.py; re-fetchable from the manifest) — never commit
 data/
 
 # Openable Excel previews derived from the raw CSVs (regenerate anytime) — don't commit
+previews/
 
 # Virtual environment
 .venv/

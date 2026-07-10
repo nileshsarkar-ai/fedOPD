@@ -10,8 +10,8 @@
 - **Window fetched:** 2021-04 → 2026-03 (60 monthly files = 5 financial years)
 
 The per-month download URLs contain unguessable hashes, so they are scraped from the
-five financial-year pages (2021-22 … 2025-26) by `scripts/build_rtt_manifest.py` and
-recorded verbatim in `scripts/nhs_manifest.json`.
+five financial-year pages (2021-22 … 2025-26) by `fetch_scripts/build_rtt_manifest.py` and
+recorded verbatim in `fetch_scripts/nhs_manifest.json`.
 
 ## Raw file shape (verified against `rtt_2026-03.csv`)
 

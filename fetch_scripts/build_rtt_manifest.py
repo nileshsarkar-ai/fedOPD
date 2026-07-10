@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Scrape NHS England's RTT financial-year pages and emit scripts/nhs_manifest.json.
+"""Scrape NHS England's RTT financial-year pages and emit fetch_scripts/nhs_manifest.json.
 
 Produces the manifest consumed by fetch_nhs.py: one entry per monthly
 "Full CSV data file" (.zip). The download URLs carry unpredictable hashes, so
@@ -8,8 +8,8 @@ they must be scraped from the live pages rather than constructed.
 Target window: 60 months (5 financial years) = Apr 2021 -> Mar 2026, i.e. the
 five FY pages 2021-22 .. 2025-26. Adjust FY_PAGES to change the range.
 
-    python scripts/build_rtt_manifest.py            # scrape + write manifest
-    python scripts/build_rtt_manifest.py --no-head  # skip Content-Length probes (faster)
+    python fetch_scripts/build_rtt_manifest.py            # scrape + write manifest
+    python fetch_scripts/build_rtt_manifest.py --no-head  # skip Content-Length probes (faster)
 """
 
 from __future__ import annotations
@@ -22,8 +22,9 @@ import sys
 
 import requests
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MANIFEST = os.path.join(ROOT, "scripts", "nhs_manifest.json")
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(HERE)
+MANIFEST = os.path.join(HERE, "nhs_manifest.json")
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 BASE = "https://www.england.nhs.uk/statistics/statistical-work-areas/rtt-waiting-times"
 

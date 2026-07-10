@@ -44,8 +44,8 @@ Purchaser–provider split, **not** one owned hospital chain:
 - **60 monthly RTT "Full CSV" files, Apr 2021 → Mar 2026** (5 financial years). 0 missing, 0 dupes.
   ~183k rows × **121 columns** each. **533 providers** (trusts + independents), **24 treatment
   functions** (incl. `C_999`).
-- Pipeline: `scripts/build_rtt_manifest.py` scrapes NHS pages → `scripts/nhs_manifest.json`;
-  `scripts/fetch_nhs.py` downloads + unzips (idempotent, stdlib-only). CSVs at
+- Pipeline: `fetch_scripts/build_rtt_manifest.py` scrapes NHS pages → `fetch_scripts/nhs_manifest.json`;
+  `fetch_scripts/fetch_nhs.py` downloads + unzips (idempotent, stdlib-only). CSVs at
   `data/nhs_rtt_referral_to_treatment/rtt_YYYY-MM.csv` (~5 GB, **git-ignored**, re-fetchable).
 - **Canonical mapping:** `date` = `Period` (`RTT-March-2026` → `2026-03-01`, parse **case-insensitively**),
   `branch` = `Provider Org Code`, `dept` = `Treatment Function Code`, `demand` = `Total All` where
@@ -78,10 +78,16 @@ Purchaser–provider split, **not** one owned hospital chain:
 > output*). No work is "done" until it's recorded there. Code lives in **`.ipynb` notebooks only**.
 
 ## 8. EDA — plan + status  (register: `docs/WORKLOG.md`; one notebook per stage in `notebooks/`; figures → `reports/figures/`)
+
+> **Clean slate (2026-07-10).** All previously generated notebooks, `src/rtt.py`, `config/`,
+> `previews/` and `reports/` were **deleted on purpose**: the owner writes the analysis code
+> himself (advisor's requirement). Only data acquisition + docs remain. Statuses below are the
+> *plan*, not work in hand. Recoverable from git history at `a77abda` if ever needed.
+
 | # | stage | status |
 |---|---|---|
 | 1 | Understand problem & data | ✅ |
-| 2 | Input & inspect (load 60 → canonical; `R##` filter; dtypes/`Period`) | 🟡 in progress |
+| 2 | Input & inspect (load 60 → canonical; `R##` filter; dtypes/`Period`) | — |
 | 3 | Handle missing (true-missing vs structural zeros vs partial history) | — |
 | 4 | Characteristics (volume, **balanced panel**, trusts-per-ICB-per-region) | — |
 | 5 | Transform (monthly series, log/scale, per-client normalise, train/back-test split) | — |
@@ -100,18 +106,26 @@ hierarchy counts (trusts/ICB, ICBs/region) · stability (confirm July-2022 break
 
 ## 10. Repo layout
 ```
-README.md · CLAUDE.md (this) · docs/{WORKLOG.md, datasets.md, nhs_structure.png}
-scripts/{fetch_nhs.py, build_rtt_manifest.py, nhs_manifest.json}
-notebooks/ (EDA, one per stage) · reports/figures/ · data/ (git-ignored, re-fetchable)
+README.md · CLAUDE.md (this) · requirements.txt
+docs/{WORKLOG.md, datasets.md, nhs_structure.png}
+fetch_scripts/{fetch_nhs.py, build_rtt_manifest.py, nhs_manifest.json}
+data/ (git-ignored, re-fetchable — 60 CSVs, 5.06 GB, present)
 ```
+`notebooks/` and `reports/figures/` are to be **created by hand** as the work proceeds.
 
 ## 11. Immediate next steps
-1. Run `notebooks/01_inspect.ipynb`; log Step 2 in `docs/WORKLOG.md`.
-2. Build the canonical loader (`notebooks/02_build_canonical.ipynb`) across all 60 months.
+1. Write `notebooks/01_inspect.ipynb` by hand: load one month, inspect the 121 columns,
+   confirm the `Period` case quirk (`APRIL` vs `April`); log Step 2 in `docs/WORKLOG.md`.
+2. Write the canonical loader across all 60 months → `[date, branch, dept, demand]` (§4 rules).
 3. Step 4: balanced panel (trusts present all 60 months) + trusts-per-ICB-per-region → day-1 client shortlist.
-4. Forecaster interface (`get_params`/`set_params`) → Flower federated loop.
+4. Rebuild the `provider → region` lookup (**not** in the RTT files — see §7; ODS / Trust-ICB attribution).
+5. Forecaster interface (`get_params`/`set_params`) → Flower federated loop.
 
 ## 12. How to help (for Claude)
+- **The owner writes the analysis code himself** — advisor's requirement, and it is not negotiable.
+  Do **not** author notebooks, the canonical loader, EDA, the forecaster or the FL loop for him.
+  Explain, review, check logic, and answer questions instead. *Data-acquisition tooling
+  (`fetch_scripts/`) and docs are the exception — those may be written/fixed directly.*
 - Respect the **locked scope** (§4). Keep the canonical table exactly `[date, branch, dept, demand]`.
 - It is **operations research, not clinical** — treat provider/department demand, never patient data.
 - **Verify code** (mock-run the logic) before proposing it. Prefer **minimal, transparent code the

@@ -23,8 +23,8 @@ Figures/tables are saved under `reports/figures/`. Notebooks under `notebooks/`.
 | # | Stage | Status | Output |
 |---|-------|--------|--------|
 | 1 | Understand problem & data | ✅ done | this header + data dictionary |
-| 2 | Input & inspect (+ provider split) | ✅ done | `notebooks/eda/01_inspect.ipynb`, `notebooks/provider_split/` |
-| 3 | Handle missing data | ✅ done | `notebooks/eda/03_missing.ipynb` + coverage figure/CSVs |
+| 2 | Input & inspect (+ provider split) | 🔁 to redo | *findings below stand; code deleted 2026-07-10 — rewrite by hand* |
+| 3 | Handle missing data | 🔁 to redo | *findings below stand; code deleted 2026-07-10 — rewrite by hand* |
 | 4 | Explore characteristics | ⬜ todo | summary tables |
 | 5 | Transform | ⬜ todo | transform list + rationale |
 | 6 | Visualise relationships | ⬜ todo | figures |
@@ -122,6 +122,21 @@ Record each working session as a row. Keep it short: **what · why · finding ·
 - **Decision:** model consumes **one number per (trust×dept×month)** — features are *engineered* from that
   series (lags + calendar), not extra columns. "Feature selection" ends here; Step 5 is series construction.
 - **Output:** new "Columns — from 121 down to the few that matter" subsection in `reports/fedopd_brief.html`.
+
+### Environment setup on Linux/A100 + clean slate — ✅ 2026-07-10
+- **What:** Cloned the repo onto a new Linux box (A100 80GB, Python 3.10.12), built `.venv`, authored the
+  first `requirements.txt`, and re-fetched all 60 monthly RTT CSVs.
+- **Finding:** the `scripts/` → `fetch_scripts/` rename left **both** fetch scripts broken — they hardcoded
+  `ROOT/scripts/nhs_manifest.json` and exited with `manifest not found`. Fixed to resolve the manifest
+  relative to each script's own directory (`__file__`), which survives future renames. The repo also had
+  **no dependency manifest** at all, and `previews/` (137 MB) was committed despite a `.gitignore` comment
+  saying it shouldn't be — the pattern under the comment was missing.
+- **Decision:** **clean slate** — deleted all generated analysis code (`src/rtt.py`, `notebooks/`,
+  `reports/`, `config/`, `previews/`) so the owner writes it himself (advisor's requirement). The repo now
+  holds only *data acquisition* + *docs*. Recoverable from git history at `a77abda`. Region lookups are
+  rebuildable from the ODS ORD API per the 2026-07-07 entry above.
+- **Output:** `requirements.txt` (pins `torch==2.11.0+cu128`), fixed `fetch_scripts/*.py`, `previews/` now
+  git-ignored, `data/nhs_rtt_referral_to_treatment/` = 60/60 CSVs (5.06 GB), README + CLAUDE.md updated.
 
 ### Step 4 — Explore characteristics + selection — ⬜ (unblocked; region attached)
 - Trusts-per-region ✅ (above). Next: dept **volume** + **regional variation** → lock the 7×10×10 panel.

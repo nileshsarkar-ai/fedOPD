@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Reproducible downloader + unzipper for the NHS RTT / A&E / DM01 monthly files.
 
-Driven entirely by ``scripts/nhs_manifest.json`` (a checked-in record of the
+Driven entirely by ``fetch_scripts/nhs_manifest.json`` (a checked-in record of the
 exact source URLs). Two idempotent phases, both safe to re-run:
 
   1. download  -> raw files land in  data/archives/<dataset>/<dataset>-<month>.<ext>
@@ -14,11 +14,11 @@ exact source URLs). Two idempotent phases, both safe to re-run:
 Everything stays under ``data/`` (git-ignored) so nothing is scattered through
 the codebase. Raw archives are preserved alongside the extracted CSVs.
 
-    python scripts/fetch_nhs.py                 # download everything, then extract
-    python scripts/fetch_nhs.py --dataset rtt   # one dataset only
-    python scripts/fetch_nhs.py --no-extract    # download archives only
-    python scripts/fetch_nhs.py --extract-only  # (re)extract from existing archives
-    python scripts/fetch_nhs.py --list          # show the plan; touch nothing
+    python fetch_scripts/fetch_nhs.py                 # download everything, then extract
+    python fetch_scripts/fetch_nhs.py --dataset rtt   # one dataset only
+    python fetch_scripts/fetch_nhs.py --no-extract    # download archives only
+    python fetch_scripts/fetch_nhs.py --extract-only  # (re)extract from existing archives
+    python fetch_scripts/fetch_nhs.py --list          # show the plan; touch nothing
 
 Stdlib only — no third-party packages required.
 """
@@ -34,8 +34,9 @@ import urllib.request
 import zipfile
 from urllib.error import HTTPError, URLError
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MANIFEST = os.path.join(ROOT, "scripts", "nhs_manifest.json")
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(HERE)
+MANIFEST = os.path.join(HERE, "nhs_manifest.json")
 DATA_DIR = os.path.join(ROOT, "data")
 ARCHIVE_DIR = os.path.join(DATA_DIR, "archives")
 UA = "Mozilla/5.0 (compatible; fedopd-fetch/1.0)"

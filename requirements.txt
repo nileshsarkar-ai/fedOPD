@@ -1,0 +1,38 @@
+# fedOPD — Python dependencies (see CLAUDE.md §9)
+#
+#   python3 -m venv .venv
+#   .venv/bin/python -m pip install -r requirements.txt
+#
+# The `+cu128` local version on torch pins resolution to PyTorch's CUDA 12.8
+# index below; without it pip would take the default wheel from PyPI.
+# For a CPU-only box, drop the extra-index-url and the `+cu128` suffix.
+--extra-index-url https://download.pytorch.org/whl/cu128
+
+# --- data + EDA -------------------------------------------------------------
+pandas>=2.2
+numpy>=1.26
+matplotlib>=3.8
+seaborn>=0.13
+scikit-learn>=1.4
+requests>=2.31          # build_rtt_manifest.py only; fetch_nhs.py is stdlib-only
+
+# --- notebooks (code lives in .ipynb — CLAUDE.md standing rule) --------------
+jupyterlab>=4.0
+ipykernel>=6.29
+
+# --- forecaster -------------------------------------------------------------
+torch==2.11.0+cu128
+
+# --- federated learning -----------------------------------------------------
+flwr>=1.13
+
+# --- agentic plane ----------------------------------------------------------
+transformers>=4.44
+datasets>=2.20
+accelerate>=0.33
+langgraph>=0.2
+langchain>=0.3
+langchain-anthropic>=0.2
+langchain-openai>=0.2
+anthropic>=0.34
+openai>=1.40
