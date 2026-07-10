@@ -154,6 +154,20 @@ Record each working session as a row. Keep it short: **what · why · finding ·
   fetched 36 new months (idempotent — the existing 60 were not re-downloaded); `data/` = 96/96 CSVs,
   ~7.7 GB. New `docs/PROJECT.md` (full project explainer). Updated README, CLAUDE.md, datasets.md.
 
+### GPU unblocked — A100 usable via a MIG instance — ✅ 2026-07-11
+- **What:** `torch.cuda.is_available()` was `False`: the A100 has MIG mode enabled but shipped
+  with **no MIG instances**, so the CUDA driver enumerated zero devices (NVML/`nvidia-smi` still
+  saw the card). No `sudo` on this account, and it's a plain VM (no HPC scheduler).
+- **Fix:** the account is in the `docker` group (≈ root via the daemon). Created one full-card
+  instance through a privileged container: `nvidia-smi mig -cgi 7g.80gb -C`. Verified a real
+  8000×8000 matmul runs on `NVIDIA A100 80GB PCIe MIG 7g.80gb`.
+- **Wiring:** `.venv/bin/activate` now resolves the MIG UUID dynamically into
+  `CUDA_VISIBLE_DEVICES` (falls back to CPU if the instance is absent).
+- **Caveats:** one shared 79 GB instance (concurrent jobs contend); **not persistent** across a
+  reboot / GPU reset — recreate with the same command (see `docs/PROJECT.md` §12). Cleaner long
+  term: have the admin persist MIG config or disable MIG.
+- **Output:** updated `docs/PROJECT.md` §12, `CLAUDE.md` §9, `README.md`.
+
 ### Step 4 — Explore characteristics + selection — ⬜ (unblocked; region attached)
 - Trusts-per-region ✅ (above). Next: dept **volume** + **regional variation** → lock the 7×10×10 panel.
 

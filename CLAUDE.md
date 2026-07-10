@@ -105,9 +105,11 @@ hierarchy counts (trusts/ICB, ICBs/region) · stability (confirm July-2022 break
 - **Dev box (Windows 11):** RTX 4060 (8 GB) · Python 3.12 venv (`.venv`) · PyTorch 2.11 + CUDA 12.8.
   PowerShell gotcha: `$env:PYTHONUTF8="1"` before scripts that print unicode.
 - **Server (Linux, A100 80 GB):** Python 3.10 venv (`.venv`) · `requirements.txt` pins
-  `torch==2.11.0+cu128`. ⚠️ GPU currently unusable — **MIG mode enabled with no instances**, so
-  `torch.cuda.is_available()==False`; needs a sysadmin to run `sudo nvidia-smi -mig 0`. CPU-only
-  meanwhile (fine for pandas EDA). Full detail in `docs/PROJECT.md` §12.
+  `torch==2.11.0+cu128`. **GPU working** via a MIG `7g.80gb` instance (the card ships with MIG
+  on but no instances → CUDA saw nothing; one was created 2026-07-11 via privileged docker,
+  since this account has no `sudo`). `.venv/bin/activate` auto-sets `CUDA_VISIBLE_DEVICES` to
+  the MIG UUID. **Not persistent across reboot** — recreate per `docs/PROJECT.md` §12 (full
+  detail there).
 - Libs (both): transformers, datasets, accelerate, **flwr (Flower)**, langgraph/langchain
   (+anthropic/openai), jupyterlab, pandas, scikit-learn, matplotlib, seaborn.
 - git SSH to GitHub verified.

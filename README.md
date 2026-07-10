@@ -45,7 +45,12 @@ Then fetch the data (below) and check the environment:
 
 ```bash
 .venv/bin/python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"
+# -> True NVIDIA A100 80GB PCIe MIG 7g.80gb
 ```
+
+On the A100 server the GPU is exposed through a **MIG `7g.80gb` instance**; `.venv/bin/activate`
+auto-selects it via `CUDA_VISIBLE_DEVICES`, so torch uses the A100 with no extra steps. The
+instance is not persistent across a reboot — see [docs/PROJECT.md](docs/PROJECT.md) §12 to recreate it.
 
 ## Fetch the data
 

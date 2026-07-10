@@ -233,8 +233,21 @@ environment.
 
 - **Linux · Python 3.10 · NVIDIA A100 80 GB.** `requirements.txt` pins
   `torch==2.11.0+cu128` against PyTorch's CUDA 12.8 index.
-- ⚠️ **GPU currently unavailable to CUDA.** The A100 has **MIG mode enabled with no MIG
-  instances**, so `torch.cuda.is_available()` returns `False` even though `nvidia-smi` sees
-  the card. This needs a sysadmin (no `sudo` on this account) to run **`sudo nvidia-smi
-  -mig 0`**. Until then torch runs CPU-only — fine for EDA (pure pandas), but a blocker for
-  the forecaster / FL loop.
+- **GPU: working, via a MIG instance.** The A100 has MIG mode enabled but shipped with **no
+  MIG instances**, so CUDA saw no device (`torch.cuda.is_available()` was `False` even though
+  `nvidia-smi` showed the card). Fixed on 2026-07-11 by creating one full-card instance —
+  `nvidia-smi mig -cgi 7g.80gb -C` — run as root via a privileged docker container (this
+  account has no `sudo`, but is in the `docker` group). `torch` now trains on the A100:
+  `torch.cuda.get_device_name(0)` → `NVIDIA A100 80GB PCIe MIG 7g.80gb`.
+- `.venv/bin/activate` auto-resolves the MIG UUID into `CUDA_VISIBLE_DEVICES` on activation,
+  so torch finds the GPU with no manual steps (and falls back to CPU cleanly if the instance
+  is gone).
+- ⚠️ **The MIG instance is not persistent** — a server reboot or GPU reset removes it.
+  Recreate it with:
+  ```bash
+  docker run --rm --privileged -v /:/host nvidia/cuda:12.2.2-base-ubuntu22.04 \
+    chroot /host nvidia-smi mig -cgi 7g.80gb -C
+  ```
+  The venv's dynamic lookup picks up the new UUID automatically. It is **one shared 79 GB
+  instance** — concurrent jobs (e.g. a second session on the same server) contend for its
+  memory and SMs. Cleaner long term: ask the admin to persist the MIG config or disable MIG.
