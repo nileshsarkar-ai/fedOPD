@@ -5,8 +5,8 @@ selection, modelling, FL, agentic — gets a dated entry here (**what · why · 
 decision · output**), so every decision is auditable and reportable. Started as the EDA
 log; now covers the whole project.
 
-Dataset: NHS England Consultant-led RTT waiting times, **NHS trusts only**, 60 months
-(2021-04 → 2026-03).
+Dataset: NHS England Consultant-led RTT waiting times, **NHS trusts only**, 96 months
+(2018-04 → 2026-03).
 
 - **Objective:** per-department **federated demand forecast**.
 - **Demand signal:** `Part_3` — New RTT Periods (new referrals starting the clock).
@@ -23,13 +23,14 @@ Figures/tables are saved under `reports/figures/`. Notebooks under `notebooks/`.
 | # | Stage | Status | Output |
 |---|-------|--------|--------|
 | 1 | Understand problem & data | ✅ done | this header + data dictionary |
-| 2 | Input & inspect (+ provider split) | 🔁 to redo | *findings below stand; code deleted 2026-07-10 — rewrite by hand* |
-| 3 | Handle missing data | 🔁 to redo | *findings below stand; code deleted 2026-07-10 — rewrite by hand* |
-| 4 | Explore characteristics | ⬜ todo | summary tables |
-| 5 | Transform | ⬜ todo | transform list + rationale |
-| 6 | Visualise relationships | ⬜ todo | figures |
-| 7 | Handle outliers | ⬜ todo | outlier register |
-| 8 | Communicate | ⬜ todo | findings report |
+| 2 | Input & inspect (+ provider split) | ✅ 2026-07-11 | `src/eda/EDA.ipynb` §Stage 2 (F-01..08, D-01) |
+| 2b | Canonical build | ✅ 2026-07-11 | `reports/tables/rtt_canonical.parquet` (F-09..10) |
+| 3 | Handle missing data | ✅ 2026-07-11 | §Stage 3 + `03_presence_heatmap.png` (F-11..14, D-02) |
+| 4 | Explore characteristics | ✅ 2026-07-11 | §Stage 4 + `04_*.png` (F-15..19, D-03) |
+| 5 | Transform (decide) | ✅ 2026-07-11 | §Stage 5 + `05_acf_busiest.png` (F-20, D-04) |
+| 6 | Visualise relationships | ✅ 2026-07-11 | §Stage 6 + `06_*.png` (F-21..24) |
+| 7 | Handle outliers | ✅ 2026-07-11 | `reports/tables/07_outlier_register.csv` (F-25..26, D-05) |
+| 8 | Communicate | ✅ 2026-07-11 | §Stage 8 summary + supervisor questions |
 
 ---
 
@@ -184,6 +185,32 @@ Record each working session as a row. Keep it short: **what · why · finding ·
 - Summary report + flowchart + recommended client panel for supervisor.
 
 ---
+
+### Steps 2–8 — EDA in one notebook (`src/eda/EDA.ipynb`, built + run) — ✅ 2026-07-11
+- **What:** Built the full EDA as a single, sectioned, commented notebook (stages 2→8) and ran it
+  **restart-and-run-all** over all **96 months (2018-04 → 2026-03)**; canonical table rebuilt + saved.
+- **Why:** Turn the type-along runbook into a reproducible, logged artifact; verify every filter and
+  characterise the data enough to pick federated clients and design the forecaster.
+- **Finding (headline):**
+  - Schema: layout steps **69→121 cols at 2021-04**; parent header stable (`Provider Parent Org Code`);
+    `Part_3` + numeric `Total All` present **96/96**; national totals validated **4/4** (F-01..08).
+  - Canonical: raw 17.36M → **227,344** rows (Part_3 · R## trusts · drop C_999 · sum commissioners);
+    96 mo · **194 trusts** (union) · **24 depts** · **3,243 series**; 0 dupes / 0 NaN / 0 zero (F-09..10, F-14).
+  - Panel: **125 trusts** present all 96 months (139 at ≥90); exits (45) > entries (11) = mergers (F-11..12, F-18).
+  - Scale: demand skew **4.92**, trust spread **~66×** (p90/p10) → per-series scaling + size-aware weighting (F-15..16).
+  - Dynamics: lag-12 seasonality in **38%** of series (low Dec/Apr/Aug, high Feb/Jan/Mar); COVID trough
+    **2020-04 = 31%** of baseline, recovery to ~116% by 2026-03; cross-trust corr **0.63** (F-21..24).
+  - Hierarchy: **42 ICBs** on the latest-month mapping (raw union 56, inflated by July-2022 CCG→ICB) (F-19).
+  - Outliers: **4,183** robust flags (spike 1,961 · drop 1,329 · covid 893); register saved (F-25..26).
+  - Data note: treatment-function **codes stable, names drift** → key `dept` on the code (reinforces D-01).
+- **Decision:** D-01 loader spec (executed) · D-02 missingness rules · D-03 client panel = 125 trusts
+  (alts 139 / 146) · D-04 transforms (window 12–24, last-12 holdout, per-series scaling, COVID regime flag)
+  · D-05 outlier actions (flag + keep, nothing deleted). **EDA gate open → forecaster + FL loop next.**
+- **Output:** `src/eda/EDA.ipynb` (57 cells, 0 errors, restart-and-run-all clean),
+  `reports/tables/rtt_canonical.parquet` (0.6 MB), `reports/tables/07_outlier_register.csv`,
+  `reports/figures/{03,04,05,06}_*.png` (7 figures).
+- **Note:** notebook authored + run by Claude Code at the owner's explicit instruction — the standing
+  "owner writes the analysis code" rule was overridden for this artifact; owner accepted the risk.
 
 ## Open questions / notes
 - July 2022: CCG → ICB switch (commissioner side) and a file-format step (size drop, row counts stable). Confirm provider side is unaffected.
