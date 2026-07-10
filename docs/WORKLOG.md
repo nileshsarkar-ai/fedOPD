@@ -208,7 +208,9 @@ Record each working session as a row. Keep it short: **what · why · finding ·
   · D-05 outlier actions (flag + keep, nothing deleted). **EDA gate open → forecaster + FL loop next.**
 - **Output:** `src/eda/EDA.ipynb` (57 cells, 0 errors, restart-and-run-all clean),
   `reports/tables/rtt_canonical.parquet` (0.6 MB), `reports/tables/07_outlier_register.csv`,
-  `reports/figures/{03,04,05,06}_*.png` (7 figures).
+  `reports/figures/{03,04,05,06}_*.png` (7 figures); plus a 23-page academic LaTeX report
+  `reports/eda_report.{tex,pdf}` (10 tables, 7 figures, F-01..26 register as a longtable),
+  compiled with tectonic 0.15.0 (`~/.local/bin`, glibc-2.35 build; `make -C reports pdf`).
 - **Note:** notebook authored + run by Claude Code at the owner's explicit instruction — the standing
   "owner writes the analysis code" rule was overridden for this artifact; owner accepted the risk.
 

@@ -30,6 +30,30 @@ recovery/backlog — enough to train and back-test seasonal, shock-aware models.
 is ~160–196k rows; the provider roster grows over the window (417 → 533 providers, 20 → 24
 treatment functions). See [docs/PROJECT.md](docs/PROJECT.md) for the full picture.
 
+## Exploratory data analysis (EDA)
+
+The full EDA runs end-to-end in [`src/eda/EDA.ipynb`](src/eda/EDA.ipynb) (restart-and-run-all, 0 errors)
+and is written up as **[`reports/eda_report.pdf`](reports/eda_report.pdf)** — a 23-page report with 10
+tables, 7 figures and an F-01..26 findings register (source [`reports/eda_report.tex`](reports/eda_report.tex)).
+Headline results:
+
+- **Canonical table** `[date, branch, dept, demand]` — 17,355,150 raw rows → **227,344** rows over
+  **96 months × 194 trusts × 24 departments** (3,243 trust×dept series); national `Part_3` totals externally validated 4/4.
+- **Balanced panel** — 125 of 194 trusts report in all 96 months (the day-one federation client set; 139 at ≥90 mo, 146 at ≥84 mo).
+- **Scale** — demand is heavily right-skewed (skew 4.92); trusts span ~66× (p90/p10) → per-series scaling + size-aware federated weighting.
+- **COVID regime** — national demand collapsed to ~31% of baseline in 2020-04 and recovered to ~116% by 2026-03; kept as a regime flag, never deleted.
+- **Federation evidence** — trusts co-move (median cross-trust correlation 0.63) and 38% of series carry an annual cycle, yet differ sharply in scale/casemix → the setting where **personalised** federated learning should win.
+
+| | |
+|---|---|
+| ![Trust × month reporting presence](reports/figures/03_presence_heatmap.png) | ![Sample series vs national aggregate](reports/figures/06_sample_series.png) |
+| **Reporting presence** — 125/194 trusts complete all 96 months. | **Series shape** — COVID collapse to ~31% and recovery to ~116% of baseline. |
+| ![Demand distribution](reports/figures/04_demand_dist.png) | ![Cross-trust correlation](reports/figures/06_crosstrust_corr.png) |
+| **Demand distribution** — heavy right skew (4.92) → per-series scaling. | **Cross-trust correlation** — median 0.63 → shared structure to learn. |
+
+The report also covers the trust-volume spread, autocorrelation (ACF), and calendar-month seasonality
+(`reports/figures/{04_trust_volume,05_acf_busiest,06_month_of_year}.png`).
+
 ## Setup
 
 ```bash
@@ -114,8 +138,11 @@ the manifest. The manifest is the reproducible record of exactly what was fetche
 
 ## Status
 
-Data acquisition and dataset documentation are in place. Next: EDA on the RTT
-collection, then the forecaster interface and the federated training loop.
+Data acquisition, the canonical build, and the full 8-stage EDA are complete (see
+[Exploratory data analysis](#exploratory-data-analysis-eda) above, and
+[`reports/eda_report.pdf`](reports/eda_report.pdf)). Next: the swappable forecaster
+interface (`get_params` / `set_params`) and the Flower cross-silo federated loop over the
+recommended 125-trust panel.
 
 ## Licensing
 
