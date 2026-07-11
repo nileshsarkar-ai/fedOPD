@@ -33,8 +33,9 @@ treatment functions). See [docs/PROJECT.md](docs/PROJECT.md) for the full pictur
 ## Exploratory data analysis (EDA)
 
 The full EDA runs end-to-end in [`src/eda/EDA.ipynb`](src/eda/EDA.ipynb) (restart-and-run-all, 0 errors)
-and is written up as **[`reports/eda_report.pdf`](reports/eda_report.pdf)** — a 23-page report with 10
-tables, 7 figures and an F-01..26 findings register (source [`reports/eda_report.tex`](reports/eda_report.tex)).
+and is written up as a 23-page report with 10 tables, 7 figures and an F-01..26 findings register —
+available as **[PDF](reports/eda_report.pdf)** and **[EPUB](reports/eda_report.epub)**
+(source [`reports/eda_report.tex`](reports/eda_report.tex); rebuild with `make -C reports all`).
 Headline results:
 
 - **Canonical table** `[date, branch, dept, demand]` — 17,355,150 raw rows → **227,344** rows over

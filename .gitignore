@@ -20,3 +20,7 @@ reports/*.lot
 reports/*.fls
 reports/*.fdb_latexmk
 reports/*.synctex.gz
+
+# EPUB build intermediates (build_epub.py regenerates and cleans these)
+reports/epub.css
+reports/.eda_report_epub.tex

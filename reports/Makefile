@@ -1,15 +1,21 @@
-# Build the fedOPD EDA report PDF.
+# Build the fedOPD EDA report.
 #
-# The .tex is self-contained and uses only standard packages, so any LaTeX
-# toolchain works. Two easy routes:
+#   make pdf    -> eda_report.pdf   (tectonic; no system TeX install, no root)
+#   make epub   -> eda_report.epub  (pandoc, via build_epub.py)
+#   make all    -> both
 #
-#   1) tectonic (single static binary, no system TeX install, no root):
-#        make pdf
-#   2) a full TeX Live / MiKTeX install:
-#        make pdf-pdflatex
-#   3) zero-install: upload eda_report.tex + the figures/ folder to Overleaf.
+# One-time tooling (both user-space, no root):
+#   curl --proto '=https' --tlsv1.2 -fsSL https://drop-sh.fullyjustified.net | sh   # tectonic
+#   pip install pypandoc_binary                                                     # pandoc
+#
+# Note: on glibc < 2.36 the latest tectonic will not run; use the 0.15.0 build,
+# which requires only glibc 2.35.
+#
+# Zero-install alternative for the PDF: upload eda_report.tex + figures/ to Overleaf.
 #
 REPORT = eda_report
+
+all: pdf epub
 
 pdf:
 	tectonic $(REPORT).tex
@@ -19,7 +25,12 @@ pdf-pdflatex:
 	pdflatex -interaction=nonstopmode -halt-on-error $(REPORT).tex
 	pdflatex -interaction=nonstopmode -halt-on-error $(REPORT).tex
 
-clean:
-	rm -f $(REPORT).aux $(REPORT).log $(REPORT).out $(REPORT).toc $(REPORT).lof $(REPORT).lot
+# build_epub.py reads LaTeX's .aux for the label->number map, so cleveref refs
+# ("Table 4") and float captions survive the conversion. It cleans up after itself.
+epub:
+	python build_epub.py
 
-.PHONY: pdf pdf-pdflatex clean
+clean:
+	rm -f $(REPORT).aux $(REPORT).log $(REPORT).out $(REPORT).toc $(REPORT).lof $(REPORT).lot epub.css .$(REPORT)_epub.tex
+
+.PHONY: all pdf pdf-pdflatex epub clean
