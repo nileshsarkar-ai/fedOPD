@@ -60,6 +60,41 @@ def load_labels():
         r"\\newlabel\{([^}]+)@cref\}\{\{\[(\w+)\]\[[^\]]*\]\[[^\]]*\]([^}]*)\}", aux)}
 
 
+# The report's math is trivial (thousands separators, x, >=, ~, arrows). Emitting it as
+# MathML is worse than useless: readers without MathML support print BOTH the rendered text
+# and its raw TeX annotation, so "$17{,}355{,}150$" shows up as "17,355,15017{,}355{,}150".
+# We therefore lower inline math to plain Unicode and drop --mathml altogether.
+# NB: this .tex is only ever fed to pandoc (never compiled), but `%`, `{`, `}`, `#` and `_`
+# must stay backslash-escaped or pandoc's LaTeX reader will mis-parse them (a bare % is a comment).
+MATH_UNICODE = [
+    (r"\{,\}", ","),          # {,} is a LaTeX thousands separator
+    (r"\\times", "×"),   # ×
+    (r"\\rightarrow", "→"),  # →
+    (r"\\geq", "≥"),     # ≥
+    (r"\\leq", "≤"),     # ≤
+    (r"\\approx", "≈"),  # ≈
+    # NOT ASCII "~" -- that is a non-breaking space in LaTeX and pandoc would swallow it.
+    (r"\\sim", "∼"),     # ∼ U+223C tilde operator
+    (r"\\log", "log"), (r"\\max", "max"), (r"\\min", "min"),
+    (r"\\,", " "), (r"\\!", ""),
+]
+
+
+def demath(tex):
+    def one(m):
+        e = m.group(1)
+        if re.fullmatch(r"\\texttt\{[^}]*\}", e.strip()):
+            return e.strip()                      # $\texttt{R\#\#}$ -> \texttt{R\#\#}
+        for pat, rep in MATH_UNICODE:
+            e = re.sub(pat, rep, e)
+        return re.sub(r"^-(?=\d)", "−", e)   # -0.01 -> −0.01 (true minus)
+
+    tex, n = re.subn(r"\$([^$]+)\$", one, tex)
+    left = tex.count("$")
+    print(f"lowered {n} math expressions to Unicode ({left} '$' left)")
+    return tex
+
+
 def rewrite(tex, labels):
     float_re = re.compile(r"\\begin\{(table|figure|longtable)\}.*?\\end\{\1\}", re.S)
 
@@ -111,13 +146,16 @@ def main():
     labels = load_labels()
     print(f"resolved {len(labels)} labels from {os.path.basename(AUX)}")
 
+    tex = rewrite(open(TEX, encoding="utf-8").read(), labels)
+    tex = demath(tex)
+
     src = os.path.join(HERE, ".eda_report_epub.tex")     # transient, gitignored
-    open(src, "w", encoding="utf-8").write(rewrite(open(TEX, encoding="utf-8").read(), labels))
+    open(src, "w", encoding="utf-8").write(tex)
     open(CSS, "w").write(STYLESHEET)
 
     subprocess.run([
         find_pandoc(), src, "-o", EPUB,
-        "--standalone", "--toc", "--toc-depth=2", "--mathml",
+        "--standalone", "--toc", "--toc-depth=2",
         f"--resource-path={HERE}", "--css", CSS,
         "--metadata", "title=Exploratory Data Analysis of NHS England Referral-to-Treatment Demand",
         "--metadata", "subtitle=A Data Foundation for Cross-Silo Federated Demand Forecasting",
