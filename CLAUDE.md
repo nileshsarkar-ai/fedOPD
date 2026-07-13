@@ -80,12 +80,22 @@ Purchaser–provider split, **not** one owned hospital chain:
 > agentic) gets a dated entry in **`docs/WORKLOG.md`** (*what · why · finding · decision ·
 > output*). No work is "done" until it's recorded there. Code lives in **`.ipynb` notebooks only**.
 
-## 8. EDA — plan + status  (register: `docs/WORKLOG.md`; one notebook per stage in `notebooks/`; figures → `reports/figures/`)
+## 8. EDA — plan + status  (register: `docs/WORKLOG.md`; **single consolidated notebook `src/eda/EDA.ipynb`**; figures → `reports/figures/`)
 
 > **Clean slate (2026-07-10).** All previously generated notebooks, `src/rtt.py`, `config/`,
 > `previews/` and `reports/` were **deleted on purpose**: the owner writes the analysis code
 > himself (advisor's requirement). Only data acquisition + docs remain. Statuses below are the
 > *plan*, not work in hand. Recoverable from git history at `a77abda` if ever needed.
+
+> **Convention update (2026-07-11).** The original "one notebook per stage in `notebooks/`" plan was
+> **superseded by the owner's instruction** to keep all of stages 2–8 in a single notebook,
+> **`src/eda/EDA.ipynb`** (sectioned by stage, commented). Stages 2–8 are **complete** and pass
+> restart-and-run-all; the write-up lives in `reports/eda_report.{pdf,epub}` (rebuild: `make -C reports all`).
+> On **2026-07-14** the notebook and report were revised to close an advisor review (see `docs/WORKLOG.md`):
+> seasonality de-artefacted (mean over complete years), honest trust-scale spread (~9× on the balanced
+> panel, not 66×), leakage-safe (trailing) outlier flags, forecastability baselines (F-27), a department
+> taxonomy audit (F-28), and a 2023-strike regime. Note: `src/eda/EDA.ipynb` is AI-authored under an
+> **explicit owner override** of §12 for this file only — the write-code rule still holds everywhere else.
 
 | # | stage | status |
 |---|---|---|
