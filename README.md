@@ -32,8 +32,8 @@ treatment functions). See [docs/PROJECT.md](docs/PROJECT.md) for the full pictur
 
 ## Exploratory data analysis (EDA)
 
-The full EDA runs end-to-end in [`src/eda/EDA.ipynb`](src/eda/EDA.ipynb) (restart-and-run-all, 0 errors)
-and is written up as a 23-page report with 10 tables, 7 figures and an F-01..26 findings register —
+The full EDA runs end-to-end in [`src/eda/EDA.ipynb`](src/eda/EDA.ipynb) (restart-and-run-all, 59 cells, 0 errors)
+and is written up as a 25-page report with 10 tables, 7 figures and an F-01..28 findings register —
 available as **[PDF](reports/eda_report.pdf)** and **[EPUB](reports/eda_report.epub)**
 (source [`reports/eda_report.tex`](reports/eda_report.tex); rebuild with `make -C reports all`).
 Headline results:
@@ -41,9 +41,10 @@ Headline results:
 - **Canonical table** `[date, branch, dept, demand]` — 17,355,150 raw rows → **227,344** rows over
   **96 months × 194 trusts × 24 departments** (3,243 trust×dept series); national `Part_3` totals externally validated 4/4.
 - **Balanced panel** — 125 of 194 trusts report in all 96 months (the day-one federation client set; 139 at ≥90 mo, 146 at ≥84 mo).
-- **Scale** — demand is heavily right-skewed (skew 4.92); trusts span ~66× (p90/p10) → per-series scaling + size-aware federated weighting.
-- **COVID regime** — national demand collapsed to ~31% of baseline in 2020-04 and recovered to ~116% by 2026-03; kept as a regime flag, never deleted.
-- **Federation evidence** — trusts co-move (median cross-trust correlation 0.63) and 38% of series carry an annual cycle, yet differ sharply in scale/casemix → the setting where **personalised** federated learning should win.
+- **Scale** — demand is heavily right-skewed (skew 4.92); the honest trust-scale spread is ~9× (p90/p10 of mean monthly demand on the balanced panel — the raw 66× lifetime-total figure conflates size with tenure) → per-series scaling + size-aware federated weighting.
+- **COVID regime** — national demand collapsed to ~31% of baseline in 2020-04 and recovered to ~116% by 2026-03; kept as a regime flag (with a separate 2023-strike regime), never deleted.
+- **Federation evidence** — trusts co-move (median cross-trust correlation 0.63, holding at 0.61 post-2022) and 38% of series carry an annual cycle (37% post-2022), yet differ sharply in scale/casemix → the setting where **personalised** federated learning should win.
+- **Bar to beat** — naive-*t*−1 forecasts the held-out year at ~12.6% median sMAPE (seasonal-naive 15.7%); the federated model must beat plain persistence.
 
 | | |
 |---|---|

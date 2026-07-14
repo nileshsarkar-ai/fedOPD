@@ -14,7 +14,7 @@ Dataset: NHS England Consultant-led RTT waiting times, **NHS trusts only**, 96 m
 - **Grain:** trust × treatment function × month → canonical `[date, branch, dept, demand]`.
 - **Data dictionary:** see [docs/datasets.md](docs/datasets.md).
 
-Figures/tables are saved under `reports/figures/`. Notebooks under `notebooks/`.
+Figures/tables are saved under `reports/figures/` and `reports/tables/`. The EDA is one consolidated notebook, `src/eda/EDA.ipynb` (stages 2–8).
 
 ---
 
@@ -213,6 +213,41 @@ Record each working session as a row. Keep it short: **what · why · finding ·
   compiled with tectonic 0.15.0 (`~/.local/bin`, glibc-2.35 build; `make -C reports pdf`).
 - **Note:** notebook authored + run by Claude Code at the owner's explicit instruction — the standing
   "owner writes the analysis code" rule was overridden for this artifact; owner accepted the risk.
+
+### Steps 2–8 — advisor-review revision (`src/eda/EDA.ipynb` + report) — ✅ 2026-07-14
+- **What:** Patched the notebook and report to close a detailed advisor review; re-ran restart-and-run-all
+  (**59 cells, 0 errors**) and rebuilt both report editions. Five substantive corrections + smaller fixes.
+- **Why:** Three headline stats were measured on shock-contaminated or count-imbalanced windows, one
+  finding was an artefact, and the outlier flags leaked future information — each would have drawn a
+  supervisor challenge and two changed the *findings* themselves.
+- **Finding (what changed):**
+  - **F-22 seasonality was an artefact.** Summing demand by month over 2022-01→2026-03 counts Jan/Feb/Mar
+    5× vs 4× for the rest, fabricating a "winter peak". Corrected to the **mean over complete years
+    2022–2025**: modest **~1.2× peak/trough**, low **Dec/Apr/Aug**, high **Oct/Mar/Jul** (the old
+    Feb/Jan/Mar peak vanished).
+  - **F-16 scale spread was tenure-confounded.** Lifetime-total p90/p10 = 66× conflates size with tenure;
+    the honest figure is **9.0×** (p90/p10 of mean monthly demand on the balanced panel). Big correction.
+  - **F-27 (new) forecastability baselines.** 12-mo holdout: **naive-t−1 median sMAPE 12.6%**,
+    seasonal-naive 15.7%, seasonal wins only 34% → persistence-dominated; the bar the FL model must beat.
+  - **F-28 (new) department taxonomy is non-stationary.** 18/24 depts span all 96 mo; the "Other" family
+    was **re-coded at 2021-04** (`X01` → `X02`–`X06`) — explains the 20→24 growth and the "X-code shift",
+    and resolves the old self-contradiction ("codes stable" vs "X01 only 36 mo"): stable semantics, moving roster.
+  - **Leakage fix (D-05/F-25).** Outlier flags switched to a **trailing (causal)** rolling window (was
+    `center=True`), so no held-out month influences a train-window flag. Flags 4,183 → **5,630**; added a
+    **2023-strike regime** class (2022-12→2023-12): covid 2,369 · spike 1,909 · strike 700 · drop 652.
+  - **Post-2022 robustness.** Cross-trust corr **0.63 full / 0.61 post-2022**; lag-12 seasonality
+    **38% full / 37% post-2022** — both stable, so neither rests on the COVID shock.
+  - **Smaller:** F-12 decomposed (8 late-only + 42 early-only + 3 both + 16 interior-gap); F-13 gappy split
+    (993 tenure/taxonomy-limited + **838 genuine interior gaps**); D-02 gains a *taxonomy-born* species;
+    sparsest sample series re-picked to a plottable one (`R1F·C_400`, 38/96 mo); dedupe "0 removed"
+    reworded as a structural guard (not a revision check); region-lookup flagged as an open dependency.
+- **Decision:** D-02 (4 species) · D-03 (panel departments = the **18 window-complete specialties**;
+  honest scale ~9×) · D-04 (COVID + 2023-strike regime flags; bar to beat ≈12.6% sMAPE) · D-05 (trailing
+  causal flags; strike class). Findings register extended to **F-01..F-28**.
+- **Output:** `src/eda/EDA.ipynb` (59 cells, clean), regenerated `reports/figures/*.png` +
+  `reports/tables/07_outlier_register.csv` (5,630 rows), and the rebuilt **25-page** report
+  `reports/eda_report.{pdf,epub}` (F-01..28 register); `make -C reports all`. Docs convention note added
+  to `CLAUDE.md` §8 (single consolidated EDA notebook, AI-authored under owner override).
 
 ## Open questions / notes
 - July 2022: CCG → ICB switch (commissioner side) and a file-format step (size drop, row counts stable). Confirm provider side is unaffected.
