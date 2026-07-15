@@ -140,11 +140,15 @@ the manifest. The manifest is the reproducible record of exactly what was fetche
 
 ## Status
 
-Data acquisition, the canonical build, and the full 8-stage EDA are complete (see
-[Exploratory data analysis](#exploratory-data-analysis-eda) above, and
-[`reports/eda_report.pdf`](reports/eda_report.pdf)). Next: the swappable forecaster
-interface (`get_params` / `set_params`) and the Flower cross-silo federated loop over the
-recommended 125-trust panel.
+Data acquisition, the canonical build, the full 8-stage EDA (tag `eda-v2`,
+[`reports/eda_report.pdf`](reports/eda_report.pdf)) **and the federated build (Steps 0–10)** are
+complete. The build lives in [`src/fedopd/`](src/fedopd/) (modules + narrative notebook
+`build.ipynb`), gated step-by-step in [`docs/BUILD_LOG.md`](docs/BUILD_LOG.md), with every number
+traceable to a `results/*.json`. Headline (macro-mean sMAPE, 5 seeds, vs the naive-t−1 bar 16.34):
+**local-only 16.90±0.05 (loses) · fedavg+personalisation 16.24±0.07 (ties the bar) · centralised
+15.81±0.39 (beats)** — federation beats isolated training by 0.66 pts (≫ seed noise) with no raw
+data leaving any site; Flower parity gap 0.004. Next: window-24 default, per-client model selection,
+Part_1A/1B/2 extraction for the agentic layer.
 
 ## Licensing
 

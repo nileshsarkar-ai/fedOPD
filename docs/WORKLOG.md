@@ -273,6 +273,27 @@ Record each working session as a row. Keep it short: **what · why · finding ·
   `reports/eda_report.{tex,pdf,epub}`; committed + tagged **`eda-v2`** as the point-in-time supervisor deliverable.
 - **Also:** added `docs/OPS.md` (operator cheat-sheet: env, GPU policy, exact commands, tmux sessions, directory map).
 
+### Build phase — forecaster + federated loop, Steps 0–10 — ✅ 2026-07-15
+- **What:** Full post-EDA build per the runbook: frozen panel → leakage-checked tensors → verified
+  metric/bar → MLP forecaster behind `get_params/set_params` → local/centralised baselines → FedAvg →
+  FedProx + personalisation → 5-seed grid + ablations + sensitivity → Flower parity → honest verdict.
+  All 10 gates **PASS**; per-step detail in `docs/BUILD_LOG.md`; every number traces to a
+  `results/*.json` (config, seed, git sha). Code: `src/fedopd/{data,model,fed,evaluate,run}.py` +
+  narrative notebook `src/fedopd/build.ipynb` (20 cells, restart-and-run-all, 0 errors) +
+  `scripts/{run_grid.sh,flower_parity.py}`. All CPU (A100 untouched); long jobs in `fedopd-*` tmux.
+- **Headline (macro-mean sMAPE, 5 seeds, vs bar R-01 naive-t1 16.34):** local **16.90±0.05** (loses) ·
+  fedavg 16.35±0.06 · **fedavg+ft 16.24±0.07** · fedprox+ft 16.22±0.09 (tie bar, ~1.5σ below) ·
+  central **15.81±0.39** (beats; 15.18 at window 24). Median series: all neural 11.2–11.4 vs naive
+  12.92. **Federation beats isolation by 0.66 ≫ noise**; Flower parity gap 0.004.
+- **Sensitivity (= supervisor answers):** Q4 include Neurosurgery (costs nothing) · Q5 X-codes break
+  nothing (exclusion case is taxonomy/allocability) · Q1 robust to panel strictness (136 clients @≥84mo).
+- **H1 pre-registered → REFUTED** (ρ=0.038, p=0.68): gains concentrate in mid-size clients; thinnest
+  quartile better off local (early stopping ≈ naive anchor). Implication: per-client selection on
+  train-tail validation among {naive, local, global+ft}.
+- **Decisions:** D-06 notebook+modules split · D-07 roster (revisit per Q4 numbers) · D-08 target=delta.
+- **Next:** W=24 default candidate · per-client model selection · more rounds · Part_1A/1B/2 extraction
+  for the agentic layer · region lookup still open.
+
 ## Open questions / notes
 - July 2022: CCG → ICB switch (commissioner side) and a file-format step (size drop, row counts stable). Confirm provider side is unaffected.
 - Month case differs pre/post 2023-04 in the `Period` string (`APRIL` vs `April`) — parse case-insensitively.

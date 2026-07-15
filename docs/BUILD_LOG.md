@@ -194,3 +194,26 @@ Numbers:  flwr 1.30.0 FedAvg (NumPyClient clients + Flower's FedAvg.aggregate_fi
           handwritten 16.43 at seed 0 -> gap 0.004 (<= 0.3). results/flower_parity_s0.json.
 Gate:     PASS. Caveat (logged): Ray is not installed, so transport is an in-process driver loop;
           client fit + strategy aggregation are Flower's code end to end.
+
+## H1 verdict (pre-registered hypothesis) · 2026-07-15
+Numbers:  Spearman rho(client train-windows, local-minus-fed+ft margin) = 0.038, p = 0.68, n = 117.
+          Quartile means (pp): thinnest -1.26 | q2 +0.59 | q3 +1.10 | largest +0.50.
+Verdict:  **H1 REFUTED** — reported as found (that is what pre-registration is for). Federation's
+          gains concentrate in MID-SIZE clients, not the thinnest: fair-fight early stopping collapses
+          tiny clients toward the naive anchor (near-optimal for their volatile series) and the
+          imported global structure overrides it; +ft with ~54 windows cannot pull it back.
+Implication: deployment rule = per-client selection on train-tail validation among
+          {naive, local, global+ft}; personalisation epoch caps alone do not rescue the thinnest.
+
+## Step 10 · Results + write-up · 2026-07-15
+Ran:      full restart-and-run-all of src/fedopd/build.ipynb (tmux fedopd-nb) — 20 cells, 0 errors;
+          verdict cell s10_verdict added. Regeneration: bash scripts/run_grid.sh &&
+          python scripts/flower_parity.py && nbconvert --execute build.ipynb.
+Verdict (stated against seed noise):
+          fed+ft 16.24±0.07 vs local 16.90±0.05 (federation beats isolation by 0.66 >> sigma) and vs
+          bar 16.34 (ties, marginally below ~1.5σ); central 15.81±0.39 beats the bar (15.18 @ W=24);
+          all neural methods beat naive on the MEDIAN series by 1.5-1.8 pts. Honest headline:
+          "federated learning lets every trust match a strong persistence baseline and beat isolated
+          training — without raw data leaving any site." Q1/Q4/Q5 answered with numbers (Step 8).
+Gate:     PASS — every number in the write-up traces to results/*.json (seed + git sha inside each);
+          the documented commands regenerate the table from scratch.

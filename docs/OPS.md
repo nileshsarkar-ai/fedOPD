@@ -103,6 +103,17 @@ print('cells',len(nb['cells']),'errors',sum(1 for c in nb['cells'] for o in c.ge
 python fetch_scripts/fetch_nhs.py --dataset rtt
 ```
 
+**Build phase (forecaster + FL) — run/regenerate everything:**
+```bash
+source .venv/bin/activate
+python -m src.fedopd.run --method fedavg --target delta --ft-epochs 3 --seed 0   # one run -> results/*.json
+bash scripts/run_grid.sh 8          # the whole Step-8 grid, 8-way parallel, RESUMABLE (skips existing JSONs)
+python scripts/flower_parity.py    # Step-9 parity vs the handwritten loop
+.venv/bin/jupyter nbconvert --to notebook --execute --inplace src/fedopd/build.ipynb   # narrative + gates
+# tmux sessions used (ours, fedopd-*): fedopd-step5, fedopd-step67, fedopd-grid, fedopd-parity, fedopd-nb
+# each writes a log + final "EXIT:<code>" line under the session scratchpad; poll that, never attach arc3-*.
+```
+
 ---
 
 ## 4. Background / tmux sessions
