@@ -245,3 +245,17 @@ for the forecast. Reproduces flow-identity 3.8%, 969/322/218 RAG, 216k/mo, ICB r
 breach share (42.7/27/11), rho 0.40. Every analytical STAGE now has a notebook:
   EDA -> src/eda/EDA.ipynb · forecasting -> src/fedopd/build.ipynb · agentic -> src/fedopd/agentic.ipynb
 with reusable logic in src/fedopd/*.py (the endorsed D-08a narrative-notebook + modules pattern).
+
+## DR1-DR4 improvement notebook — PREPARED, not run · 2026-07-16
+src/fedopd/improve.ipynb (21 cells, every code cell parse-checked, ZERO execution). Contents:
+  DR1: run_federated_v2 (FedAvg/FedAvgM/FedAdam server step, 150 rounds), naive-blend (closed-form
+       global alpha on the true chronological train-tail via tr_month), LossForecaster (mse/mae/huber/
+       pinball); DR2: build_extended() — flow features (lagged log1p-z backlog/completed, breach share,
+       missing flag), national+ICB per-dept demand z at t-1, working-days feature (England bank-holiday
+       calendar incl. 2020-2023 one-offs); PARITY GATE: switches off => must reproduce the frozen
+       108065x33 tensors and bar 16.34 exactly. Ladder L0..L2_all_huber isolates each lever; resumable
+       JSONs -> results/improve/. DR3: ridge+GBT comparators on identical protocol; direct 12-output
+       multi-horizon (origins leakage-safe); pinball P50/P90 + agentic plan@P90 with coverage gate.
+  DR4 (guarded, RUN_DR4=False): ODS region lookup (RO209) + GP-referrals/IMD/flu integration template.
+Config: QUICK=True (seed 0 smoke) -> set QUICK=False for the 5-seed programme. Claim rule unchanged.
+Next session: execute top-to-bottom, log gates here, promote any outside-noise win into the reports.
