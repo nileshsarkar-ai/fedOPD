@@ -133,13 +133,35 @@ data/ (git-ignored, re-fetchable — 96 CSVs, ~7.7 GB, present)
 ```
 `notebooks/` and `reports/figures/` are to be **created by hand** as the work proceeds.
 
-## 11. Immediate next steps
-1. Write `notebooks/01_inspect.ipynb` by hand: load one month, inspect the 121 columns,
-   confirm the `Period` case quirk (`APRIL` vs `April`); log Step 2 in `docs/WORKLOG.md`.
-2. Write the canonical loader across all 96 months → `[date, branch, dept, demand]` (§4 rules).
-3. Step 4: balanced panel (trusts present across the 96-month window) + trusts-per-ICB-per-region → day-1 client shortlist.
-4. Rebuild the `provider → region` lookup (**not** in the RTT files — see §7; ODS / Trust-ICB attribution).
-5. Forecaster interface (`get_params`/`set_params`) → Flower federated loop.
+## 11. Status + next steps (updated 2026-07-16)
+
+**Done end-to-end (tags `eda-v2` → `build-v1` → `system-v1`):** EDA (F-01..28, D-01..08) · federated
+forecaster (117 clients × 17 depts; fed+ft **16.24±0.07** vs naive bar **16.34** vs local 16.90 vs
+central 15.81; Flower parity 0.004) · agentic plane (flow table + Little's-law capacity policy;
+2026-03: 969 RED / 322 AMBER / 218 GREEN, 216k extra pathways/mo, ICB ranking; validated) · reports
+(`reports/{eda_report,system_report,project_report}.pdf`) · live dashboard (`dashboard/`, serve +
+ngrok — see `docs/OPS.md`). Notebooks: `src/eda/EDA.ipynb`, `src/fedopd/build.ipynb`,
+`src/fedopd/agentic.ipynb`; reusable logic in `src/fedopd/*.py`; gates in `docs/BUILD_LOG.md`.
+
+**NEXT SESSION — pre-registered improvement roadmap (implement Tier 1→4 in order, measure every
+change against the same 16.34 bar, 5 seeds, same 18,191 points):**
+- **Tier 1 (optimization, closes the fed→central ~0.4 gap):** (1) more FL rounds (100–200) + server
+  optimizer (FedAdam/momentum) — loss was still descending at 40; (2) **blend** with naive
+  ŷ=α·model+(1−α)·naive, α fitted on train-tail (selection failed at 16.83, blending is the robust
+  form); (3) align loss with metric (train log1p/MAE, not MSE-on-z vs sMAPE-on-raw).
+- **Tier 2 (new features from the SAME dataset — forecaster currently sees only Part_3 lags):**
+  (4) flow-state features per series: lagged backlog / completions / >18wk share (already in
+  `reports/tables/rtt_flow.parquet`); (5) last month's **national/ICB per-dept demand** as input
+  (co-movement 0.63 is the strongest measured structure; public data → FL-safe); (6) working-days /
+  bank-holidays-in-month feature (explains Dec/Apr/Aug troughs).
+- **Tier 3 (model & evaluation):** (7) comparator families: ridge-AR + gradient-boosted trees
+  (linear often matches MLP on 84-point series); (8) direct multi-horizon (1–12 mo — the agentic
+  burn-down needs it); (9) **quantile forecasts** → agent plans against P90, not the mean (biggest
+  decision-quality win).
+- **Tier 4 (beyond the dataset):** GP-referrals upstream data · population/IMD per ICB ·
+  provider→region lookup (ODS) · flu/weather seasonality.
+- Honest ceiling: with demand-history-only, naive is near-optimal for many monthly series — gains
+  come from added information (Tier 2) and changing what is predicted (Tier 3), not bigger nets.
 
 ## 12. How to help (for Claude)
 - **The owner writes the analysis code himself** — advisor's requirement, and it is not negotiable.

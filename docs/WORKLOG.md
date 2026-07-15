@@ -310,6 +310,23 @@ Record each working session as a row. Keep it short: **what · why · finding ·
 - **Next:** rolling-window model selection · multi-horizon forecasting · region lookup · LLM-orchestrated
   agent wrapping the validated policy · legibility scenario panel.
 
+### Improvement roadmap — pre-registered for the next session — 📋 2026-07-16
+- **Why:** end-to-end v1 is closed (`system-v1`); headroom is measured, not guessed. Two distinct gaps:
+  **fed→central ≈ 0.4 pts** (optimization) and **central→beyond** (information: the forecaster sees only
+  Part_3 lags + calendar — the extracted backlog/throughput/wait-band signals never feed it).
+- **Tier 1 (quick, no new data):** (1) 100–200 FL rounds + server optimizer (FedAdam) — loss still
+  descending at 40; (2) **naive-blend** ŷ=α·model+(1−α)·naive, α on train-tail (selection failed 16.83 →
+  blend is the noise-robust form; targets the volatile small-series tail that owns the macro-mean);
+  (3) loss↔metric alignment (log1p/MAE training).
+- **Tier 2 (same dataset, new features):** (4) per-series lagged backlog/completions/breach-share from
+  `rtt_flow.parquet`; (5) national/ICB per-dept demand last month (co-movement 0.63; public → FL-safe);
+  (6) working-days/bank-holiday counts per month.
+- **Tier 3:** (7) ridge-AR + GBT comparators; (8) direct multi-horizon 1–12mo; (9) quantile forecasts →
+  agent plans vs P90 (decision-quality win even if sMAPE static).
+- **Tier 4 (external):** GP referrals · population/IMD · ODS region lookup · flu/weather.
+- **Protocol:** every change measured against the frozen bar (16.34, same 18,191 points, 5 seeds);
+  gates + BUILD_LOG discipline continue; nothing claimed inside seed noise.
+
 ## Open questions / notes
 - July 2022: CCG → ICB switch (commissioner side) and a file-format step (size drop, row counts stable). Confirm provider side is unaffected.
 - Month case differs pre/post 2023-04 in the `Period` string (`APRIL` vs `April`) — parse case-insensitively.
