@@ -77,3 +77,44 @@ Gate:     PASS — all 5 leakage asserts (scaler-fit <= 2025-03; test months in 
 Next:     Step 3 (metric + bar R-01). NOTE: at **Step 4** decide the module refactor — keep build.ipynb
           as narrative but move model/data/fed into src/fedopd/*.py so Step 8's 40-run grid is a thin
           resumable run.py (a kernel crash must not kill the sweep). (Advisor guidance.)
+
+## Step 3 · Metric + operative bar (R-01) · 2026-07-15 21:30 · b76a8f7
+Ran:      src/fedopd/build.ipynb (tmux fedopd-build3) -> results/baselines.json
+Metric:   sMAPE on RAW counts (models inverse-transform first), per series then aggregated, scored on
+          EXACTLY the 18,191 model test points (te_df 1:1 with X_test; asserted len==18191).
+Numbers:  R-01 naive-t1: macro-mean 16.34% | median 12.92% | vol-weighted 12.35% (1,528 eval series).
+                seasonal-t12: 23.26 / 16.39 / 17.23. F-27 reproduction (EDA scope, 1,412 complete,
+                median): naive 12.59% seasonal 15.65%.
+Gate:     PASS — F-27 reproduced within +-0.2 (metric/aggregation verified against the EDA).
+Finding:  R-01 = the operative bar. Macro-mean (16.34%) > EDA median (12.6%) because sMAPE is
+          right-skewed and the panel adds small/gappy series; big series are easy (vol-weighted 12.35%).
+          THE NUMBER TO BEAT: naive-t1 macro-mean 16.34% (median 12.92%), scored identically for models.
+Next:     Step 4 (forecaster behind get_params/set_params) + the module-refactor decision.
+
+---
+
+## Findings (R) and pre-registrations
+
+- **R-00 — 125 balanced-panel trusts -> 117 federated clients.** Eight panel trusts contribute no
+  eligible series once the 17-dept roster + window minimums bite, because their departments are
+  off-roster: REN Clatterbridge Cancer Centre (cancer specialist), RP4 Great Ormond Street (paediatric),
+  and six mental-health/community partnership trusts (RPG Oxleas, RT1 Cambs & Peterborough, RWX Berkshire
+  Healthcare, RX4 Northumberland Tyne & Wear, RXG SW Yorkshire, RJ8 Cornwall). Consistent with F-14
+  (min 1 dept/trust) and F-17 (specialist concentration). **Quote "117 federated clients" (not 125) in
+  the results table;** 125 stays the EDA balanced-panel fact (D-03).
+
+- **H1 (pre-registered, before any model runs) — federation rescues the data-poor.** The FL and
+  personalisation margin over local-only is *inversely related to a client's train-window count*
+  (thinnest 54 windows, mean ~924, vs a ~4.3k-param model). If it holds it is a prediction from data
+  shape confirmed, not a post-hoc story. **Fair-fight requirement:** local-only gets early stopping on a
+  train-tail split, weight decay, and a sensible small-client batch — no strawman. **Corollary:** cap
+  fine-tune epochs for thin clients or personalisation overfits them right back.
+
+- **Sensitivity plan (compute is NOT a constraint: ~230k samples max, ~4.3k params, minutes on CPU).**
+  Panel strictness (125/139/146) x roster (17/18/24, incl. Neurosurgery and the X-codes) run as a
+  **sensitivity table at Steps 5 and 8**, not chosen now — turning Q1/Q4/Q5 from "decide blind" into
+  "here are the numbers". Full frozen panel used throughout; never subset for compute; all gates blocking.
+
+- **Backlog (not for modelling; needed before the agentic layer).** Extract Part_1A/1B (incomplete
+  pathways) and Part_2 (decision-to-admit) alongside Part_3 demand — the agentic plane needs a
+  waiting-list state to decide *against*, not just incoming demand.

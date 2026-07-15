@@ -20,12 +20,16 @@ questions are on the table now, with the numbers I already have.
 3. **Small-trust inclusion.** The smallest early-exit trusts inflate the raw max/min spread but are
    already down-weighted by size-aware aggregation. *Keep as clients, or drop? My lean: keep.*
 
-4. **Department coverage threshold — this now has a name and a number.** The default (a department must
-   be offered by ≥50% of the 125 panel trusts) drops exactly **one** of the 18 window-complete
-   specialties: **C_150 Neurosurgery, at 36% coverage**. The next-lowest is Cardiothoracic at 51%, so
-   **any threshold between 0.37 and 0.51 gives the identical 17-department roster** — the choice is not
-   "what threshold?" but **"exclude Neurosurgery: yes/no?"** Neurosurgery is a tertiary service
-   concentrated in a few centres. *My lean: exclude it from the shared per-department model.*
+4. **Department coverage threshold — sharper than it first looked.** The default (≥50% of the 125 panel
+   trusts) drops exactly **one** window-complete specialty: **C_150 Neurosurgery, at 36% coverage** —
+   which is still **~45 silos**. That is nowhere near data-starved: F-17's whole point was that no
+   department is starved at the *federation* level, and the shared model already handles non-overlap
+   through the department one-hot features. So Neurosurgery is **not** a taxonomy artefact like the
+   X-codes — it is a real tertiary specialty that only major centres perform. The honest question is
+   therefore whether a coverage threshold solves **any** problem here at all; **excluding a real
+   specialty is a much harder sell than excluding a catch-all bucket.** I will answer it empirically:
+   the Step-5 sensitivity reports roster 17 (exclude) vs 18 (include Neurosurgery) so the cost is
+   visible. *Current lean: likely include it (i.e. drop the threshold), pending that number.*
 
 5. **The X-code "Other" family (D-07).** `X01` ("Other", 36 months) was recoded into five service-line
    buckets `X02`–`X06` at 2021-04 (F-28). Ranking them across the window double-represents one bucket,
