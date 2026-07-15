@@ -170,3 +170,27 @@ Gate:     PASS — full comparison table (seed 0, macro / median):
             fedavg 16.43/11.20 · fedavg+ft 16.34/– · fedprox(.001) 16.41/11.21 · fedprox+ft 16.34/–
           Ranking vs R-01: central beats the bar; fed+ft ties it; fed > local > seasonal. Median
           tells the complementary story (all neural << naive). Seed noise quantified at Step 8.
+
+## Step 8 · Seeds + ablations + sensitivity · 2026-07-15 · (tmux fedopd-grid, scripts/run_grid.sh, 40 JSONs)
+Numbers (macro-mean sMAPE ± std over 5 seeds; bar 16.34):
+            local 16.90 ± 0.05 (loses by 0.56 — far outside noise, despite the fair fight)
+            fedavg 16.35 ± 0.06 | fedavg+ft3 16.24 ± 0.07 | fedprox(.001)+ft3 16.22 ± 0.09
+            central 15.81 ± 0.39 (beats bar; noisier — pooled Adam run variance)
+          HONEST RANKING RULE APPLIED: fed+ft's margin over the bar (~0.10-0.12) is ~1.5σ -> "ties the
+          bar"; its margin over LOCAL (0.66) is >>σ -> real. fedprox ≈ fedavg (full participation).
+Ablations (seed 0): weighting n 16.35 < sqrt 16.47 < equal 16.52 (size-weighting matters modestly,
+          F-16 vindicated); window 24: central 15.18 vs its bar 15.92 (best single cell — W=24 helps
+          the pooled model), fedavg+ft(W24) 15.94 ≈ bar 15.92.
+Sensitivity (seed 0, each variant vs ITS OWN recomputed bar) — the Q1/Q4/Q5 evidence:
+            roster18 (incl. Neurosurgery): central 15.61 / fed+ft 16.30 vs bar 16.37 -> costs NOTHING.
+              Q4 answer: the coverage threshold solves no problem; include Neurosurgery (18 depts).
+            all24 (incl. X-codes): central 16.42 / fed+ft 16.38 vs bar 16.59 -> nothing breaks; the
+              X-exclusion case rests on the taxonomy break + agentic-allocability, not on accuracy.
+            panel139: fed+ft 16.26 vs bar 16.27 · panel146: 16.08 vs 16.07 -> robust to strictness.
+Gate:     PASS — every ranking claim stated against seed std; none overclaimed.
+
+## Step 9 · Flower parity · 2026-07-15 · (tmux fedopd-parity, scripts/flower_parity.py)
+Numbers:  flwr 1.30.0 FedAvg (NumPyClient clients + Flower's FedAvg.aggregate_fit): macro 16.44 vs
+          handwritten 16.43 at seed 0 -> gap 0.004 (<= 0.3). results/flower_parity_s0.json.
+Gate:     PASS. Caveat (logged): Ray is not installed, so transport is an in-process driver loop;
+          client fit + strategy aggregation are Flower's code end to end.

@@ -1,0 +1,21 @@
+{
+  "name": "flower_fedavg_delta",
+  "flwr_version": "1.30.0",
+  "metrics": {
+    "macro_mean": 16.43516065114752,
+    "median": 11.205778951579486,
+    "vol_weighted": 10.995654260937446,
+    "n_series": 1528
+  },
+  "handwritten_R05": {
+    "macro_mean": 16.431221365736484,
+    "median": 11.19877483602805,
+    "vol_weighted": 10.993416107596055,
+    "n_series": 1528
+  },
+  "gap_macro": 0.004,
+  "gate": "PASS",
+  "seed": 0,
+  "caveat": "in-process driver (Ray not installed); client fit + FedAvg.aggregate_fit are Flower code",
+  "duration_s": 132.6
+}
