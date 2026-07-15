@@ -237,3 +237,11 @@ Report: reports/system_report.{tex,pdf} (10 pp, TikZ two-plane architecture, ass
   table, 14 figures, honest verdict + limitations). Figures via src/fedopd/make_figures.py.
 Gate:   PASS -- every figure/number traces to a committed artefact; PDF viewed page-by-page, RAG
   validation corrected to be non-tautological.
+
+## Notebook coverage — Stage-6 agentic notebook added · 2026-07-16
+Gap closed: the agentic plane was module-only. Added src/fedopd/agentic.ipynb (14 cells, restart-and-
+run-all, 0 errors) — narrative + the Little's-law decision policy written inline, importing data/fed
+for the forecast. Reproduces flow-identity 3.8%, 969/322/218 RAG, 216k/mo, ICB ranking, RED>AMBER>GREEN
+breach share (42.7/27/11), rho 0.40. Every analytical STAGE now has a notebook:
+  EDA -> src/eda/EDA.ipynb · forecasting -> src/fedopd/build.ipynb · agentic -> src/fedopd/agentic.ipynb
+with reusable logic in src/fedopd/*.py (the endorsed D-08a narrative-notebook + modules pattern).
