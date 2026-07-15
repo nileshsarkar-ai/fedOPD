@@ -117,9 +117,19 @@ Currently present (as of 2026-07-15):
 | `arc3-autocommit` | auto-commit daemon: commits `FedOPD research commit — <ts>` to `master` every ~20 min and pushes | leave running; it captures our work |
 | `arc3-finalize-pb`, `arc3-full-pb`, `arc3-snapshot-pb`, `arc3-watchdog-pb` | **other project's** jobs (likely the GPU workload) | **DO NOT TOUCH** |
 
-Our own long jobs (notebook re-runs, report builds) are launched as background shell commands,
-not tmux; they self-notify on completion. If you run them manually, prefer a named tmux:
-`tmux new -s fedopd-build`.
+### Resource-safety rule (hard, non-negotiable)
+
+The **`arc3-*` tmux sessions belong to another project (Nilesh's ARC Prize work)** and the
+**A100's memory is theirs**. They are **not ours to manage**:
+
+- **Never** `tmux kill-session`, `kill-server`, `pkill`, or stop / attach-and-interrupt / reattach
+  the `arc3-*` sessions.
+- **Never** free the GPU's memory, reset the GPU, or kill its processes.
+- If a resource looks **stuck, idle, or "abandoned", it is not ours to judge** — report it and
+  **leave it alone**. Absence of activity is not permission.
+- We create **only** our own sessions, always with the **`fedopd-*`** prefix, and operate **only**
+  on those (`fedopd-build`, `fedopd-report`, …). Our long jobs run in these tmux sessions so a
+  VS Code disconnect can't kill them; they write a log + `EXIT:<code>` line we poll.
 
 **Autocommit caveat:** because the daemon commits every ~20 min, a milestone can land in a
 `research commit` rather than a titled one. For milestones, commit + **tag** explicitly (e.g.

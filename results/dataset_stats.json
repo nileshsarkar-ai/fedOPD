@@ -1,0 +1,15 @@
+{
+  "n_features": 33,
+  "window": 12,
+  "horizon": 1,
+  "roster_size": 17,
+  "n_train_windows": 108065,
+  "n_test_windows": 18191,
+  "n_train_series": 1544,
+  "n_eval_series": 1528,
+  "n_train_only_series": 16,
+  "n_clients": 117,
+  "n_test_clients": 117,
+  "train_windows_per_client_min": 54,
+  "feature_layout": "12 scaled lags + [sin,cos,covid,strike] + 17 dept one-hot"
+}

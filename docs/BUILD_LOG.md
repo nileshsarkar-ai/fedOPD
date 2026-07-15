@@ -53,3 +53,27 @@ Decision: D-07 (pending supervisor Q5) — default roster EXCLUDES the X 'Other'
 Next:     Step 2 (build datasets: windowing, per-series scalers on TRAIN-only excl. outlier-flagged
           months, leakage asserts). NOTE for supervisor before Step 2 builds on it: confirm the roster
           (Q5 X-codes, Q4 coverage threshold) — Step 2 tensors inherit whatever panel.json freezes.
+
+## Step 1 (revised) · no-test-window handling + named the roster drop · 2026-07-15 21:xx · 1e0b9e5
+Change (advisor): the blanket "drop no-test-window series" was too blunt. The 155 no-test series split
+into 34 with >=24 train windows (usable) + 121 too short. Of the 34: **16 are active interior-gaps**
+(still report in 2025-04+, last report mostly 2026-01..03) -> KEPT as **train-only** (train signal, not
+evaluated); **18 went stale** (no report after 2025-03) -> dropped. Roster drop now has a name+number:
+**C_150 Neurosurgery @ 0.360 panel coverage** (next-lowest is Cardiothoracic @ 0.512, so any threshold
+in [0.37,0.51] yields the same 17 depts — Q4 is "exclude Neurosurgery y/n", not "pick a number").
+Numbers:  eval 1528 + train-only 16 = **1544 training series** · **117 client trusts** (8 of 125 panel
+          trusts contribute no roster series) · drops {few-train-windows 137, stale-closed 18} ·
+          panel.json hash e3aa353ecef2cbcb.
+Rule:     every method trains on the identical 1544-series set; only the 1528 eval series are scored.
+
+## Step 2 · Build datasets · 2026-07-15 21:xx · 1e0b9e5
+Ran:      src/fedopd/build.ipynb (tmux fedopd-build2) -> results/dataset_stats.json
+Numbers:  X_train (108065, 33) · X_test (18191, 33) · **33 features** (12 scaled lags + [sin,cos,covid,
+          strike] + 17 dept one-hots — 33 not the runbook's 34 because roster=17, not 18) · window 12
+          horizon 1 · per-series scalers on TRAIN-only excl. outlier-flagged months (D-04/D-05), std
+          floored 1e-6 · 117 clients · min train-windows/client 54.
+Gate:     PASS — all 5 leakage asserts (scaler-fit <= 2025-03; test months in [2025-04,2026-03]; 0 NaN;
+          every test trust also trains; totals logged).
+Next:     Step 3 (metric + bar R-01). NOTE: at **Step 4** decide the module refactor — keep build.ipynb
+          as narrative but move model/data/fed into src/fedopd/*.py so Step 8's 40-run grid is a thin
+          resumable run.py (a kernel crash must not kill the sweep). (Advisor guidance.)

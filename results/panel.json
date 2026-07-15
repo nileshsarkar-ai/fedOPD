@@ -1,6 +1,6 @@
 {
-  "created": "2026-07-15 20:44:40",
-  "git": "0c91096",
+  "created": "2026-07-15 21:10:36",
+  "git": "1e0b9e5",
   "panel_trusts": [
     "R1A",
     "R1D",
@@ -153,6 +153,9 @@
     "C_430",
     "C_502"
   ],
+  "roster_dropped": {
+    "C_150": 0.36
+  },
   "min_coverage": 0.5,
   "window": 12,
   "min_train_windows": 24,
@@ -171,7 +174,7 @@
     "2026-02-01",
     "2026-03-01"
   ],
-  "series": [
+  "eval_series": [
     [
       "R1A",
       "C_110",
@@ -9341,10 +9344,213 @@
       12
     ]
   ],
-  "n_series": 1528,
+  "train_only_series": [
+    [
+      "R1K",
+      "C_300",
+      55
+    ],
+    [
+      "RA7",
+      "C_300",
+      70
+    ],
+    [
+      "RAS",
+      "C_160",
+      44
+    ],
+    [
+      "RBD",
+      "C_410",
+      41
+    ],
+    [
+      "RCD",
+      "C_300",
+      55
+    ],
+    [
+      "RCX",
+      "C_300",
+      70
+    ],
+    [
+      "RJE",
+      "C_410",
+      46
+    ],
+    [
+      "RJL",
+      "C_330",
+      47
+    ],
+    [
+      "RJL",
+      "C_400",
+      30
+    ],
+    [
+      "RL4",
+      "C_170",
+      33
+    ],
+    [
+      "RLT",
+      "C_340",
+      71
+    ],
+    [
+      "RNN",
+      "C_400",
+      48
+    ],
+    [
+      "RTH",
+      "C_170",
+      69
+    ],
+    [
+      "RVV",
+      "C_300",
+      26
+    ],
+    [
+      "RWJ",
+      "C_300",
+      25
+    ],
+    [
+      "RXP",
+      "C_400",
+      44
+    ]
+  ],
+  "n_eval_series": 1528,
+  "n_train_series": 1544,
+  "client_trusts": [
+    "R1A",
+    "R1D",
+    "R1F",
+    "R1H",
+    "R1K",
+    "RA2",
+    "RA7",
+    "RA9",
+    "RAJ",
+    "RAN",
+    "RAS",
+    "RAX",
+    "RBD",
+    "RBK",
+    "RBL",
+    "RBT",
+    "RBV",
+    "RC9",
+    "RCB",
+    "RCD",
+    "RCF",
+    "RCU",
+    "RCX",
+    "RD1",
+    "RD8",
+    "RDE",
+    "RDR",
+    "REF",
+    "REM",
+    "REP",
+    "RET",
+    "RFR",
+    "RFS",
+    "RGM",
+    "RGP",
+    "RGR",
+    "RGT",
+    "RH8",
+    "RHM",
+    "RHU",
+    "RHW",
+    "RJ1",
+    "RJ2",
+    "RJ6",
+    "RJC",
+    "RJE",
+    "RJL",
+    "RJN",
+    "RJZ",
+    "RK5",
+    "RK9",
+    "RKB",
+    "RKE",
+    "RL1",
+    "RL4",
+    "RLQ",
+    "RLT",
+    "RM1",
+    "RM3",
+    "RMC",
+    "RMP",
+    "RN3",
+    "RN5",
+    "RN7",
+    "RNA",
+    "RNN",
+    "RNQ",
+    "RNS",
+    "RNZ",
+    "RP5",
+    "RP6",
+    "RPA",
+    "RPC",
+    "RPY",
+    "RQ3",
+    "RQM",
+    "RQW",
+    "RQX",
+    "RR7",
+    "RR8",
+    "RRF",
+    "RRJ",
+    "RRK",
+    "RRV",
+    "RTD",
+    "RTF",
+    "RTG",
+    "RTH",
+    "RTP",
+    "RTX",
+    "RVJ",
+    "RVR",
+    "RVV",
+    "RVW",
+    "RW1",
+    "RWA",
+    "RWD",
+    "RWE",
+    "RWF",
+    "RWG",
+    "RWJ",
+    "RWP",
+    "RWW",
+    "RWY",
+    "RX1",
+    "RXC",
+    "RXF",
+    "RXK",
+    "RXL",
+    "RXN",
+    "RXP",
+    "RXQ",
+    "RXR",
+    "RXW",
+    "RYJ",
+    "RYR",
+    "RYW"
+  ],
+  "n_clients": 117,
   "drop_reasons": {
-    "no-test-window": 155,
-    "few-train-windows": 16
+    "few-train-windows": 137,
+    "stale-closed": 18
   },
-  "hash": "c106fd0afe4baeb3"
+  "hash": "e3aa353ecef2cbcb"
 }
