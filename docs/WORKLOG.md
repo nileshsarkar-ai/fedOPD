@@ -249,6 +249,30 @@ Record each working session as a row. Keep it short: **what · why · finding ·
   `reports/eda_report.{pdf,epub}` (F-01..28 register); `make -C reports all`. Docs convention note added
   to `CLAUDE.md` §8 (single consolidated EDA notebook, AI-authored under owner override).
 
+### Steps 2–8 — advisor review round 2 (interpretation) — ✅ 2026-07-15
+- **What:** Second advisor pass on the revised EDA — four interpretive refinements to notebook + report,
+  no new computation (numbers unchanged). Re-ran restart-and-run-all and rebuilt both report editions.
+- **Finding / change:**
+  - **F-27 is a finding, not just a bar.** The baseline inversion (seasonal-naive 15.7% *losing* to naive-t−1
+    12.6%) is exactly what F-20 (lag-1 0.80) + F-22 (~1.2× seasonality) predict: persistence strong, cycle weak.
+    Design consequence written in: the forecaster's edge comes from **recent-window dynamics**, calendar
+    features are cheap seasoning. Also made the protocol explicit — F-27 is computed **per series, on the
+    2025-04→2026-03 holdout, over the 125-trust panel, macro-averaged** (all 1,412 gap-free series ∈ panel),
+    so the bar is directly comparable to the models.
+  - **66×→9× reframes the heterogeneity argument.** Removed any "orders of magnitude" overclaim; the
+    personalisation case now leads on **casemix** (1–24 depts/trust, taxonomy) with **moderate scale** (~9×)
+    as the secondary leg. Verdict survives and is *strengthened*: co-movement **0.61 post-2022** confirms the
+    previously-unmeasured "persists outside the shock" claim.
+  - **37% post-2022 seasonality gets a small-sample caveat** (~51-month window, ~4 cycles → noisy estimate;
+    stability vs the 38% full-window figure is the point, not the second decimal).
+  - **X-code family promoted to supervisor Q5** (its own question, next to the coverage threshold): X01 (36 mo)
+    recodes into X02–X06 at 2021-04, so ranking them across the window double-represents one bucket and a
+    catch-all is not a department the agentic layer can allocate to → options: map X01→successors, merge the
+    family, or **exclude X-codes** (recommended lean). Supervisor questions now number 6 (incl. region lookup).
+- **Output:** updated `src/eda/EDA.ipynb` (F-27 cell now panel-restricted + interpretation) and
+  `reports/eda_report.{tex,pdf,epub}`; committed + tagged **`eda-v2`** as the point-in-time supervisor deliverable.
+- **Also:** added `docs/OPS.md` (operator cheat-sheet: env, GPU policy, exact commands, tmux sessions, directory map).
+
 ## Open questions / notes
 - July 2022: CCG → ICB switch (commissioner side) and a file-format step (size drop, row counts stable). Confirm provider side is unaffected.
 - Month case differs pre/post 2023-04 in the `Period` string (`APRIL` vs `April`) — parse case-insensitively.
