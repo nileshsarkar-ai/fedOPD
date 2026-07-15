@@ -134,3 +134,19 @@ Gate:     PASS — (a) round-trip bit-identical; (b) overfit RP6 series 200 epoc
           0.00024 (<2% equivalent); (c) determinism: same seed twice -> identical loss;
           (d) delta anchor exact; (e) module/notebook data parity.
 Next:     Step 5 (local-only fair-fight + centralised, both targets -> D-08 target choice).
+
+## Step 5 · Baselines: local-only + centralised (both targets) · 2026-07-15 · 77c1138
+Ran:      python -m src.fedopd.run --method {central,local} --target {level,delta} --seed 0 (tmux fedopd-step5, 4-way parallel)
+Numbers:  vs bar R-01 macro-mean 16.34% —
+            central delta 15.62 (R-04, BEATS bar by 0.72) | central level 15.74
+            local   delta 16.99 (R-03, loses by 0.65)     | local   level 18.38
+          Local-only had the FAIR FIGHT (train-tail early stopping, weight decay, small-client batch)
+          and still loses: thin clients (median ~72 windows/series-group) overfit a 4,289-param model.
+          Centralised = privacy-ignoring upper bound, beats naive modestly — the expected shape, no
+          leakage smell (predictions inverse-transformed, scored on the identical 18,191 points).
+Gate:     PASS — both recorded with per-run JSONs; NOT everything loses to naive (central wins), so
+          no STOP; target formulation decided.
+Decision: **D-08 target = delta** (naive-anchored) — wins on both methods (15.62<15.74, 16.99<18.38),
+          exactly as F-27's persistence-domination predicted. All later steps use delta.
+Next:     Step 6 FedAvg / Step 7 FedProx+personalisation (running); the interesting question is
+          whether federation closes the local->central gap (16.99 -> 15.62) without pooling data.
