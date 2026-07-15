@@ -1,0 +1,97 @@
+"""Hand-written federated loop (the scientific instrument): FedAvg / FedProx + personalisation.
+
+Touches ONLY the Forecaster interface (get_params/set_params/train_epochs/predict), so the
+model is swappable. Cross-silo, full participation: every client trains E local epochs per
+round; the server aggregates with the chosen weighting.
+"""
+from __future__ import annotations
+import numpy as np
+from .model import Forecaster, clone_with
+
+
+def _weights(clients, sizes, weighting):
+    if weighting == "equal":
+        w = np.ones(len(clients))
+    elif weighting == "sqrt":
+        w = np.sqrt(np.array([sizes[c] for c in clients], float))
+    else:                                    # "n" -- classic FedAvg example-count weighting
+        w = np.array([sizes[c] for c in clients], float)
+    return w / w.sum()
+
+
+def _tail_split(X, y, tail=12):
+    """Last `tail` samples as validation (windows are built in time order per series, so the
+    tail is the most recent slice -- a train-tail early-stopping split, not a random one)."""
+    if len(X) <= tail * 2:
+        return (X, y), None
+    return (X[:-tail], y[:-tail]), (X[-tail:], y[-tail:])
+
+
+def run_federated(client_data, n_features, target="level", rounds=40, local_epochs=1,
+                  lr=1e-3, batch=64, mu=0.0, weighting="n", seed=0, log_every=10, verbose=False):
+    """FedAvg (mu=0) / FedProx (mu>0). Returns (global_params, history)."""
+    clients = sorted(client_data)
+    sizes = {c: len(client_data[c][1]) for c in clients}
+    w = _weights(clients, sizes, weighting)
+    glob = Forecaster(n_features, target, seed).get_params()
+    history = []
+    for r in range(rounds):
+        updates, losses = [], []
+        for c in clients:
+            m = clone_with(glob, n_features, target, seed)
+            X, y = client_data[c]
+            losses.append(m.train_epochs(X, y, epochs=local_epochs, lr=lr, batch=batch,
+                                         mu=mu, global_params=glob))
+            updates.append(m.get_params())
+        glob = [np.sum([w[i] * u[k] for i, u in enumerate(updates)], axis=0)
+                for k in range(len(glob))]
+        history.append(float(np.mean(losses)))
+        if verbose and (r + 1) % log_every == 0:
+            print(f"  round {r+1}/{rounds}  mean local loss {history[-1]:.4f}")
+    return glob, history
+
+
+def personalise(global_params, client_data, n_features, target="level", ft_epochs=3,
+                lr=1e-3, batch=64, seed=0):
+    """Fine-tune the final global model per client. Thin-client guard (H1 corollary): early
+    stopping on a train-tail split caps effective epochs, so small clients are not overfitted
+    right back by personalisation."""
+    out = {}
+    for c, (X, y) in client_data.items():
+        m = clone_with(global_params, n_features, target, seed)
+        (Xt, yt), val = _tail_split(X, y)
+        m.train_epochs(Xt, yt, epochs=ft_epochs, lr=lr, batch=batch, val=val, patience=2)
+        out[c] = m
+    return out
+
+
+def train_local_only(client_data, n_features, target="level", epochs=40, lr=1e-3,
+                     batch=64, seed=0):
+    """Local-only baseline, compute-matched (epochs = rounds x local_epochs) and given a FAIR
+    FIGHT (H1): early stopping on a train-tail split + weight decay + small-client batch."""
+    out = {}
+    for c, (X, y) in client_data.items():
+        m = Forecaster(n_features, target, seed)
+        (Xt, yt), val = _tail_split(X, y)
+        b = int(min(batch, max(8, len(yt) // 4)))
+        m.train_epochs(Xt, yt, epochs=epochs, lr=lr, batch=b, val=val, patience=5)
+        out[c] = m
+    return out
+
+
+def train_centralised(Xtr, ytr, n_features, target="level", epochs=40, lr=1e-3,
+                      batch=256, seed=0):
+    """All data pooled: the privacy-ignoring upper bound."""
+    m = Forecaster(n_features, target, seed)
+    m.train_epochs(Xtr, ytr, epochs=epochs, lr=lr, batch=batch)
+    return m
+
+
+def predict_per_client(models, te_df, Xte):
+    """Route each test row to its owning trust's model; returns scaled predictions."""
+    pred = np.empty(len(Xte), np.float32)
+    for c, m in models.items():
+        idx = np.flatnonzero((te_df.branch == c).values)
+        if len(idx):
+            pred[idx] = m.predict(Xte[idx])
+    return pred

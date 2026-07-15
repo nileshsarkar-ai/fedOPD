@@ -118,3 +118,19 @@ Next:     Step 4 (forecaster behind get_params/set_params) + the module-refactor
 - **Backlog (not for modelling; needed before the agentic layer).** Extract Part_1A/1B (incomplete
   pathways) and Part_2 (decision-to-admit) alongside Part_3 demand — the agentic plane needs a
   waiting-list state to decide *against*, not just incoming demand.
+
+## Step 4 · Forecaster + interface + module refactor · 2026-07-15 · cffa350
+Ran:      src/fedopd/{data,model,fed,evaluate,run}.py written; gates run inline.
+Decision: **D-08a module refactor (advisor, decided at Step 4 as planned):** build.ipynb stays the
+          narrative; model/data/fed/evaluate live in src/fedopd/*.py imported by both the notebook
+          and a thin src/fedopd/run.py (one process = one run = one results/*.json), so the Step-8
+          grid is resumable and a kernel crash cannot kill a sweep. data.py reproduces the frozen
+          tensors EXACTLY (108065x33 / 18191x33 / 117 clients / R-01 16.34) — asserted.
+Model:    MLP 33->64->32->1, ReLU, Adam, MSE on scaled targets; **4,289 params**; weight decay 1e-4;
+          torch threads=2. Interface: get_params/set_params/train_epochs(mu,global_params)/predict.
+          Both targets: level and delta (naive-anchored: zero-delta == naive t-1, verified to
+          float32 noise, max dev 1.55e-04 raw).
+Gate:     PASS — (a) round-trip bit-identical; (b) overfit RP6 series 200 epochs -> scaled-MSE
+          0.00024 (<2% equivalent); (c) determinism: same seed twice -> identical loss;
+          (d) delta anchor exact; (e) module/notebook data parity.
+Next:     Step 5 (local-only fair-fight + centralised, both targets -> D-08 target choice).
