@@ -150,3 +150,23 @@ Decision: **D-08 target = delta** (naive-anchored) — wins on both methods (15.
           exactly as F-27's persistence-domination predicted. All later steps use delta.
 Next:     Step 6 FedAvg / Step 7 FedProx+personalisation (running); the interesting question is
           whether federation closes the local->central gap (16.99 -> 15.62) without pooling data.
+
+## Step 6 · FedAvg · 2026-07-15 · (tmux fedopd-step67)
+Ran:      python -m src.fedopd.run --method fedavg --target delta --ft-epochs 3 --seed 0
+Numbers:  R-05 fedavg_delta: macro 16.43% | median 11.20% (bar 16.34/12.92). Loss history monotone
+          0.838 -> 0.511 over 40 rounds, still descending (more rounds may help; seeds first).
+Gate:     PASS — non-divergent; recorded vs R-03 (local 16.99) / R-04 (central 15.62). FedAvg beats
+          local-only but not the bar on macro-mean; on MEDIAN it beats naive by 1.7pts. Honest note:
+          macro-mean is dominated by the small/volatile-series tail where naive is hard to beat —
+          exactly the heterogeneity motivation for Step 7.
+
+## Step 7 · FedProx + personalisation · 2026-07-15 · (tmux fedopd-step67)
+Ran:      fedprox mu in {0.001, 0.01, 0.1}, all +ft3, delta, seed 0
+Numbers:  fedprox macro: mu.001 16.41 | mu.01 16.42 | mu.1 16.49 (mild prox ~ fedavg; strong prox
+          hurts — expected under full-participation cross-silo). Personalisation (+ft3, tail-val
+          early-stopped): all pulled to ~16.34 = exactly the bar; fedavg+ft 16.34.
+Gate:     PASS — full comparison table (seed 0, macro / median):
+            naive 16.34/12.92 · seasonal 23.26/16.39 · local 16.99/12.11 · central 15.62/11.06 ·
+            fedavg 16.43/11.20 · fedavg+ft 16.34/– · fedprox(.001) 16.41/11.21 · fedprox+ft 16.34/–
+          Ranking vs R-01: central beats the bar; fed+ft ties it; fed > local > seasonal. Median
+          tells the complementary story (all neural << naive). Seed noise quantified at Step 8.

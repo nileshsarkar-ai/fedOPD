@@ -43,45 +43,48 @@ def main(argv=None):
     ap.add_argument("--depts-mode", default="stable18")
     ap.add_argument("--min-coverage", type=float, default=0.5)
     ap.add_argument("--panel-min-months", type=int, default=96)
+    ap.add_argument("--window", type=int, default=12)
     ap.add_argument("--tag", default="")                     # extra label for sensitivity runs
     ap.add_argument("--out-dir", default=str(data.ROOT / "results"))
     a = ap.parse_args(argv)
 
     t0 = time.time()
     np.random.seed(a.seed)
-    ds = data.build_all(a.depts_mode, a.min_coverage, a.panel_min_months)
+    ds = data.build_all(a.depts_mode, a.min_coverage, a.panel_min_months, window=a.window)
     cd = data.per_client(ds)
-    nf, te_df, Xte = ds["n_features"], ds["te_df"], ds["Xte"]
+    nf, te_df, Xte, nl = ds["n_features"], ds["te_df"], ds["Xte"], ds["n_lags"]
     metrics, extra = {}, {}
 
     if a.method == "naive":
         metrics = evaluate.naive_bar(te_df)
     elif a.method == "seasonal":
         # reconstruct raw t-12 from the scaled lag-0 column (lags are t-12..t-1; col 0 is t-12)
-        raw = Xte[:, 0] * te_df["sd"].values + te_df["mean"].values
+        assert a.window >= 12, "seasonal baseline needs lag-12 in the window"
+        raw = Xte[:, a.window - 12] * te_df["sd"].values + te_df["mean"].values
         metrics = evaluate.score_raw(te_df, raw)
     elif a.method == "central":
-        m = fed.train_centralised(ds["Xtr"], ds["ytr"], nf, a.target, a.epochs, a.lr, seed=a.seed)
+        m = fed.train_centralised(ds["Xtr"], ds["ytr"], nf, a.target, a.epochs, a.lr, seed=a.seed,
+                                  n_lags=nl)
         metrics = evaluate.score_scaled(te_df, m.predict(Xte))
     elif a.method == "local":
-        models = fed.train_local_only(cd, nf, a.target, a.epochs, a.lr, seed=a.seed)
+        models = fed.train_local_only(cd, nf, a.target, a.epochs, a.lr, seed=a.seed, n_lags=nl)
         metrics = evaluate.score_scaled(te_df, fed.predict_per_client(models, te_df, Xte))
     else:                                                    # fedavg / fedprox
         mu = a.mu if a.method == "fedprox" else 0.0
         glob, hist = fed.run_federated(cd, nf, a.target, a.rounds, a.local_epochs, a.lr,
-                                       mu=mu, weighting=a.weighting, seed=a.seed)
-        gm = Forecaster(nf, a.target, a.seed); gm.set_params(glob)
+                                       mu=mu, weighting=a.weighting, seed=a.seed, n_lags=nl)
+        gm = Forecaster(nf, a.target, a.seed, n_lags=nl); gm.set_params(glob)
         metrics = evaluate.score_scaled(te_df, gm.predict(Xte))
         extra["loss_history"] = [round(h, 5) for h in hist]
         if a.ft_epochs > 0:
-            pers = fed.personalise(glob, cd, nf, a.target, a.ft_epochs, a.lr, seed=a.seed)
+            pers = fed.personalise(glob, cd, nf, a.target, a.ft_epochs, a.lr, seed=a.seed, n_lags=nl)
             extra["ft_metrics"] = evaluate.score_scaled(
                 te_df, fed.predict_per_client(pers, te_df, Xte))
 
     name = a.method + (f"_mu{a.mu}" if a.method == "fedprox" else "") \
         + (f"_ft{a.ft_epochs}" if a.ft_epochs else "") + f"_{a.target}" \
         + (f"_w{a.weighting}" if a.method in ("fedavg", "fedprox") and a.weighting != "n" else "") \
-        + (f"_{a.tag}" if a.tag else "")
+        + (f"_win{a.window}" if a.window != 12 else "") + (f"_{a.tag}" if a.tag else "")
     rec = {"name": name, "config": vars(a), "metrics": metrics, **extra,
            "bar_R01": evaluate.naive_bar(te_df), "n_test_points": int(len(te_df)),
            "n_clients": len(cd), "seed": a.seed, "git": git_sha(),

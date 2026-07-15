@@ -13,7 +13,7 @@ import torch.nn as nn
 
 torch.set_num_threads(2)   # OPS: cap threads; parallelise across configs, not within a run
 
-LAG1_COL = 11              # index of the most recent scaled lag in the 33-feature layout
+LAG1_COL = 11              # most recent scaled lag when n_lags=12 (overridden via n_lags)
 
 
 def _seed(seed: int):
@@ -23,9 +23,10 @@ def _seed(seed: int):
 
 class Forecaster:
     def __init__(self, n_features: int = 33, target: str = "level", seed: int = 0,
-                 weight_decay: float = 1e-4):
+                 weight_decay: float = 1e-4, n_lags: int = 12):
         assert target in ("level", "delta")
         self.target, self.n_features, self.seed = target, n_features, seed
+        self.lag1 = n_lags - 1                     # column of the most recent scaled lag
         _seed(seed)
         self.net = nn.Sequential(nn.Linear(n_features, 64), nn.ReLU(),
                                  nn.Linear(64, 32), nn.ReLU(), nn.Linear(32, 1))
@@ -81,11 +82,11 @@ class Forecaster:
         X = np.asarray(X, np.float32)
         with torch.no_grad():
             out = self.net(torch.from_numpy(X)).squeeze(-1).numpy()
-        return X[:, LAG1_COL] + out if self.target == "delta" else out
+        return X[:, self.lag1] + out if self.target == "delta" else out
 
     # ---- internals --------------------------------------------------------------------
     def _target(self, X, y):
-        return (y - X[:, LAG1_COL]).astype(np.float32) if self.target == "delta" else y
+        return (y - X[:, self.lag1]).astype(np.float32) if self.target == "delta" else y
 
     def _val_mse(self, Xv, yv):
         Xv = np.asarray(Xv, np.float32)
@@ -95,7 +96,7 @@ class Forecaster:
         return float(np.mean((out - t) ** 2))
 
 
-def clone_with(params, n_features=33, target="level", seed=0) -> Forecaster:
-    m = Forecaster(n_features, target, seed)
+def clone_with(params, n_features=33, target="level", seed=0, n_lags=12) -> Forecaster:
+    m = Forecaster(n_features, target, seed, n_lags=n_lags)
     m.set_params(params)
     return m
