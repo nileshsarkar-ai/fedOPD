@@ -1,0 +1,22 @@
+{
+  "R01_naive_t1": {
+    "macro_mean": 16.337349025087104,
+    "median": 12.921575312301295,
+    "vol_weighted": 12.354395807098305,
+    "n_series": 1528
+  },
+  "R01_seasonal_t12": {
+    "macro_mean": 23.255096305671085,
+    "median": 16.392324040075792,
+    "vol_weighted": 17.232724680668134,
+    "n_series": 1528
+  },
+  "f27_repro_median": {
+    "naive": 12.586609091330278,
+    "seasonal": 15.651375002302082
+  },
+  "n_test_points": 18191,
+  "bar_headline_macro_mean_pct": 16.34,
+  "bar_median_pct": 12.92,
+  "note": "R-01 = naive-t1 on the frozen 117-client panel. Headline metric is macro-mean sMAPE (runbook); median (~12.9%) tracks the EDA F-27 12.6%. Models are scored identically."
+}
