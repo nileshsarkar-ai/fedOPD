@@ -30,7 +30,7 @@ def git_sha():
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--method", required=True,
-                    choices=["naive", "seasonal", "local", "central", "fedavg", "fedprox"])
+                    choices=["naive", "seasonal", "local", "central", "fedavg", "fedprox", "selective"])
     ap.add_argument("--target", default="delta", choices=["level", "delta"])
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--rounds", type=int, default=40)
@@ -69,17 +69,23 @@ def main(argv=None):
     elif a.method == "local":
         models = fed.train_local_only(cd, nf, a.target, a.epochs, a.lr, seed=a.seed, n_lags=nl)
         metrics = evaluate.score_scaled(te_df, fed.predict_per_client(models, te_df, Xte))
-    else:                                                    # fedavg / fedprox
+    else:                                                    # fedavg / fedprox / selective
         mu = a.mu if a.method == "fedprox" else 0.0
         glob, hist = fed.run_federated(cd, nf, a.target, a.rounds, a.local_epochs, a.lr,
                                        mu=mu, weighting=a.weighting, seed=a.seed, n_lags=nl)
         gm = Forecaster(nf, a.target, a.seed, n_lags=nl); gm.set_params(glob)
         metrics = evaluate.score_scaled(te_df, gm.predict(Xte))
         extra["loss_history"] = [round(h, 5) for h in hist]
-        if a.ft_epochs > 0:
+        if a.method == "selective":
+            models, chosen = fed.train_selective(glob, cd, nf, a.target, a.ft_epochs or 3,
+                                                 a.epochs, a.lr, seed=a.seed, n_lags=nl)
+            metrics = evaluate.score_scaled(te_df, fed.predict_per_client(models, te_df, Xte, lag1=nl-1))
+            from collections import Counter
+            extra["selection_counts"] = dict(Counter(chosen.values()))
+        elif a.ft_epochs > 0:
             pers = fed.personalise(glob, cd, nf, a.target, a.ft_epochs, a.lr, seed=a.seed, n_lags=nl)
             extra["ft_metrics"] = evaluate.score_scaled(
-                te_df, fed.predict_per_client(pers, te_df, Xte))
+                te_df, fed.predict_per_client(pers, te_df, Xte, lag1=nl-1))
 
     name = a.method + (f"_mu{a.mu}" if a.method == "fedprox" else "") \
         + (f"_ft{a.ft_epochs}" if a.ft_epochs else "") + f"_{a.target}" \

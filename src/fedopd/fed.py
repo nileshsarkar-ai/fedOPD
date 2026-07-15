@@ -88,11 +88,44 @@ def train_centralised(Xtr, ytr, n_features, target="level", epochs=40, lr=1e-3,
     return m
 
 
-def predict_per_client(models, te_df, Xte):
-    """Route each test row to its owning trust's model; returns scaled predictions."""
+def predict_per_client(models, te_df, Xte, lag1=11):
+    """Route each test row to its owning trust's model; returns scaled predictions.
+    A model of None means 'use naive t-1' for that client (the scaled lag-1 column)."""
     pred = np.empty(len(Xte), np.float32)
     for c, m in models.items():
         idx = np.flatnonzero((te_df.branch == c).values)
         if len(idx):
-            pred[idx] = m.predict(Xte[idx])
+            pred[idx] = Xte[idx, lag1] if m is None else m.predict(Xte[idx])
     return pred
+
+
+def train_selective(global_params, client_data, n_features, target="delta", ft_epochs=3,
+                    local_epochs=40, lr=1e-3, seed=0, n_lags=12, sel=12):
+    """Per-client model selection (the H1-refutation remedy): for each client choose the best of
+    {naive t-1, local-only, global+fine-tune} by MSE on a held-out SELECTION slice (the last `sel`
+    train windows, excluded from every candidate's fit), then REFIT the winner on the full train.
+    Selection uses only training data -- no test peeking. Returns (models, chosen)."""
+    lag1 = n_lags - 1
+    models, chosen = {}, {}
+    for c, (X, y) in client_data.items():
+        if len(X) <= sel + MIN_FIT:                          # too small to select -> global+ft on all
+            m = clone_with(global_params, n_features, target, seed, n_lags=n_lags)
+            m.train_epochs(X, y, epochs=ft_epochs, lr=lr); models[c] = m; chosen[c] = "global+ft(small)"
+            continue
+        Xf, yf, Xv, yv = X[:-sel], y[:-sel], X[-sel:], y[-sel:]
+        loc = Forecaster(n_features, target, seed, n_lags=n_lags); loc.train_epochs(Xf, yf, local_epochs, lr)
+        ft = clone_with(global_params, n_features, target, seed, n_lags=n_lags); ft.train_epochs(Xf, yf, ft_epochs, lr)
+        mse = {"naive": float(np.mean((Xv[:, lag1] - yv) ** 2)),
+               "local": float(np.mean((loc.predict(Xv) - yv) ** 2)),
+               "global+ft": float(np.mean((ft.predict(Xv) - yv) ** 2))}
+        pick = min(mse, key=mse.get); chosen[c] = pick
+        if pick == "naive":
+            models[c] = None
+        elif pick == "local":
+            m = Forecaster(n_features, target, seed, n_lags=n_lags); m.train_epochs(X, y, local_epochs, lr); models[c] = m
+        else:
+            m = clone_with(global_params, n_features, target, seed, n_lags=n_lags); m.train_epochs(X, y, ft_epochs, lr); models[c] = m
+    return models, chosen
+
+
+MIN_FIT = 24
