@@ -294,6 +294,22 @@ Record each working session as a row. Keep it short: **what · why · finding ·
 - **Next:** W=24 default candidate · per-client model selection · more rounds · Part_1A/1B/2 extraction
   for the agentic layer · region lookup still open.
 
+### Stage 6 — agentic plane + system report — ✅ 2026-07-16
+- **What:** Built the first agentic-plane prototype and a supervisor system report. Extended the data
+  with an operational-flow table (Part_1/2/3 → demand/completed/backlog/breach18), built a transparent
+  Little's-law capacity-planning decision engine on top of the federated forecasts, and wrote a 10-page
+  professional PDF (`reports/system_report.pdf`) covering architecture, assumptions, clients, method,
+  and all results. Also tried a selective forecaster (Stage-5 tighten) — honest negative.
+- **Agentic decision (2026-03, 1,509 panel services):** 969 RED / 322 AMBER / 218 GREEN; ~216k extra
+  pathways/month needed; ICB allocation ranking. **Validated:** flow identity 3.8% national err,
+  per-service flow ρ=0.40, RED services carry the highest actual >18wk share (12/27/49% by RAG).
+- **Selective forecaster:** 16.83 > fed+ft 16.24 — val-window selection doesn't transfer; reported as
+  found. **W=24:** seed-noisy, ≈W12, not claimed.
+- **Output:** `src/fedopd/{extract_flow,agentic,make_figures}.py`, `reports/tables/rtt_flow.parquet`,
+  `results/agentic_*.{json,parquet}`, `reports/system_report.{tex,pdf}`, 14 figures. Tag `system-v1`.
+- **Next:** rolling-window model selection · multi-horizon forecasting · region lookup · LLM-orchestrated
+  agent wrapping the validated policy · legibility scenario panel.
+
 ## Open questions / notes
 - July 2022: CCG → ICB switch (commissioner side) and a file-format step (size drop, row counts stable). Confirm provider side is unaffected.
 - Month case differs pre/post 2023-04 in the `Period` string (`APRIL` vs `April`) — parse case-insensitively.

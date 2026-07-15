@@ -147,8 +147,17 @@ complete. The build lives in [`src/fedopd/`](src/fedopd/) (modules + narrative n
 traceable to a `results/*.json`. Headline (macro-mean sMAPE, 5 seeds, vs the naive-t−1 bar 16.34):
 **local-only 16.90±0.05 (loses) · fedavg+personalisation 16.24±0.07 (ties the bar) · centralised
 15.81±0.39 (beats)** — federation beats isolated training by 0.66 pts (≫ seed noise) with no raw
-data leaving any site; Flower parity gap 0.004. Next: window-24 default, per-client model selection,
-Part_1A/1B/2 extraction for the agentic layer.
+data leaving any site; Flower parity gap 0.004.
+
+**The agentic plane (Stage 6, tag `system-v1`) is also prototyped:** an operational-flow table
+(`reports/tables/rtt_flow.parquet` — demand/completed/backlog/>18wk-breach) feeds a transparent
+Little's-law capacity-planning engine ([`src/fedopd/agentic.py`](src/fedopd/agentic.py)) that turns
+forecasts into per-service staffing signals and an ICB allocation ranking (2026-03: 969/322/218
+RED/AMBER/GREEN, ~216k extra pathways/month; validated — RED services carry the highest actual >18wk
+share, 12/27/49%). The whole system is written up for review in
+**[`reports/system_report.pdf`](reports/system_report.pdf)** (architecture, every assumption, all 14
+graphs). Next: rolling-window model selection, multi-horizon forecasting, region lookup, an
+LLM-orchestrated agent wrapping the validated policy.
 
 ## Licensing
 

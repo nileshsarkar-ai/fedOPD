@@ -206,3 +206,11 @@ fedOPD/
   NHS national totals in the same run — if it disagrees with 227,344 rows / 96 months, stop.
 - Build phase: each run writes `results/<config>_<seed>.json` (config, metrics, seed, git sha,
   duration); every reported number must trace to one.
+
+**Agentic plane + system report:**
+```bash
+python -m src.fedopd.extract_flow    # -> reports/tables/rtt_flow.parquet (Part_1/2/3 flow state)
+python -m src.fedopd.agentic         # -> results/agentic_{decisions.parquet,summary.json}
+python -m src.fedopd.make_figures    # -> reports/figures/{fc_,ag_}*.png (retrains H1 models ~2min)
+export PATH="$HOME/.local/bin:$PATH"; (cd reports && tectonic system_report.tex)   # -> system_report.pdf
+```
