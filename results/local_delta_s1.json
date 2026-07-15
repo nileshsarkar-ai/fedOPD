@@ -1,0 +1,38 @@
+{
+  "name": "local_delta",
+  "config": {
+    "method": "local",
+    "target": "delta",
+    "seed": 1,
+    "rounds": 40,
+    "local_epochs": 1,
+    "epochs": 40,
+    "mu": 0.01,
+    "ft_epochs": 0,
+    "weighting": "n",
+    "lr": 0.001,
+    "depts_mode": "stable18",
+    "min_coverage": 0.5,
+    "panel_min_months": 96,
+    "window": 12,
+    "tag": "",
+    "out_dir": "/home/garima/fedOPD/results"
+  },
+  "metrics": {
+    "macro_mean": 16.89918553342873,
+    "median": 12.12892235239818,
+    "vol_weighted": 11.505632829953528,
+    "n_series": 1528
+  },
+  "bar_R01": {
+    "macro_mean": 16.337349025087104,
+    "median": 12.921575312301295,
+    "vol_weighted": 12.354395807098305,
+    "n_series": 1528
+  },
+  "n_test_points": 18191,
+  "n_clients": 117,
+  "seed": 1,
+  "git": "36f8e24",
+  "duration_s": 59.2
+}
