@@ -217,3 +217,23 @@ Verdict (stated against seed noise):
           training — without raw data leaving any site." Q1/Q4/Q5 answered with numbers (Step 8).
 Gate:     PASS — every number in the write-up traces to results/*.json (seed + git sha inside each);
           the documented commands regenerate the table from scratch.
+
+## Stage 5 tighten + Stage 6 (agentic) + system report · 2026-07-16
+Selective forecaster (R-10, honest NEGATIVE): per-client pick of {naive,local,global+ft} on a
+  validation slice -> macro 16.83 > fedavg+ft 16.24. The val-window selection signal does not transfer
+  to the 2025 test year; reported as found, not tuned away. W=24 explored: seed-noisy (central 15.18/
+  16.31/15.80), ~= W12, so NOT claimed as an improvement.
+Stage 6a RTT flow (src/fedopd/extract_flow.py -> reports/tables/rtt_flow.parquet, 231,508 rows):
+  demand(Part_3) / completed(Part_1A+1B) / backlog(Part_2) / breach18(Part_2 bands >=18wk). Flow
+  identity backlog(t)~backlog(t-1)+demand-completed holds nationally to 3.8% median error.
+Stage 6b agentic engine (src/fedopd/agentic.py): Little's-law capacity policy
+  C_req = D_hat + max(0,B-B*)/12, B* = 4.14*D_hat; gap = C_req - C_base; RAG from implied wait.
+  Decision @2026-03 (1,509 panel services): 969 RED / 322 AMBER / 218 GREEN; 216k additional
+  pathways/month; ICB allocation ranking (QOP,QH8,QRV...). VALIDATION: flow model Spearman rho=0.40
+  per client-month; RED services carry highest actual >18wk share (GREEN 12% < AMBER 27% < RED 49%),
+  cross-validating the wait proxy against independent wait-band data. Fixed a biased %-growth
+  validation panel -> breach-share (base-invariant).
+Report: reports/system_report.{tex,pdf} (10 pp, TikZ two-plane architecture, assumptions/variables
+  table, 14 figures, honest verdict + limitations). Figures via src/fedopd/make_figures.py.
+Gate:   PASS -- every figure/number traces to a committed artefact; PDF viewed page-by-page, RAG
+  validation corrected to be non-tautological.

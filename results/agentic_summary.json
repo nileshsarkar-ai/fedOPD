@@ -1,0 +1,27 @@
+{
+  "decision_month": "2026-03-01",
+  "n_client_series": 1509,
+  "rag_counts": {
+    "RED": 969,
+    "AMBER": 322,
+    "GREEN": 218
+  },
+  "national_additional_capacity_per_month": 216046,
+  "national_backlog": 4156690,
+  "national_breach18": 1539249,
+  "top_icbs_by_additional_capacity": {
+    "QOP": 12201,
+    "QH8": 11654,
+    "QRV": 11559,
+    "QKK": 10355,
+    "QHG": 10212,
+    "QE1": 9882,
+    "QU9": 9637,
+    "QHM": 9626
+  },
+  "backtest_sign_concordance": 0.546,
+  "backtest_spearman_shortfall_vs_backlog_change": 0.184,
+  "horizon_months": 12,
+  "wait_target_months": 4.14,
+  "seed": 0
+}
