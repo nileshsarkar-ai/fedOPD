@@ -13,6 +13,11 @@ demand forecaster learned federatedly (no raw data leaves a branch) as the instr
 | 03 | `03_staffing_requests` | branch coordinator agents convert forecasts into staffing requests (+N WTE / slots per month) |
 | 04 | `04_board_allocation` | boards rank requests under budget → fund / partial / defer + strategic decisions (enhance, expand, segregate) |
 | 05 | `05_verification` | the thesis test: did units in true need raise requests, and did they get access? precision, recall, access rate — plus forecast-driven vs backlog-driven allocation |
+| 06 | `06_selection_audit` | appendix — provenance: the 35-branch network re-derived from raw + NHS ODS registry (AUDIT PASSED) |
+
+`src/` is fully self-contained: it needs only `../config/nhs_network.json` and the raw monthly
+CSVs under `../data/` — nothing else. The A100 mirror of this pipeline (96-month data, powered
+multi-seed sweep) lives in `../a100/`.
 
 Stated planning assumption used throughout: **1 clinical WTE ≈ 200 outpatient appointments
 per month** (`SLOTS_PER_WTE = 200`, adjustable in one place; a coarse NHS job-planning

@@ -32,40 +32,41 @@ Source: <https://www.england.nhs.uk/statistics/statistical-work-areas/rtt-waitin
 ([Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/)).
 Raw data is not in git.
 
-## Pipeline (`notebooks/`, all executed end-to-end)
+## Pipeline (`src/`, decision-first, all executed end-to-end)
 
 | # | notebook | what it does |
 |---|---|---|
-| 00 | `00_audit_selection` | re-derives the 35-trust network from raw + NHS ODS registry — **AUDIT PASSED** |
-| 01 | `01_process_rtt` | 60 raw CSVs (5 GB) → `data/processed/rtt_long.csv` (210k rows, 0 reconciliation mismatches) |
-| 02 | `02_eda` | trend, seasonality (Dec trough / Mar peak), 3.4× trust spread, backlog story |
-| 03 | `03_client_datasets` | leak-proof per-client tables: 694 series, time split 30/6/12 months, train-only normalization |
-| 04 | `04_federated_train` | the ladder: naive → local → FedAvg → +fine-tune → centralized; persists models |
-| 05 | `05_agentic` | monitoring / planning / retrain-trigger agents on live data |
-| 06 | `06_a100_sweep` | multi-seed × multi-algorithm harness (laptop smoke mode) |
-| 07 | `07_allocation` | the closed loop: requests → ICB budget allocation → board memo → backtested verification |
+| 00 | `00_network_and_data` | the group (35 branches, 7 regions, 29 boards) + the operational panel (210k rows, 0 mismatches) |
+| 01 | `01_pressure` | who needs staff: GREEN/AMBER/RED per branch×department, shortfall in WTE |
+| 02 | `02_federated_forecaster` | the shared instrument + its honesty certificate (naive/local/FedAvg/+ft/centralized ladder) |
+| 03 | `03_staffing_requests` | branch agents raise WTE staffing requests to their boards |
+| 04 | `04_board_allocation` | boards fund under a 2% budget + ENHANCE / EXPAND / centre- & region-wise views |
+| 05 | `05_verification` | backtest vs 12 months of actuals: recall, precision, access, coverage + policy test |
+| 06 | `06_selection_audit` | appendix — the network re-derived from raw + NHS ODS registry (**AUDIT PASSED**) |
 
-`a100/` contains the same pipeline (00 fetch → 08 allocation) prepared for the 8-year
-(96-month) full run — see [a100/README.md](a100/README.md).
+`a100/` mirrors this pipeline for the 8-year (96-month) full run with the powered multi-seed
+sweep — see [a100/README.md](a100/README.md). Results figure: [docs/results_summary.png](docs/results_summary.png).
 
 ## Results so far (single seed — the powered sweep is the A100 run)
 
-- Ladder (test MAE, mean per-trust): local-only **106.9** · fed+fine-tune 108.1 · FedAvg 110.9
-  · naive 111.2 · centralized 114.2. Federation-vs-local is genuinely open at single-seed
+- **Decision loop verified** (backtest as-of 2025-03 vs 12 months of actuals): detection
+  recall **82%**, request precision **95%**, access rate 10% and need coverage 8.1% under the
+  2% budget — the budget, not the loop, is the binding constraint.
+- **Key finding**: with identical budgets, forecast-driven allocation places **89%** of granted
+  staff on true future need vs **83%** for backlog-driven — the federated forecast improves
+  the *decision* even though its 12-month rollout MAE is worse than naive (117 vs 106).
+  Decision value ≠ forecast MAE.
+- Forecaster ladder (test MAE, mean per-branch): local-only **106.9** · fed+fine-tune 108.1 ·
+  FedAvg 110.9 · naive 111.2 · centralized 114.2. Federation-vs-local is open at single-seed
   resolution; the 5-seed × 8-algorithm sweep decides it.
-- Allocation backtest (workflow run as-of 2025-03, judged on 12 months of actuals):
-  **100% request precision** — every funded unit truly had demand exceed capacity.
-- Reported as found: on 12-month recursive rollouts the naive forecast still beats the
-  federated one (106 vs 117 MAE) — the forecaster, not the mechanism, is the improvement
-  target (levers pre-registered in WORKLOG §2).
 
 ## Setup
 
 ```bash
 python -m venv .venv && .venv/Scripts/activate   # Windows
 pip install -r requirements.txt
-cd notebooks
-jupyter nbconvert --to notebook --execute --inplace 00_audit_selection.ipynb   # then 01..07 in order
+cd src
+jupyter nbconvert --to notebook --execute --inplace 00_network_and_data.ipynb   # then 01..06 in order
 ```
 
 Torch uses CUDA automatically when available; everything also runs on CPU.

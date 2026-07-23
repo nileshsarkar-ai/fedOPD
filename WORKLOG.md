@@ -265,7 +265,22 @@ ENHANCE/EXPAND/segregation) · 05 verification (decision metrics, policy test).
     adds decision value even though its 12-month rollout MAE (117) is worse than naive
     (106) — decision value ≠ forecast MAE. This is the paper's argument in one number.
 
+## 2026-07-23 (restructure) — notebooks/ removed; src/ standalone; a100/ rebuilt in src's image
+
+- `notebooks/` deleted (history reachable at commit b6c96cd). `src/` is now the single source
+  of truth: added `06_selection_audit.ipynb` (provenance appendix, frozen-window rule);
+  README notes full independence (needs only config/ + raw data/).
+- `a100/` rebuilt decision-first, mirroring src: 00 fetch · 01 selection_audit · 02 network+data
+  · 03 pressure · 04 federated_forecaster · 05 sweep (powered, 5 seeds × 8 algos) ·
+  06 staffing_requests · 07 board_allocation · 08 verification. 06–08 are verbatim src copies;
+  02–04 adapted only for the 96-month span (frozen network/panel, zero-demand pre-2021 targets
+  excluded, same date splits). README carries all pre-registrations + tmux runbook.
+- Validation: all 10 notebooks parse-check clean. a100/03 EXECUTED on laptop data →
+  byte-identical ops_panel.csv (md5 match). src/06 EXECUTED live (raw scan + ODS registry):
+  **AUDIT PASSED**, 0 errors. In progress at commit time: a100/04 equivalence run
+  (features md5 + exact ladder numbers) — result appended below when complete.
+
 ### Next
-- A100: run a100/ 00→08 (README runbook); consider mirroring the src/ POV there after.
+- Append a100/04 + src/06 validation results.
+- A100: run a100/ 00→08 per README; 05_sweep is the main event.
 - Sensitivity over stated knobs (8% standard, 2-of-3 rule, 2% budget, SLOTS_PER_WTE).
-- Commit src/ + WORKLOG (pending user go).
