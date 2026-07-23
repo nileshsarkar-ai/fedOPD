@@ -1,9 +1,9 @@
 {
   "board": "NHS England",
-  "source": "RTT full extracts, 2021-04..2026-04 (61 months)",
+  "source": "RTT full extracts, 2021-04..2026-03 (60 months)",
   "selection": {
     "eligible": "NHS trusts only (3-char R-prefixed org codes); independent-sector providers excluded",
-    "coverage": "reported in all 61 months",
+    "coverage": "reported in all 60 months",
     "rank": "top 5 per region by mean monthly new RTT periods",
     "icb_anchor_month": "2025-12"
   },
