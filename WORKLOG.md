@@ -277,10 +277,11 @@ ENHANCE/EXPAND/segregation) · 05 verification (decision metrics, policy test).
   excluded, same date splits). README carries all pre-registrations + tmux runbook.
 - Validation: all 10 notebooks parse-check clean. a100/03 EXECUTED on laptop data →
   byte-identical ops_panel.csv (md5 match). src/06 EXECUTED live (raw scan + ODS registry):
-  **AUDIT PASSED**, 0 errors. In progress at commit time: a100/04 equivalence run
-  (features md5 + exact ladder numbers) — result appended below when complete.
+  **AUDIT PASSED**, 0 errors. a100/04 EXECUTED on laptop data: features.csv md5 EXACT match +
+  ladder EXACT (106.9/108.1/110.9/111.2/114.2/144.9), 0 errors — every adapted a100 stage is
+  proven equivalence-safe on the 60-month data; A100 differences will be attributable to the
+  extra history and the powered sweep alone.
 
 ### Next
-- Append a100/04 + src/06 validation results.
 - A100: run a100/ 00→08 per README; 05_sweep is the main event.
 - Sensitivity over stated knobs (8% standard, 2-of-3 rule, 2% budget, SLOTS_PER_WTE).
