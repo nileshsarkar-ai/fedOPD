@@ -233,7 +233,39 @@ the A100's 8-year run, goals mapped to docs/PROBLEM.md in its README. Key pieces
   logic degrades gracefully as designed. 00_fetch/01_audit not executed on laptop
   (fetch would download 36 extra months; audit unchanged except file-window filter).
 
+## 2026-07-23 (v2 of the pipeline) — src/: the decision-first rewrite
+
+Per user direction: the goal is not demand prediction per se but *"a branch that needs more
+staff can access it"* — pipeline rewritten from that POV in `src/` (6 notebooks, all executed,
+0 errors; `notebooks/` kept as the committed record). Staffing expressed in WTE via stated
+assumption SLOTS_PER_WTE = 200 appointments/month. One bug found in the rewrite: icb_of as a
+pandas Series broke `.values()` in allocate() — fixed by `.to_dict()`.
+
+### Structure
+00 network+data (org chart + panel) · 01 pressure (flags + WTE shortfall; ops_panel.csv) ·
+02 federated forecaster (ladder = instrument certificate; models_src.pt) · 03 staffing
+requests (WTE asks per branch/dept to its board) · 04 board allocation (budget, memo,
+ENHANCE/EXPAND/segregation) · 05 verification (decision metrics, policy test).
+
+### Results
+- 01: 482 RED units; current staffing shortfall ≈ **517 WTE** group-wide.
+- 02: ladder reproduced EXACTLY (local 106.9 · fed+ft 108.1 · FedAvg 110.9 · naive 111.2 ·
+  central 114.2) — determinism held through the rewrite.
+- 03/04 (as-of 2026-03): 423 requests = **477 WTE asked**; boards granted **59 WTE**
+  (29 funded / 27 partial / 367 deferred under the 2% budget); EXPAND candidates: RAJ
+  (60 WTE deferred), RC9/RX1 (24), RDE/RTE (20), RXN (12); 321 ENHANCE service lines.
+- **05 verification (backtest as-of 2025-03, judged on 12 months of actuals):**
+  - **Detection recall 82%** — 519 of 694 units were in true need; 451 requests captured
+    most; 92 silent needs = only **37 of 646 WTE** (misses are small units).
+  - **Request precision 95%** (unit basis — stricter than the funded-only 100% figure).
+  - **Access rate 10% / need coverage 8.1%** — honest: the 2% budget, not the loop,
+    is the binding constraint.
+  - **Policy test: forecast-driven allocation beats backlog-driven** — useful-grant share
+    89% vs 83%, coverage 8.1% vs 7.5%, same budgets. KEY FINDING: the federated forecast
+    adds decision value even though its 12-month rollout MAE (117) is worse than naive
+    (106) — decision value ≠ forecast MAE. This is the paper's argument in one number.
+
 ### Next
-- A100: run a100/ 00→08 in order (README runbook); the sweep is the main event.
-- Sensitivity analysis over stated thresholds (8%, 2-of-3, 2% budget, 25%) — A100-adjacent.
-- Housekeeping: checkpoint git commit (notebooks/ + a100/ + docs + WORKLOG) — pending user go.
+- A100: run a100/ 00→08 (README runbook); consider mirroring the src/ POV there after.
+- Sensitivity over stated knobs (8% standard, 2-of-3 rule, 2% budget, SLOTS_PER_WTE).
+- Commit src/ + WORKLOG (pending user go).
