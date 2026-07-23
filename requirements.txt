@@ -1,0 +1,7 @@
+numpy
+pandas
+pyarrow
+matplotlib
+requests
+torch
+flwr[simulation]==1.32.1
