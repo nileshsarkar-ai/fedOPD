@@ -867,3 +867,73 @@ Fix: the fallback is the provider's most recent post-2021 reported parent, **acc
 - **F-14 needs an evaluation guard, not a note.** 524 all-zero series in the forecast path would *fraudulently improve* macro-sMAPE, since sMAPE(0,0) → 0 drags the mean down, as well as wasting training. Phase 3 must implement an `offered` mask in the windowing **and** in the metric's series set.
 - **The ~26% post-2021 ICB disagreement** between file and ODS is asserted as real drift and never chased on a sample of disagreeing trusts.
 - `inspect_dataset.ipynb` comments unchanged at 28% against the 78% `fetch_dataset.ipynb` demonstrates.
+
+---
+
+# Entry 10 — 2026-07-25
+## Working mode changed: the owner writes everything from `inspect_dataset` onward
+
+## 10.1 The decision, and the reason
+
+The owner stated that a **completed earlier version of this project was rejected by their supervisor**, and that the correction is to derive the work themselves rather than review work already done. Recorded as **D-08**.
+
+From now on:
+
+- `src/fetch_dataset.ipynb` (acquisition) stands as built. Everything downstream is the owner's to write from scratch.
+- Claude explains concepts, sets tasks with **target numbers** so the owner can self-check, and reviews code the owner has written. Claude does **not** write analysis code, scaffold notebooks, or supply solutions — including as "a starting point", an illustrative snippet, or pseudocode that transcribes 1:1.
+- The only override is explicit and must be logged here as a decision, so the supervisor can see exactly which parts were not hand-written. Frustration or a rephrased request is not an override.
+
+Written into `CLAUDE.md` as its first substantive section, above the researcher rules, so it is read before anything else each turn. The rationale is written in too: **code the owner did not write is a defect in the deliverable even when it is correct.**
+
+`CLAUDE.md` also now carries the *forcing* clauses, which are the operative part: ask what they think before explaining; make them predict before they measure; ask "why" after every result; do not let a passing assert go unexamined; insist on worklog notes every session.
+
+## 10.2 The previous build is archived, not deleted
+
+`inspect_dataset.ipynb` and `data_processing.ipynb` moved to **`src/_solutions/`**. They are a reference of last resort — a number can be checked against them when everything else has failed. They are not to be read to answer a question the owner is currently working on, and not to be extended. `src/` now contains only `fetch_dataset.ipynb`.
+
+This is deliberately not a deletion: the findings F-01…F-23 were expensive to obtain and several are non-obvious traps. Losing them would mean rediscovering them by accident rather than by design.
+
+## 10.3 `GUIDE.md` / `GUIDE.pdf` — the teaching document
+
+Nine parts plus an appendix, ~25 KB, rendered to PDF (162 KB, A4).
+
+Structure: what is on disk → what one row means (the five part types, stocks vs flows) → the April 2021 schema break and its three consequences → who is in the data (sectors, the balanced panel) → building the canonical table → the hierarchy problem → the panel and the zero-fill evaluation trap → the accounting identity → open questions → the pandas idioms this dataset actually demands.
+
+Design decisions worth recording:
+
+- **Targets, not code.** Every task states the number to hit — 96 files, 653 providers, 199,410 identity groups with 0 mismatches, 322,531 canonical rows, 18 of 24 renamed, 526/524 structural series, and so on. The owner writes the query; the number tells them whether they were right without showing them how.
+- **Traps are set, not disclosed.** `C_999` is introduced as "one of these codes is not a specialty" with the 7,045,510 vs 14,091,020 pair given as the tell. The April 2021 step is set as "plot file size and see the jump" before it is explained.
+- **Both definitions of "present" are made an exercise**, because the project has already shipped a wrong number from exactly that ambiguity (Entry 9.6). The task explicitly asks for it computed both ways.
+- **The p90/p10 vs max/min task** exists to make the 1,435× overclaim (still open, Entry 9.10) something the owner discovers rather than inherits.
+- **Part 9 lists the genuinely open questions** with no target number, so it is clear which parts of the project are unanswered rather than merely unwritten: the 26% ICB disagreement, KH03's lack of a consumer, seasonality, COVID recovery by specialty, independent-share concentration, and the independents-as-clients ablation.
+
+## 10.4 The canonical build was finished and verified before the handover
+
+The `icb` backfill leak from Entry 9.8 is fixed and the notebook re-ran clean, so the archived state is a correct one rather than a broken one:
+
+| | |
+|---|---|
+| errors | **0** |
+| canonical | 322,531 rows × **15** columns, 653 providers, 19 depts, 96 months |
+| `icb` | **36 distinct, all valid** — no region codes; asserts 6a and 6b both pass |
+| federation clients / allocatable | 126 / 196 |
+| own-ICB share (public) | mean 82.7%, **median 89.9%**, 12 of 173 below 50% |
+| outputs | `rtt_canonical.csv` **28.1 MB** (literal single CSV, as asked), parquet, panel, `provider_dim.csv` |
+
+Two honest consequences of the stricter backfill rule: only **2** public providers are now backfilled rather than 16, because the rule refuses any code that is not a known ICB — so **14 public providers have no ICB at all**. None is a federation client, so nothing is blocked, but it is a real gap and not a rounding detail. The stale `rtt_canonical.csv.gz` was removed now that a literal CSV is written.
+
+One bug was introduced and caught during this pass: a blanket rename of `panel_member` → `fl_client` also hit `census.panel_member`, which is a column name in `provider_census.csv` and not ours to rename. Caught by the run failing immediately with `AttributeError`. Cheap because it was loud — the argument for asserts and against silent fallbacks, again.
+
+## 10.5 Where this leaves the open items
+
+Items still open from Entry 9.10 are now **the owner's work, not Claude's**, and most are folded into `GUIDE.md` as tasks: the sha256 manifest and F-01 honesty, the 1,435× overclaim, the `offered` mask, the 26% ICB disagreement, KH03. They stay listed here so nothing is lost in the handover.
+
+The F-21 text defect (4 axis columns, not 7) is now moot in the sense that the notebook containing it is archived — but the *lesson* is in the guide, as the label-or-axis test, which is the part worth keeping.
+
+## 10.6 `NOTES.md` — the owner's learning log, enforced
+
+Added to `CLAUDE.md` at the owner's instruction. `NOTES.md` is separate from this file: `WORKLOG.md` records what the project found, `NOTES.md` records what the **owner** now understands. It is the artefact that answers the supervisor's objection directly.
+
+Every completed task gets an entry with four required parts: **what I expected** (written before running it), **what I got**, **the gap and why** (mental model, query, or assumption about the data), and **what I now know that I did not**.
+
+Claude enforces it as a gate rather than a reminder: ask for the prediction before the task starts, and **refuse to move to the next task while the previous one has no entry**. Claude must not write, draft, or template the notes — an entry Claude produced is worth nothing, since the entire value of the artefact is that the owner produced it. Thin entries get pushed back on; questions already covered by an existing note get answered by pointing at the note rather than re-explaining.
