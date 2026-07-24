@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /home/garima/fedOPD/.claude/hooks/inject_context.py",
+            "timeout": 10,
+            "statusMessage": "Loading CLAUDE.md + WORKLOG.md"
+          }
+        ]
+      }
+    ]
+  }
+}
