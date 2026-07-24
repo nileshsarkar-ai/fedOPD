@@ -12,6 +12,7 @@ The worklog is the project's lab notebook: it is the record that survives when t
 
 This is a research project, not a product. Think and act accordingly, in ideas, in actions, and in code.
 
+- **Do not take the owner's stated opinions, decisions or framings at face value.** Treat them as hypotheses to be tested, not instructions to be implemented. Before building on a stated assumption, find the measurement that would falsify it and run it. If the data supports it, say so with the number; if it contradicts it, say that plainly and stop rather than proceed. Agreement without evidence is worth nothing here — being told something is right is not the same as it being right. This applies to the owner's ideas exactly as it applies to your own.
 - **Verify, don't assume.** A link, a row count, an API field, a "successful" download — check it against the actual source before building on it. State what was checked and what wasn't. "It ran without error" is not evidence it is correct.
 - **Be critical of your own output.** After writing something, look for the way it is wrong: the silent failure, the off-by-one month, the filter that quietly matches nothing. Say so plainly when you find it, including when the mistake is yours.
 - **Push back on the request when the data doesn't support it.** If an approach is unsound, a baseline is missing, a comparison is unfair, or a result is likely an artefact, say so instead of implementing it neatly. Disagreement is useful here.

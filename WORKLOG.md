@@ -289,3 +289,199 @@ All results are logged as findings with F-ids, negative results included, and wr
 2. Confirm the (d) reconciliation against the published NHS England figure for the month.
 3. Build `src/data_processing.ipynb` to the specification in §2.2 and §2.3.
 4. Carry forward the geography question from §1.11.
+
+### 2.10 Execution results — `inspect_dataset.ipynb`, 2026-07-24
+
+Executed end to end, 0 cell errors. Findings written to `data/reference/findings.csv`.
+
+| F-id | Result |
+|---|---|
+| F-01 | Integrity **PASS**. 96/96 months sound; 96/96 archives CRC-clean; extraction sizes exact; no Period/filename mismatch; no truncation; 61/61 KH03 workbooks valid; no duplicate provider codes. |
+| F-02 | Schema break Apr 2021: 69 cols × 36 months → 121 cols × 60 months. 53 band columns before, 105 after; the 52 bands below 52w identical in both eras. |
+| F-03 | `Part_3` has no populated week bands, by design. Demand = `Total All` alone. |
+| F-04 | `C_999` exact aggregate over **199,410 provider × part-type groups, 0 mismatches**. Waiting list 7,045,510 correct vs 14,091,020 naive = **2.00×**. |
+| F-05 | Universe **653 codes**; public 196 (RO197 194 + RO107 2); independent 457; **balanced panel 126 trusts**. |
+| F-06 | Roster: **18 named specialties, all spanning 96 months, 0 dropped**; 6 X-buckets excluded by definition. |
+| F-07 | Independents report genuine demand: 11,541,248 referrals, **0 zero-months**; national share 6.20% → 7.70%. |
+| F-08 | Independent share **trends in 6 of 24 specialties**. Fastest **C_130 Ophthalmology +2.20pp/yr (6.2% → 19.6%)** — the trend predicted in advance. |
+| F-09 | **64% of public providers span all 96 months vs 28% of independents.** |
+| F-10 | Mar 2026 published-basis total **7,045,510**, of which 441,656 (6.27%) independent. Press-notice confirmation still OPEN. |
+| F-11 | **NHS renamed 18 of 24 treatment functions at Apr 2021.** Codes stable, names not. |
+
+Archives deleted after verification; filesystem now 120 GB free (88% used).
+
+*Provenance note:* the CRC and extraction-size checks (F-01) were executed in the 22:45 run, **before** the archives were deleted. A later rerun with corrected roster logic reports "0 archives tested" for those two checks, by design — they self-skip once the archives are gone. The verification evidence is the earlier run.
+
+### 2.11 Defect in this notebook, found and corrected
+
+The first execution emitted F-06 as *"0 named specialties span all 96 months, out of 36 named codes"* — internally inconsistent with the 24 codes observed directly in a single month, which is what prompted the check.
+
+**Cause.** The roster was grouped by treatment-function **code *and* name**. NHS renamed 18 of the 24 functions at the same April 2021 break (`General Surgery` → `General Surgery Service`), so each specialty split into a 36-month row and a 60-month row and none reached 96.
+
+**Correction.** Group by code only, taking the most recent name for display. Corrected result: **18 named specialties, all spanning the full window, none dropped.**
+
+**Generalisation, now F-11:** treatment-function *codes* are stable across the window; *names* are not. All joins and groupings must key on `Treatment Function Code`. Grouping by code+name fails silently — it produces a well-formed table in which every specialty has partial history.
+
+This also surfaced that the X-family splits at the same break: one combined `X01 Other` for the 36 pre-2021 months, five themed buckets (`X02`–`X06`) for the 60 after. The union across the window is therefore 6 X-buckets, not the 5 visible in any single month.
+
+### 2.12 Is `C_999` useful for our problem? — assessment
+
+Question raised deliberately as a contrarian check against the README problem statement. Conclusion: **useless as data, valuable as a control, and asking it exposed a coverage gap.**
+
+**Not data.** The identity is exact over 199,410 groups with 0 mismatches, so C_999 is reconstructible from the rows beneath it and carries no information they lack. Were it ever to *exceed* the sum of parts it would be capturing unitemised specialties and would become real data; it never does. In the modelling table it would enter as a "department" perfectly collinear with the sum of the real ones — leakage — while doubling every total. **Excluded from the canonical table.**
+
+**Valuable as a control, for one specific reason.** C_999 is an independently published control total per provider per month. If NHS England adds a treatment function not in our roster, our sum falls short of C_999 and the standing assert fires. That converts a silent coverage loss — the failure mode that yields plausible numbers and wrong conclusions — into a hard stop. Retained permanently as an assert.
+
+**The coverage gap this exposed.** C_999 = 18 named specialties + 6 X-buckets. Measured over all 96 months of `Part_3`:
+
+| | New referrals | Share |
+|---|---|---|
+| 18 named specialties (the roster) | 115,664,910 | **74.41%** |
+| 6 X "Other" buckets | 39,784,766 | **25.59%** |
+| = C_999 | 155,449,676 | 100% |
+
+The X share is stable at 25.6% ± 1.2 and drifts up from 24.1% to 26.5% across the window.
+
+Two consequences:
+
+1. **C_999 is not the trust total of our panel.** It is 100% of demand; the roster is 74.4%. Using C_999 as the trust tier of the trust → ICB → national escalation while forecasting a roster-restricted panel would leave the tiers incoherent by roughly a quarter. **Rule: derive trust aggregates by summing the roster, never by reading C_999.**
+2. **The README's "each treatment function a department" holds for 74.4% of demand.** The X-buckets cannot simply be promoted to departments: their own era break means that across the full window they are usable only as a single merged "Other" category, not at the five-way post-2021 granularity.
+
+*Open decision:* whether the panel is the 18 named specialties (74.4% coverage, clean semantics) or 18 + one merged "Other" (100% coverage, one coarse residual client per trust). To be decided explicitly with this number attached, not left as an unnoticed gap.
+
+### 2.13 Open items (supersedes §2.9)
+
+1. **Panel scope decision:** 18 named specialties, or 18 + merged "Other"? See §2.12. Blocking for the canonical build.
+2. Confirm F-10 against the published NHS England press notice for March 2026.
+3. Build `src/data_processing.ipynb` to the specification in §2.2 (band reconciliation, with the boundary assert) and §2.3 (all providers retained, `sector` column, balanced-panel client rule).
+4. The independents gate (§2.8) is **complete and passed** — independents report genuine demand with no zero-months. Carry F-08 forward as a live constraint: the sector mix is non-stationary, most sharply in ophthalmology, so the model must carry the sector split rather than assume fixed composition.
+5. Carry forward the geography question from §1.11.
+
+---
+
+# Entry 3 — 2026-07-24
+## Decisions taken after the inspection run. Phase 2 unblocked.
+
+### 3.1 D-02 — the 25.6% gets a design answer: `X_OTHER` as a 19th series
+
+**Decision.** Carry a merged Other series alongside the 18 named specialties: `X_OTHER = X01` pre-2021, `= sum(X02..X06)` post-2021. One continuous 96-month series per trust, with a **boundary-continuity assert at 2021-04**, exactly as for the wait-band break. The X-family recode is the same shape as that break — coarse before, finer after — so the same reconciliation applies.
+
+**Consequences, which is why this beats disclosure.**
+- The panel becomes **19 series per trust** (18 named + Other) and the hierarchy reconciles **exactly**.
+- It upgrades the `C_999` assert from roster-drift detection to a **full-coverage identity**: 18 named + `X_OTHER` = `C_999`, per provider, per part type, per month.
+- **The agentic split follows naturally:** department-level capacity requests are raised only for the 18 real specialties — you cannot staff "Other" — but **trust-tier capacity arithmetic includes Other**, because that demand consumes real capacity and an escalation sum that ignores a quarter of the workload is wrong.
+
+**Alternative recorded and rejected:** scope to the 18 named specialties and state 74.4% coverage. Rejected because the trust tier stays incoherent by ~25% and the figure becomes the obvious reviewer question. The merged series costs one row per trust and removes the question.
+
+### 3.2 D-03 — the roster is 18; the old 17 is dead
+
+With code-only grouping, **all 18 named specialties span all 96 months**, so the default roster is the full 18 with **no coverage filter**.
+
+The former ≥50%-presence threshold — which dropped Neurosurgery at 36% — is **demoted from default to sensitivity run**. The design criterion is "a real, allocable clinical service", which Neurosurgery plainly is, and the previous build's own sensitivity showed including it costs nothing.
+
+**Standing finding (F-11), promoted from the bug that caused it:** treatment-function **codes are stable, names are not** — 18 of 24 were renamed at 2021-04. Join and group on `Treatment Function Code` only, never on name. The failure is silent: it yields a well-formed table in which every specialty has partial history.
+
+### 3.3 D-04 — sector definition and the panel of 126, made explicit
+
+`sector = public` **= RO197 (NHS Trust) + RO107 (Care Trust)**. Criterion is **allocability**: a public body with an ICB parent that capacity can be allocated to. RO157 is grouped with the independents.
+
+The balanced-panel rule (public **and** present in all 96 months) yields **126**, decomposed from the census as:
+
+| Role | In panel |
+|---|---|
+| RO197 NHS Trust | 125 |
+| RO107 Care Trust | **1** — `TAD` Bradford District Care NHS Foundation Trust (96/96 months) |
+
+The second Care Trust, `TAJ` Black Country Partnership NHS Foundation Trust, is excluded by the panel rule on 24/96 months — not by a sector judgement. So 126 is a **filter result derived from `provider_census.csv`**, not a new magic number: 125 → 126 is precisely the admission of one Care Trust, which is the RO107 decision showing up in the data.
+
+### 3.4 D-05 — the ophthalmology interpretive caveat
+
+Wherever `C_130` appears in a report, one sentence must accompany it:
+
+> Ophthalmology is both the largest department by volume and the fastest-substituting one, with the independent-sector share rising from 6.2% to 19.6% across the window. Trust-level ophthalmology demand trends are therefore **partly sector shift, not population change** — which is exactly why the ICB-level independent context series exists.
+
+Stated once, the non-stationarity caveat is handled rather than lurking in the results.
+
+### 3.5 D-06 — item (d) scheduled before the report, not before phase 2
+
+Internal consistency is proven, so the build proceeds. The open reconciliation has a concrete target: the NHS England statistical press notice for a chosen month publishes the national incomplete-pathways figure, and the check is **which of the two bases reproduces it** — all-provider **7,045,510** or trusts-only. Expectation, stated in advance: the published headline is the all-provider figure. Whichever way it lands, the report then states "our table reproduces the published X on basis Y" with no hedging.
+
+### 3.6 Status
+
+Phase 2 is **unblocked**. The standing asserts now guard every trap found so far:
+
+1. **`C_999` coverage identity** — 18 named + `X_OTHER` = `C_999`, every provider, part type and month.
+2. **Boundary continuity at 2021-04** — for both the >52 wait-band reconciliation and the `X_OTHER` recode.
+3. **Code-only joins** — treatment functions keyed on code, never name.
+
+Next artefact: `src/data_processing.ipynb`, built to §2.2, §2.3, §3.1 and §3.2.
+
+---
+
+# Entry 4 — 2026-07-24
+## Phase 2: canonical table built. Three findings, one a defect in our own test.
+
+`src/data_processing.ipynb` built to §2.2, §2.3, §3.1 and §3.2. Executed end to end, 0 cell errors.
+
+### 4.1 Outputs
+
+| File | Contents |
+|---|---|
+| `data/canonical/rtt_canonical.parquet` | 322,531 rows — 653 providers × 19 departments × 96 months, **all providers retained**, `sector` / `panel_member` / `in_roster` as flags, never filters. 3.7 MB |
+| `data/canonical/rtt_panel.parquet` | The rectangular federation cube: **126 trusts × 19 departments × 96 months = 229,824 rows**. 2.2 MB |
+| `data/canonical/national_monthly.csv` | National monthly series including the accounting-identity check |
+
+Measures per cell: `demand` (Part_3), `completed_admitted`, `completed_nonadmitted`, `completed`, `waiting`, `waiting_gt18`, `waiting_gt52`, `waiting_dta`.
+
+Sector split of the canonical table: public 196 providers / 207,504 rows / 143,908,428 referrals; independent 457 providers / 115,027 rows / 11,541,248 referrals (**7.4%** of demand).
+
+### 4.2 Assert 1 — full-coverage identity: PASSED
+
+18 named + `X_OTHER` = `C_999` across **199,410 provider × part-type groups, 0 mismatches**. D-02 delivered what it promised: the 19 series account for *all* reported activity, so the hierarchy reconciles exactly rather than approximately. The assert is now a coverage guarantee, not merely drift detection.
+
+### 4.3 Defect in our own boundary test — F-12
+
+Assert 2 reported the `>52` reconstruction at **6.60× typical** monthly change and still passed, because the threshold had been set loosely at 10×. Passing a test by a wide threshold is not evidence; the number was investigated rather than accepted.
+
+**The 6.60× was an artefact of the test statistic, not of the data.** The comparison used a *global* median absolute monthly change. The `>52` series is near zero for the whole pre-covid period, so that global median (6,622) is dominated by quiet months and inflates the ratio for any step occurring during a volatile one.
+
+Measured against **local** volatility — the twelve months either side of the break, median 24,583 — the ratio is **1.26×**. The surrounding months settle it: Mar 2021 +26,825, **Apr 2021 −30,988**, May 2021 −37,359. April's movement is *smaller* than May's. This is the ordinary post-peak decline of the covid long-wait backlog, not a step introduced by the reconciliation.
+
+**Correction applied:** `boundary_ratio()` now measures against local variation with the step itself excluded from the window, and the threshold is tightened from 10× to 3×. Both reconciliations pass on the stricter test (`X_OTHER` 0.97×, `>52` 1.26×).
+
+*Generalisation:* a boundary-continuity test must compare against variation local to the boundary. A global dispersion statistic makes a quiet-era series look discontinuous at any turbulent join, and a loose threshold then hides the fact that the statistic is wrong.
+
+### 4.4 Structural zeros in the panel cube — F-13
+
+Filling the 126 × 19 × 96 cube required creating **62,313 cells (27.11%)** absent from the source. Investigated rather than accepted as missing data:
+
+- **2,394** trust × department pairs exist in the cube.
+- **524 of them (21.9%) have zero demand in all 96 months** — these trusts simply do not provide that specialty. Most trusts have no neurosurgery, no cardiothoracic surgery.
+- The remaining **1,870 active pairs have a median of 96/96 months active**.
+
+So the 27% fill is overwhelmingly **structural absence, not sporadic missingness**: a service that does not exist, rather than a service that failed to report.
+
+*Consequence for phase 3:* the real client-series count is **~1,870 trust × department series, not 2,394**. Training on all-zero series would waste capacity and distort any pooled loss. The 524 structurally-absent pairs must be excluded by a "was this service ever provided" rule, and that rule belongs in the modelling notebook, not in the canonical table — the table keeps them so the exclusion stays visible and reversible.
+
+### 4.5 The backlog accounting identity leaks — F-14, material for phase 4
+
+The README states `backlog ≈ previous backlog + demand − completions`. Measured over all 96 months on the panel:
+
+| | |
+|---|---|
+| Mean residual (actual − predicted) | **−183,635 per month** |
+| As % of the waiting list | **−4.2%** (range −7.9% to −2.4%) |
+| As % of monthly demand | **−15.3%** |
+| Sign | **negative in 95 of 95 months** |
+
+This is not noise. It is a systematic, one-directional leak: the identity **over-predicts the backlog every single month**. Roughly **15% of new referrals leave the waiting list without a recorded completion** — removals, transfers, validation exercises, patients who die or decline treatment.
+
+*Consequence:* a per-service agent projecting the backlog forward on the stated identity will over-project it consistently and escalate more aggressively than the data warrants, and the error compounds over a multi-month projection horizon. **Phase 4 must carry an explicit removal term**, estimable from this residual, rather than treating the identity as exact. The README wording "≈" is doing heavy lifting and should be quantified there.
+
+### 4.6 Open items
+
+1. **Phase 3 modelling:** exclude the 524 structurally-absent trust × department pairs; the client set is ~1,870 series.
+2. **Phase 4:** add a removal term to the backlog dynamics; the residual measured here is the estimator.
+3. Confirm F-10 against the published NHS England press notice (D-06, before the report).
+4. Carry F-08 forward: the sector mix is non-stationary, sharpest in ophthalmology.
+5. Carry forward the geography question from §1.11.
