@@ -937,3 +937,25 @@ Added to `CLAUDE.md` at the owner's instruction. `NOTES.md` is separate from thi
 Every completed task gets an entry with four required parts: **what I expected** (written before running it), **what I got**, **the gap and why** (mental model, query, or assumption about the data), and **what I now know that I did not**.
 
 Claude enforces it as a gate rather than a reminder: ask for the prediction before the task starts, and **refuse to move to the next task while the previous one has no entry**. Claude must not write, draft, or template the notes — an entry Claude produced is worth nothing, since the entire value of the artefact is that the owner produced it. Thin entries get pushed back on; questions already covered by an existing note get answered by pointing at the note rather than re-explaining.
+
+## 10.7 `GUIDE.pdf` expanded to cover the whole project
+
+The first version covered only the dataset and the table build. Rewritten to cover everything: **12 parts plus four appendices**, 40 KB markdown, 208 KB PDF.
+
+Added over the first version:
+
+- **Part 0 — what the project is.** The forecaster, the three baselines it must beat (persistence, isolated per-client, pooled central), the agentic decision layer, and what is deliberately out of scope. The guide previously assumed this context; now it states it, so the owner builds a table that fits the job.
+- **Part 1 — acquisition and the reference tables.** What `fetch_dataset.ipynb` actually did, why the `.part`-then-rename pattern is the one permitted safety net, a dictionary of all eight files in `data/reference/`, how the ODS ORD API works (`PrimaryRoleId`, `Rels`, `RE5`), and KH03 stated as an **open question rather than a settled exclusion**, including the resolution mismatch that makes the join non-trivial.
+- **Part 3 — the full 24 treatment functions** with names and demand shares, measured from `tf_month_demand.csv`. Two observations drawn out: the X buckets are ~25% of demand, and specialties differ >50-fold in size, so any cross-specialty average is a weighting choice.
+- **Part 10 — what comes after the table.** Windowing, the temporal-split requirement, where COVID goes, per-client scaling, FedAvg, the weighting decision, per-client fine-tuning — and the **pre-registration warning** that "FL rescues the small client" was already refuted once on this project and must not be quietly re-adopted.
+- **Task 8.3** — a new task making the zero-fill metric trap numerical rather than described: score a metric with and without 500 constant-zero series and watch it move for a reason unrelated to model quality.
+- **Task 6.4** — the label-or-axis test as an exercise, including the category error made on this project (running it over the measure columns and reporting them as axes).
+- **Task 7.4** — the entity-attribute rule as an exercise, with the requirement to write **both** asserts and explain why either alone is insufficient.
+- **Task 9.3** — mean-of-ratios vs ratio-of-means, from the Entry 7.5 correction.
+- **Appendix A — glossary** of 22 NHS and FL terms.
+- **Appendix C — every target in one table**, so self-checking does not require re-reading.
+- **Appendix D — sources**, with `WORKLOG.md` named as the most useful one.
+
+Open question 7 added: **no sha256 manifest of the extracted CSVs was ever written**, so there is no standing integrity baseline now the archives are gone. Flagged as cheap to fix and to be done before anything is published from these files.
+
+The pedagogy is unchanged: no analysis code anywhere, traps set rather than disclosed, and every task carries the number to hit. `findings.csv` is explicitly labelled in the reference dictionary as the answer key, not to be read until the exercises are done.
