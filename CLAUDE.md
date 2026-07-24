@@ -70,6 +70,37 @@ Every task the owner completes gets an entry, in their own words, containing all
 
 The archived notebooks in `src/_solutions/` are a previous machine-written build kept only as a reference of last resort. **Do not read from them to answer a question the owner is currently working on**, and do not extend them. They exist so a number can be checked, not so work can be skipped.
 
+## How the owner learns, and how to pitch to them
+
+This complements the "who writes the code" rule above: that section says *don't write it*; this one says *how to help without writing it*.
+
+**Who the owner is.** A technically strong undergraduate, and this is their **first real research project**. Two consequences. First, do not dumb anything down: assume the mathematics and the programming are within reach, and pitch at that level. Second, **err toward detail, not brevity, in teaching and reference material** - the owner has asked explicitly for depth, because in research the detail is where the result lives and a first researcher has to be able to defend every number. Brevity is for chat replies (see the style section); depth is for the guide, reviews, and explanations of a concept. When unsure whether to include a detail, include it and mark why it matters. This is why note-taking is forced rather than suggested: first research is judged on whether the owner can defend the work line by line, and the notes are that defence.
+
+**The goal is recall, not fluency.** The target is being able to open a blank file and build the thing unaided. Tutorial-fluent — able to follow along — is explicitly not the goal, and is the failure mode to avoid. So optimise every answer for what the owner will be able to reproduce next week from memory, not for what unblocks them fastest today.
+
+- **Give shape, vocabulary, tradeoffs, and where to look — not finished code.** Name the function, describe the shape of the answer, point at the doc. Never hand over anything that could be pasted to get the result.
+- **When stuck, help find the gap; do not fill it.** The useful move is to locate *which* step is missing, not to supply the step. A filled gap teaches nothing.
+- **Be adversarially honest. Do not validate.** The owner has asked for pushback, not reassurance. If an idea is weak, say so and why. "Good question" and "great idea" are noise.
+
+**The owner's own working method — respect its gates, do not short-circuit them.**
+
+- **Brief before code.** Understand the problem fully before any code exists.
+- **Skeleton first:** signatures and docstrings with empty bodies, then fill through gates. Do not jump to a full body.
+- **Smallest slice that runs end to end, then expand. No skipping gates.** If asked to help with a later slice while an earlier gate is open, point back to the open gate.
+- **Trivia-stuck vs concept-stuck are handled differently.** Syntax, kwargs, a method name — the owner just looks it up, no slowing down, and you can answer directly. *How or why something works* — the owner slows down on purpose; this is the real learning, so here you ask what they think first and go slower, never faster.
+- **The 20-minute rule:** struggle alone first, then look, then close the tab and rebuild from memory. If the owner is inside that window, do not pre-empt it. The struggle is the mechanism.
+- **The owner keeps an error log** — what broke, why, what they now understand. Reinforce it the way `NOTES.md` is reinforced.
+
+## Communication style the owner wants
+
+Applies to chat answers, reviews, `GUIDE`/teaching material, and any prose written for the owner.
+
+- **British / Indian spelling.** No em-dashes. No emoji.
+- **High signal-to-word ratio.** Lead with the point. Cut hedging, restating, and padding.
+- **Research-level framing, not personal framing.** This is a supervised research project, and the supervisor advised expressly against vibe-coding — so frame in terms of the problem and the evidence, not "you should feel". Detail is wanted *because* it is research, but detail is not the same as volume.
+- **Short, crisp, with intuition where it helps** — then depth underneath for the reader who wants it. Simple language, not simplified content.
+- **Do not overwhelm with a wall of text at once.** Pace it. A long, complete document (like `GUIDE.pdf`) is fine because it can be read in parts; a long *reply* that dumps everything in one go is not. When there is a lot to say, surface the core first and offer to go deeper, rather than emptying it all onto the screen.
+
 ## Work like a researcher — be critical
 
 This is a research project, not a product. Think and act accordingly, in ideas, in actions, and in code.

@@ -959,3 +959,219 @@ Added over the first version:
 Open question 7 added: **no sha256 manifest of the extracted CSVs was ever written**, so there is no standing integrity baseline now the archives are gone. Flagged as cheap to fix and to be done before anything is published from these files.
 
 The pedagogy is unchanged: no analysis code anywhere, traps set rather than disclosed, and every task carries the number to hit. `findings.csv` is explicitly labelled in the reference dictionary as the answer key, not to be read until the exercises are done.
+
+## Laptop realigned to the handover state
+
+**2026-07-25, laptop session.** The owner asked for the laptop's `FedOPD/` directory to be
+emptied entirely — code, `data/` (60 monthly CSVs + archives), `.venv`, `.git` — with no backup,
+then re-cloned from the latest remote state only. Done: directory wiped, then shallow clone
+(`--depth 5`) of `origin/master` at `e6354e5`. Nothing was committed or pushed from the laptop
+during this; the parallel laptop line from 2026-07-23 (decision-first `src/`, `a100/`, dashboard)
+remains in remote history beneath the handover commits, superseded by the restructure.
+
+Consequences on this machine:
+
+- **No `data/`** — re-acquisition is via `src/fetch_dataset.ipynb`, run by the owner.
+- **No Python environment** — the old `.venv` (torch cu128 on the RTX 4060, flwr) was deleted
+  with everything else and the new tree carries no `requirements.txt`; environment setup is
+  needed before any notebook runs locally.
+- This laptop Claude session has read `CLAUDE.md` and operates under D-08 from here on:
+  concepts, target numbers, and review only — no analysis code, no scaffolds.
+
+---
+
+# Entry 11 — 2026-07-25
+## Source-documentation pass: what NHS England actually publishes, read from the primary docs
+
+Owner asked, before starting EDA, to understand the CSVs from the NHS source itself — how the
+files are constructed and what each column means — rather than reverse-engineering meaning from
+the data. No code written; this is a documentation/teaching pass. Authoritative sources retrieved
+and read directly (two NHS PDFs downloaded and text-extracted with `pypdf`, since WebFetch's
+parser cannot decode FlateDecode-compressed NHS PDFs):
+
+- **Recording and reporting RTT guidance v5.2 (PRN01045, Oct 2025)** — the definitions.
+- **RTT statistics work area page** and the **2025-26 monthly data page** — file inventory.
+- **March 2026 statistical press notice (published 14 May 2026)** — methodology / estimation.
+- **NHS Data Dictionary, Treatment Function Code** — the specialty codes.
+
+### 11.1 Confirmed from primary source (matches existing project facts)
+
+- **The CSV is an aggregate return, not patient-level.** Providers submit via SDCS a spreadsheet
+  form broken down by commissioner; the collection is "in three sections" = the part types. Grain
+  is provider × commissioner × treatment function × part type × week-band. Confirms the README/GUIDE
+  grain and the commissioner axis being the one genuine second dimension (F-21).
+- **Exact part-type definitions (guidance p.41), verbatim:** Part 1a completed–admitted (clock
+  stopped with inpatient/day-case admission); Part 1b completed–non-admitted (clock stopped for
+  other reasons); Part 2 incomplete ("a 'snapshot' on the last day of the reporting period");
+  Part 2a incomplete with a decision to admit (subset of Part 2, clinical decision to admit to a
+  bed made); Part 3 new RTT periods (clock-start date within the month, "will include those where
+  the clock also stopped within the reporting month"). Confirms GUIDE Part 2.
+- **April 2021 change, from NHS's own list (guidance p.42 / press-notice Notes for editors §4):**
+  (1) X24 commissioner code phased out for granular NHSE commissioning codes; (2) weekly bands
+  52-53…104+ added to Parts 1A/1B/2/2A; (3) treatment-function changes — name updates **and** the
+  'Other' category split into five groups. This is F-02 + F-11 + the X-bucket split, now sourced.
+- **Independents are genuine.** Guidance p.40: IS providers commissioned by a sub-ICB/NHSE "should
+  engage in the RTT data collection… in the same way as NHS provider organisations." Confirms F-07.
+
+### 11.2 New facts the project docs do NOT currently capture
+
+1. **A THIRD structural break inside the window: community services removed from RTT, Feb 2024.**
+   Press-notice Notes for editors: from Feb 2024 community-service pathways are no longer reported
+   in RTT (moved to the Community Health Services waiting-list collection). Measured impact ~43,000
+   pathways dropped — mostly **Community Paediatric / Paediatric Neurodisability**, which sit inside
+   **"Other – Paediatric Services" and "Other – Other Services"**, i.e. our `X_OTHER` post-2021
+   buckets (X02–X06). ~36k left the Feb 2024 figures, ~7k the Mar 2024 figures; ~4,400 fewer 52-wk,
+   2,500 fewer 65-wk, 1,400 fewer 78-wk waits. **Consequence:** `X_OTHER` has a genuine
+   discontinuity at Feb–Mar 2024 that the project has treated as a smooth 96-month series with only
+   the Apr-2021 recode. The D-02 boundary-continuity assert guards **2021-04 only**; it does not
+   look at 2024-02. This is concentrated in the X buckets, not the 18 named specialties, so the
+   forecast target for the named roster is largely unaffected — but any `X_OTHER` series and any
+   paediatric "Other" analysis crosses a ~43k downward step in early 2024. **Open: check X_OTHER at
+   2024-02/03 against local variation the same way the Apr-2021 break was checked.**
+
+2. **The published headline includes estimates for non-reporting trusts; the CSV does not.** March
+   2026: **Sheffield Teaching Hospitals (RHQ) submitted no RTT data.** The press-notice "7.1 million"
+   waiting and the precise long-wait counts (94,406 >52wk, etc.) **include an estimate** for missing
+   acute trusts, carried in the *RTT Overview Timeseries* file, "based on the latest data submitted
+   by non-reporting" trusts. The **Full CSV is the raw submitted aggregate with no estimate.** So the
+   GUIDE/F-10 target **7,045,510** is the raw-CSV Part_2 sum and is the right number to reproduce
+   from our data — but it is **not** identical to the press-notice headline, which is higher because
+   of the Sheffield estimate. F-10's "press-notice confirmation OPEN" should be closed with this
+   understanding: raw CSV ≠ published headline **by construction**, not by our error. Also flags that
+   **March 2026 (our last month) is missing a large trust** — a real data-quality caveat for the end
+   of the window.
+
+3. **Treatment-function reporting exceptions (roll-ups).** Codes 108 (Spinal Surgery), 111
+   (Orthopaedic), 115 (Trauma Surgery) are reported **inside 110 Trauma & Orthopaedics**; 144/145
+   (Maxillofacial / Oral & Maxillofacial) inside **140 Oral Surgery**. So those codes do not appear
+   as separate series by design — relevant to understanding why the roster is what it is.
+
+4. **Pathways ≠ patients.** Press notice: 7.1M pathways vs ~6.0M unique patients (WLMDS-based);
+   "some patients are on more than one pathway." The forecast target `demand` counts pathway
+   clock-starts, not people. Worth stating in any patient-level interpretation.
+
+5. **Waiting measured in completed weeks; bands are "Gt X To Y Weeks" = more than X and up to Y.**
+   Read from the column names + the ">18 weeks" standard; NHS states "waiting times in weeks" but I
+   did not find an explicit inclusive/exclusive sentence — treat the boundary convention as inferred
+   from the column labels, not quoted. March 2026 sanity figures for the incomplete list: median
+   11.3 wk, 92nd percentile 38.3 wk — derivable from the banded data as a cross-check.
+
+### 11.3 Sources (for Appendix D / future reference)
+
+- RTT statistics work area: https://www.england.nhs.uk/statistics/statistical-work-areas/rtt-waiting-times/
+- Rules & guidance index: https://www.england.nhs.uk/statistics/statistical-work-areas/rtt-waiting-times/rtt-guidance/
+- Recording & reporting guidance v5.2 (definitions, part types p.41, Apr-2021 changes p.42):
+  https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2025/10/Recording-and-reporting-RTT-waiting-times-guidance-v5.2-Feb25.pdf
+- March 2026 statistical press notice (estimation, community-services removal, Sheffield missing):
+  https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2026/05/Mar26-RTT-statistical-press-notice-PDF-545K-Dc1i9U.pdf
+- NHS Data Dictionary — Treatment Function Code:
+  https://archive.datadictionary.nhs.uk/DD%20Release%20August%202024/attributes/treatment_function_code.html
+- DCB0095 (the data standard behind the Apr-2021 collection change) — named in the press notice, not yet retrieved.
+
+Open follow-ups from this pass: (a) X_OTHER break at Feb 2024 needs the same local-variation check
+as Apr 2021; (b) fold the sourced definitions + the two new facts into GUIDE.md — **done, see 11.4**;
+(c) DCB0095 and DCB0028 named by the docs but their own text not yet pulled.
+
+### 11.4 GUIDE.md/GUIDE.pdf rebuilt with source citations (owner request)
+
+Owner asked to rebuild the guide grounded in the fetched sources, citing NHS source rather than
+memory, "all details, what each column is." Done. The guide is Claude-authored teaching material
+(Entry 10.3), so rebuilding it is not a D-08 violation — no analysis code, pedagogy preserved
+(tasks, targets, traps not disclosed).
+
+Changes:
+- **Two-tier fact discipline made explicit:** every claim about *what the data is* now carries a
+  bracketed citation to the NHS doc + section/page (`[G §10.1.7, p.46]`), and every project number
+  (653, 322,531, the leak) is labelled "measured" — not NHS-published. This mirrors the
+  observation-vs-inference rule.
+- **New "sources this guide is grounded in" table** with citation keys [G]/[SPN]/[DD]/[DD-T]/[SWA]/
+  [DCB0095]/[DCB0028] and URLs.
+- **Part 2** part-type table now quotes the guidance verbatim (p.41); column dictionary cited.
+- **Part 3** rebuilt from the collection form's own 18 treatment functions with NHS names
+  (`[G §10.1.4, p.43-44]`), the roll-up exceptions (108/111/115→110; 144/145→140; 170=172+173),
+  and what falls into the five Other buckets.
+- **Part 4** grounds the Apr-2021 break in NHS's own 3-item change list, adds the **exact band-to-day
+  mapping** (18 weeks = 126 days is *within* standard), and adds the **Feb-2024 community-services
+  break** as a second, grounded discontinuity in X_OTHER.
+- **Part 5** adds pathways≠periods≠patients (7.1M vs 6.0M) and the **estimate-for-missing-trusts**
+  nuance (Sheffield/RHQ; raw CSV 7,045,510 ≠ published 7.1M by construction).
+- **Part 6/9** tie the coverage identity and the accounting-identity leak to NHS's own Annex-B
+  validation checks and the rule-4/rule-5 clock-stop definitions.
+- **Appendix A** glossary reworked to quote the guidance §13 terminology; **Appendix E** added — the
+  band-to-day table and a per-column grounded dictionary; **Appendix D** is now a cited bibliography.
+- New open items added to Part 11: the Feb-2024 X_OTHER step and the estimate-gap quantification.
+
+### 11.5 CLAUDE.md gains the owner's learning method and communication style
+
+Owner supplied a "how I work with Claude" brief; added to `CLAUDE.md` as two sections after the
+`_solutions` paragraph: **"How the owner learns, and how to pitch to them"** (goal is recall not
+tutorial-fluency; give shape/vocab/tradeoffs not code; find the gap don't fill it; adversarial
+honesty, no validation; respect the owner's gates — brief-before-code, skeleton-first, smallest
+end-to-end slice, trivia-stuck vs concept-stuck handled differently, the 20-minute rule, the error
+log) and **"Communication style the owner wants"** (British/Indian spelling, no em-dashes, no emoji,
+high signal-to-word, research-level not personal framing, short-and-crisp with depth underneath, do
+not dump a wall of text in one reply — a long standalone doc like GUIDE.pdf is fine, a long reply is
+not). Complements the existing "who writes the code" rule rather than duplicating it.
+
+---
+
+### 11.6 GUIDE rebuilt for the owner's audience framing + note-forcing
+
+Owner: highly technical undergrad, first real research; wants detail kept and note-taking forced.
+Edits to `GUIDE.md`: added a "Who this is written for" paragraph (no dumbing-down; detail is where
+the result lives; notes are the deliverable the rejected version lacked), and promoted note-taking
+from a closing reminder to a **standing "note gate"** near the top (a task is finished when the
+four-part note is written, not when the number matches; do not batch notes). Also applied the new
+style rule: **stripped all 182 em-dashes** to spaced hyphens. Caught and fixed a self-inflicted bug
+- the em-dash pass included a `re.sub(r'  +',' ')` space-collapse that flattened the `data/` ASCII
+tree in the one fenced code block; restored the tree and set `white-space: pre` in the print CSS.
+Re-rendered: **GUIDE.pdf 16 pages / 864 KB**, verified 0 em-dashes and the new sections present.
+
+Render path (no pandoc/latex/weasyprint on this laptop): `python -m markdown` (installed this turn)
+→ styled HTML with an NHS-blue print stylesheet → **headless Chrome `--print-to-pdf`**. Gotcha
+logged: Git-Bash `$(pwd)` yields `/c/...`, which Chrome rejects as a file URL — must pass
+`file:///C:/...`; and Chrome could not overwrite an open `GUIDE.pdf`, so render to scratchpad then
+`cp`. Result: **GUIDE.md 71 KB, GUIDE.pdf 15 pages / 857 KB**, verified to contain the key strings
+(7,045,510; Gt 17 To 18; 43,000; Sheffield; 199,410; Appendix E). Intermediate `GUIDE.html` deleted.
+
+### 11.7 GUIDE gains an active-learning gate ("do not blind-read")
+
+Owner asked the PDF to push active engagement, not passive reading. Added a **"Do not blind-read this"**
+callout directly after the note gate: cover the target before predicting; try to find each trap in
+the data before reading its explanation; keep a kernel running beside the guide (stop if two pages
+pass with no query); rebuild each part's core idea from memory before moving on; being stuck is the
+mechanism. Re-rendered: **GUIDE.pdf 16 pages / 872 KB**, 0 em-dashes, section verified present.
+
+### 11.8 Recurring active-learning reminders seeded through the GUIDE PDF
+
+Owner wanted the predict/try/note/don't-blind-read discipline reinforced continually, not just once
+up front. Chrome's print-to-pdf cannot do a CSS running footer (Blink ignores `@page` margin-box
+content), so instead a small script inserts a rotating one-line reminder (`<div class="remind">`)
+before every `# Part`, `# Appendix` and `### Task` heading - **45 in total, ~2.5 per page over 17
+pages**. Ten messages cycle deterministically (predict before revealing; kernel open; write the note;
+try the trap first; sit in the stuck; believe the data but check the question; rebuild from memory;
+stop if only reading; a task ends at the note; ten rows before any hypothesis). Styled as a small
+italic amber rule, distinct from the yellow target blockquotes. **Idempotent**: the script strips any
+existing `class="remind"` lines before re-inserting, so rebuilds do not stack them. GUIDE.pdf now
+17 pages / ~1.0 MB, 0 em-dashes.
+
+### 11.9 Reminders rewritten from generic to context-specific and blunt
+
+Owner: reminders must be tied to the concept on that page, and "be brutal". Replaced the 10 rotating
+generic lines with **45 bespoke reminders, one authored per anchor** (each Part, Appendix and Task),
+keyed to the exact heading text via a dict in a scratchpad script (heredoc quoting failed, so the
+script was written to file and run). Each names that section's specific failure mode in blunt terms
+(e.g. C_999 "hands you exactly double and lets you publish it"; Part 8 "wrong in your favour ... the
+kind you will never think to question"; Task 9.2 "doing PR for your result, not research on it").
+Restyled from soft amber to a red left-border callout to read as an alarm, distinct from the yellow
+target blockquotes. Still idempotent (strips `class="remind"` before reinserting). GUIDE.pdf now
+**18 pages / ~913 KB, 45 reminders, 0 em-dashes**; all anchors matched (0 missed).
+
+### 11.10 Reminders rewritten again - bite on consequence, not hollow scolding
+
+Owner flagged the Task 1.1 reminder as "lame": it scolded over trivial arithmetic (predicting 96 =
+8x12) while ignoring the actual trap (missing months / original-plus-revised duplicates), and the
+"if you cannot X you have not understood Y" construction recurred across several. Rewrote all 45 so
+each names the concrete failure mode or consequence instead (Task 1.1 now points at gaps/duplicates;
+9.2 "advertising your result, not testing it"; Appendix C "a loaded gun aimed at your own learning").
+Same idempotent script, values only. GUIDE.pdf still 18 pages, 45 reminders, 0 em-dashes.
