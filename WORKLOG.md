@@ -191,7 +191,7 @@ Downloads are idempotent: each file is written under a temporary `.part` name an
 4. **Archive deletion** (section 6 of the inspection notebook) is now unblocked: verification has passed, so the 329 MB of ZIP archives is confirmed redundant against the extracted CSVs. Left as a deliberate manual step.
 5. **Confirm whether the geographic region** required for the phase-11 scenario panel should be derived from the trust postcode now captured in the reference table, or obtained separately. The RTT extracts already carry `Provider Parent Org Code`, which duplicates the ICB assignment; the reference table's contribution is the true geography.
 
-### 1.12 Working conventions adopted
+### 1.12 Working conventions adopted (continued below in Entry 2)
 
 Recorded in `CLAUDE.md` and enforced where enforcement is possible:
 
@@ -199,3 +199,93 @@ Recorded in `CLAUDE.md` and enforced where enforcement is possible:
 - Code is commented on a per-line basis; the reasoning behind non-obvious constructions is stated explicitly.
 - Long-running jobs are executed detached under `tmux` or `nohup`, never in a foreground shell, as the machine is accessed over SSH.
 - Claims are verified against the source before being relied upon, and the distinction between what was measured and what was inferred is maintained throughout.
+
+---
+
+# Entry 2 — 2026-07-24
+## Phase 1b: Validation, inspection, and the canonical-spec revision
+
+### 2.1 Scope discipline — one responsibility per notebook
+
+Agreed and now enforced by naming: each notebook does what its filename says and nothing else.
+
+| Notebook | Responsibility |
+|---|---|
+| `src/fetch_dataset.ipynb` | Acquisition only |
+| `src/inspect_dataset.ipynb` | Validation and inspection only — transforms nothing |
+| `src/data_processing.ipynb` | Transformation, including the April 2021 band reconciliation and panel construction |
+| `src/eda/EDA.ipynb` | Exploration of the processed table |
+
+The `>52`-week reconciliation logic was drafted into the inspection notebook and then **removed**: detecting and documenting the schema break is inspection, but implementing the handling rule is transformation. It now belongs to `data_processing.ipynb`. Recorded because the boundary is easy to blur and the drafting error is instructive.
+
+`README.md` was updated with the notebook responsibilities, the data layout, and the measured facts that constrain the build.
+
+### 2.2 Handling rule for the April 2021 band change (specification for `data_processing.ipynb`)
+
+Established here, implemented there.
+
+- **Post-2021:** sum the weekly bands from `Gt 52 To 53` through `Gt 103 To 104`, plus the `Gt 104 Weeks` tail, into a single >52 figure.
+- **Pre-2021:** take the single `Gt 52 Weeks` column.
+- **Never the reverse.** The early era cannot be disaggregated into weekly bands, so the coarser representation governs the joined series.
+- Select columns **by name with an explicit era branch**, never by position.
+- **Boundary assert required:** the reconciled >52 series must be continuous across 2021-03 → 2021-04, so that no step is introduced by the reconstruction itself.
+
+**The mitigating fact.** The agentic layer's headline metric is the >18-week count, and the 18→52 bands are identical in both eras. Measured: 53 band columns exist pre-2021 and 105 post-2021, of which the 52 bands below 52 weeks are common to both. So only the >52 tail requires reconciliation; everything the decision layer keys on is era-stable.
+
+### 2.3 Canonical spec revision (D-01): independents stay in the data
+
+**Superseded:** the extraction no longer filters to `R##` trust codes.
+
+The canonical table now holds **every provider**, trust and independent alike, with one added column `sector`, derived from ODS primary role (queried with retired organisations included) rather than from code shape. Sector filtering becomes a **downstream, one-line panel decision** rather than a data decision baked into the parquet.
+
+Federation clients remain **trusts only**, enforced by the balanced-panel rule rather than by a filter — and the data largely enforces it by itself, since few independents have full-window history. The independents' role is downstream: aggregate per-specialty, per-ICB context that the board sees as substitution capacity.
+
+**Sector decision, taken explicitly rather than left implicit:**
+
+- `sector = public` covers ODS primary roles **RO197 (NHS Trust) and RO107 (Care Trust)**. The design criterion is **allocability** — a public body with an ICB parent that capacity can be allocated to — not the role label. The two Care Trusts satisfy it.
+- The single **RO157 (non-NHS organisation) is grouped with the independents.**
+- RO172 and RO176 are independent sector.
+
+### 2.4 Trust census table
+
+Built as `data/reference/provider_census.csv`: one row per provider code **ever** seen in RTT, carrying name, ODS primary role and role name, active/retired status, first month, last month, months present, ICB parent, sector, and panel membership.
+
+Purpose: every provider count used anywhere in the project must be **derivable from this one table** rather than asserted in prose. The counts that previously floated around the project — reference ≈ 247 active, RTT-active 149, panel ~125, union 194 — are now all recomputed from it and printed side by side.
+
+### 2.5 Corrections to standing numbers, before they fossilised
+
+1. **The provider universe is 653 codes across the window, not 517.** 517 was one month's reporters (January 2026). The census and every canonical build must run on the 653.
+2. **Roster arithmetic re-derived, not inherited.** The latest month has 24 treatment-function codes = 23 real departments + `C_999`, and the 23 comprise **18 named specialties + 5 X-family "Other" buckets**. An earlier build's "18 stable" conflated some X-family codes era-dependently. The notebook now derives the roster fresh from first/last-appearance — candidate set = named specialties spanning all 96 months — and prints every excluded code with its reason and month range. The resulting count is whatever the data says; it is not carried over from any previous build.
+3. **214, not 221**, organisations carry an ICB code — see §1.8d. Cause was a naive `awk -F,` split across quoted fields containing commas.
+
+### 2.6 C_999 — hardened from a sample to a standing assert
+
+§1.8 proved the aggregate identity on one month. It is now asserted across **all 96 months × 5 part types × every provider**, with a hard `assert` that halts the notebook on any mismatch, so future schema drift cannot silently break the exclusion.
+
+The headline number is worth stating plainly because it is the difference between a dropped row and a doubled national statistic: summing `Part_2` without excluding `C_999` gives an England waiting list of **14,375,354** against the correct **7,187,677** — exactly **2.00×**.
+
+### 2.7 `Part_3` has no waiting-time bands — expected, not a defect
+
+New referrals have waited ~0 weeks by definition, so waiting-time bands are meaningless for that part type. Demand is the `Total All` column alone; the bands only ever feed the backlog and agentic side. Recorded explicitly so that nobody later "fixes" it.
+
+### 2.8 Blocking gate: verify the independent sector against ground truth
+
+**Status: implemented in `inspect_dataset.ipynb`, execution in progress.** No phase-2 build proceeds until this is complete and reviewed.
+
+The gate establishes with numbers and plots whether independent rows are genuine demand or a reporting artefact:
+
+- **(a)** Do independents report real `Part_3` new-referral volumes with plausible monthly dynamics, or only completed/incomplete pathways? Measured as the population rate of each part type per provider-month by sector, plus independent demand totals, zero-months, and the correlation of month-on-month change against the public sector.
+- **(b)** Independent **share of pathways over time, per specialty**, with a fitted slope in percentage points per year; any specialty drifting more than 0.5pp/year is flagged as trending rather than stable. Ophthalmology is expected to trend, given the growth of private cataract provision — stated in advance so a confirmation cannot be read as post-hoc.
+- **(c)** Reporting behaviour by sector: entry/exit churn by year, months present, gaps inside a provider's own reporting window, ODS-retirement rate, and systematic differences in how the five part types are populated.
+- **(d)** National totals **with and without** independents, so it is known exactly which published figure the table reproduces. Four variants are computed. Confirmation against the NHS England press notice for the month is logged as OPEN — not claimed.
+
+All results are logged as findings with F-ids, negative results included, and written to `data/reference/findings.csv`.
+
+**Contingency, decided in advance:** if independent reporting proves partial, erratic, or structurally different in a way that contaminates the table, the `sector` column allows it to be quarantined in one line. That decision will be made on the evidence produced here, not on assumption.
+
+### 2.9 Open items
+
+1. **Complete and review the independents gate** (§2.8). Blocking for phase 2.
+2. Confirm the (d) reconciliation against the published NHS England figure for the month.
+3. Build `src/data_processing.ipynb` to the specification in §2.2 and §2.3.
+4. Carry forward the geography question from §1.11.

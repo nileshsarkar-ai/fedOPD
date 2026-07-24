@@ -30,3 +30,61 @@ it, detecting the collapse, escalating through the recovery, and normalising aft
 The result is a system that demonstrates, on public data and real institutions, that
 privacy-preserving federation plus transparent agentic decision-making can drive
 operational efficiency in a multi-site health system.
+
+---
+
+## Repository
+
+Each notebook is named for exactly what it does, and does only that.
+
+| Notebook | Responsibility |
+|---|---|
+| `src/fetch_dataset.ipynb` | **Acquisition only.** Scrapes the eight NHS RTT financial-year pages, downloads the 96 monthly Full CSV archives, extracts them, builds the provider→ICB reference from the ODS ORD API, and fetches the KH03 bed workbooks. Idempotent: reruns resume rather than restart. |
+| `src/inspect_dataset.ipynb` | **Validation and inspection only.** Proves the download is intact, then establishes what is in the data — provider census, department roster, hierarchy, per-region and per-department averages, and the blocking verification gate on the independent sector. Transforms nothing. |
+| `src/data_processing.ipynb` | **Transformation.** Builds the canonical table from the raw monthly files, including the April 2021 waiting-time band reconciliation and the panel construction. |
+| `src/eda/EDA.ipynb` | Exploratory analysis on the processed table. |
+
+### Data layout
+
+```
+data/
+  rtt_csv/      96 monthly RTT full extracts (~7.7 GB) — the source of truth
+  reference/    provider_census.csv, trust_icb.csv, provider_types.csv,
+                monthly_summary.csv, tf_month_demand.csv, findings.csv
+  kh03/         61 quarterly overnight bed workbooks
+```
+
+The downloaded archives are deleted once `inspect_dataset.ipynb` has CRC-verified them
+against the extracted files; the CSVs are the only copy retained.
+
+### Facts about the data that shape the build
+
+These are measured in `inspect_dataset.ipynb`, not assumed. Full detail, with the numbers
+and the reasoning, is in `WORKLOG.md`.
+
+- **`C_999` is an aggregate row, not a department.** The `Treatment Function Code` column
+  contains a code named "Total" that is the exact sum of the other specialties, published
+  as extra rows in the same table. It is verified exact across every month, part type and
+  provider. Failing to exclude it doubles the England waiting list.
+- **The schema changes in April 2021.** 69 columns before, 121 after: the single
+  `Gt 52 Weeks` column is replaced by weekly bands running to 104 weeks. The bands below
+  52 weeks are identical in both eras, so the >18-week metric the agentic layer uses is
+  era-stable; only the >52 tail needs reconciling, and that reconciliation belongs to
+  `data_processing.ipynb`.
+- **`Part_3` carries no waiting-time bands, by design** — a new referral has waited ~0
+  weeks. Demand is the `Total All` column alone.
+- **The RTT return covers independent-sector providers as well as NHS trusts.** The
+  canonical table keeps every provider with a `sector` column; sector filtering is a
+  downstream panel decision, not baked into the data. `sector = public` covers ODS primary
+  roles RO197 (NHS Trust) and RO107 (Care Trust), the criterion being allocability rather
+  than the role label.
+- **Every provider count in the project is derivable from `provider_census.csv`** — one
+  row per provider code ever seen in RTT, with ODS role, active/retired status, first and
+  last month, months present, ICB parent, sector and panel membership.
+
+### Environment
+
+Python 3.10 virtualenv at `fed_learning/` (`torch 2.13.0+cu130`, `flwr`, pandas stack,
+Jupyter kernel `fed_learning (CUDA)`). The GPU is an A100 80GB reachable only through a
+MIG instance. Long jobs run detached under `tmux`. See `CLAUDE.md` for working
+conventions.
