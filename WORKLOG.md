@@ -764,3 +764,106 @@ Rewritten for structure rather than content: the project prose was six unbroken 
 - **F-17** (vacuous integrity `PASS` flag) still open from Entry 7.
 - **KH03 has no consumer.** Decide whether the bed data enters the model or leaves the repository.
 - The `inspect_dataset.ipynb` comment gap (§8.1) is unchanged.
+
+---
+
+# Entry 9 — 2026-07-25
+## Column dossier, the escalation assumption tested, and three corrections including two of mine
+
+## 9.1 The dossier — a standing rule for column fate
+
+`inspect_dataset.ipynb` gains **section J**, which characterises every column and decides nothing; the keep/drop decision stays in `data_processing.ipynb`. Three tests in order:
+
+1. **Is it populated?** blank, constant or rounding-error columns decide nothing.
+2. **Is it a label or an axis?** A column taking exactly one value per `provider × treatment function × part type` is *functionally determined* by keys already carried — a label, and F-11 proved labels are unstable while codes are not. More than one value means a genuine dimension, and collapsing it is a loss of information requiring justification.
+3. **Does the goal consume it?** measured against the README's named state vector.
+
+Test 2 is the sharp one: it converts "is this redundant?" from a judgement into a query. Adopted as a convention.
+
+## 9.2 F-21 — the commissioner columns are the only real second axis
+
+Of the 16 descriptive columns, every one is a key or a label **except the four commissioner columns**. So the earlier justification for dropping them — "a second hierarchy, orthogonal to ours" — was a hand-wave: it is a real dimension being summed over, not redundancy being removed.
+
+*Defect in the finding as first emitted:* the test was run over all 16 non-band columns, so `Total`, `Total All` and `Patients with unknown clock start date` were also reported as "axes". They are measures, not descriptive columns — of course they vary within a key that has several commissioner rows. The finding overstates: **4** columns are the real answer, not 7. To be corrected in the cell.
+
+## 9.3 F-22 — the trust → ICB escalation tier is sound, with a nameable exception
+
+This was never a column question. The README escalates trust → ICB, which is only sound if an ICB commissions the work its trusts deliver. Measured for the first time:
+
+| | |
+|---|---|
+| all new referrals commissioned within the provider's own ICB | **84.3%** |
+| median per public provider | **91.9%** |
+| public providers below 50% | **11 of 150** |
+
+The low tail is not noise and not a data defect — it is **national specialist centres**, exactly as predicted before the number was seen:
+
+| Trust | own-ICB share |
+|---|---|
+| Clatterbridge Cancer Centre | 0.0% |
+| Central and North West London | 0.0% |
+| Moorfields Eye Hospital | **13.1%** |
+| The Royal Marsden | 14.3% |
+| Great Ormond Street | 15.1% |
+| Royal National Orthopaedic | 18.5% |
+| Alder Hey Children's | 23.0% |
+| Royal Brompton & Harefield | 26.0% |
+
+*Decision:* option (a) plus the retained measurement. The commissioner axis is collapsed, escalation is modelled trust → parent ICB as a **stated approximation, weakest for specialist centres**, and `own_icb_share` is retained per provider in `provider_dim.csv` so a reader can see how literally to take any given trust's escalation. This matters for the ophthalmology story specifically: Moorfields is a flagship for the C_130 finding and is one of the least ICB-aligned trusts in the country.
+
+## 9.4 F-23 — `Total All` is the only universal headline column, proved on the full column set
+
+`Total` is identically zero for `Part_2`, `Part_2A` and `Part_3`; for the completed parts it is `Total All` minus the unknown-clock-start count, which is **0.0066%** of all activity and already inside `Total All`. Bands sum to `Total All` exactly for `Part_2`/`Part_2A`, to 0.999× for the completed parts (unknown-start patients are unbanded), and to **zero for `Part_3`** — F-03 reconfirmed across every column rather than by inspection of one part type.
+
+## 9.5 F-09 was wrong — correction
+
+> ~~F-09: "the balanced-panel rule performs most of the sector filtering by itself, as predicted."~~
+
+It does not. On the census basis (months carrying a `Part_3` row), **126 independent providers span all 96 months — exactly as many as the 126 public trusts.** The rule removes 331 of 457 independents and leaves 126; the panel is public because an **explicit sector filter** does that work, not the balance rule.
+
+The substance matters: the owner's criterion — "if independents report the same data, include them" — is satisfied by 126 providers, so the question is live rather than settled by the data. What the data also says is that they are not like trusts: ~1/20th the scale, a median of 11 of 19 departments, 86.5% vs 98.5% of cells carrying non-zero demand, and 46 of 47 `Part_2A > Part_2` anomalies (F-16) are theirs.
+
+## 9.6 My own error — the "4 missing full-history trusts" was an artefact of my definition
+
+Reported last turn: *"4 public providers with full 96-month history (RAE, RBQ, RH5, RW5) are not in the panel — the panel rule uses a different condition."*
+
+Wrong, and the fault was mine. I counted months as **any row in the canonical table**; the census counts months carrying a **demand row**. RAE appears in 96 months but has `Part_3` rows in only 74 of them. On the census's own basis, `public & months_present == 96` reproduces `panel_member` **exactly, 126 = 126**. The panel rule is consistent and needed no diagnosis.
+
+The correction is not cosmetic — it also revises §9.5 from 169 independents to **126**, because that count was made on the same wrong basis. The lesson is the one the census exists to enforce: *every provider count comes from `provider_census.csv`, on its stated definition; a count computed ad hoc from another table is a different question wearing the same words.*
+
+## 9.7 D-07 — `panel_member` split into two flags
+
+`panel_member` was doing two jobs: "trains the forecaster" and "can receive an allocation". They separate on the axis the README already draws — capacity is **allocated to** NHS trusts and **purchased from** independents.
+
+- **`fl_client`** — federated training client. Currently the 126 trusts.
+- **`allocatable`** — can receive NHS capacity. `sector == public`. Independents are `False` by construction: an ICB can commission from a private provider, it cannot direct NHS staff and capital into one.
+
+Neither implies the other, which is what makes "126 vs 126+126 independents" a runnable phase-3 ablation rather than a design argument.
+
+*Ablation pre-registration, recorded now so the result cannot be read post-hoc:* scored on the **fixed 126-trust series in both arms** (adding clients changes the metric population as well as the training set); aggregation weighting **pinned to n-samples**, so the test is inclusion under the deployed scheme rather than a weighting artefact; and the hypothesis registered **against the previous refutation** — the earlier pre-registered "FL rescues the small data-poor client" was refuted, with gains in mid-size clients and the thinnest better off local. These providers are thinner still, so prior evidence predicts little gain and little contribution. Either outcome is a result; framing them in advance as the method's best test cases would repeat exactly the error that pre-registration exists to prevent. If they enter, `sector` becomes a **model input**, not just a table column, because independent `Part_3` is partly commissioned flow rather than organic demand and F-08 already showed the mix is non-stationary.
+
+## 9.8 The backfill leak, fixed properly
+
+Found by re-reading my own output rather than by a test: `icb` came back with **47 distinct values** for a country with 42 ICBs. Cause: the fallback was applied **per row**, so a provider ODS could not place took its own reported parent each month — a region code before 2020, an ICB after. Eleven region codes (`Q71`, `Q72`, `Q74`–`Q79`, `Q85`, `Q86`, `QRV`) entered the escalation key, and `TAD` was Q72-the-region in 2018–19 and QWO-the-ICB from 2021.
+
+This is the **third instance of one failure class in two weeks** — an organisation-level attribute resolved per row from the monthly files: names (F-11), parent organisations (F-18), now the backfill. Rule adopted, and written into the notebook: *attributes of an organisation resolve once into `provider_dim` and are joined from there; nothing entity-level is ever derived per-row from the monthly files.*
+
+Fix: the fallback is the provider's most recent post-2021 reported parent, **accepted only if that code is a known ICB**, giving one fixed value per provider. Two asserts, because either alone is insufficient:
+
+- **6a** — `icb` has exactly one value per provider across all months.
+- **6b** — no resolved value lies outside the ODS ICB set. 6a alone would pass if a provider were *consistently* backfilled with a region code, which is the leak that actually occurred.
+
+## 9.9 Contract frozen at 15 columns
+
+`waiting_gt52` **retained**, and the README amended rather than the contract. Three consumers, none of which were stated: the agent's classifier cannot separate "behind" (breaching 18 weeks) from "in crisis" (a year-plus tail) on `waiting_gt18` alone, since two services with identical breach counts can have very different tails, and the two states demand different asks; the `>52` series is one of the two reconstructions **Assert 2 guards**, so it is load-bearing in the verification layer regardless; and 52 weeks is the NHS's own elective-recovery target line, so severity measured there maps onto a real policy standard rather than an invented threshold. The contract's rule — a column earns its place only if the README's system consumes it — was being violated by a column that deserves its place, so the README gains the line.
+
+`fl_client` and `allocatable` replace `panel_member`, taking the table to **15 columns**. `own_icb_share` is retained in `provider_dim.csv`.
+
+## 9.10 Still open
+
+- **F-01 has mutated** — the stored finding reads "archives CRC-clean **(0 tested)**" because the notebook was re-run after deletion. The original verification happened; the artefact no longer evidences it. Fix: pin the original CRC log and write a **sha256 manifest of the extracted CSVs**, which decision 5 required before deletion and which was never produced.
+- **Cell 27 overclaim** — "largest/smallest ratio 1,435×" is max/min over 196 public providers including a 2-month provider and a 22-referrals/month minnow, the same tenure-confounded overclaim the EDA revision purged. Must be a p90/p10 spread before it reaches any report.
+- **F-21 text** overstates (§9.2) — 4 axis columns, not 7.
+- **F-14 needs an evaluation guard, not a note.** 524 all-zero series in the forecast path would *fraudulently improve* macro-sMAPE, since sMAPE(0,0) → 0 drags the mean down, as well as wasting training. Phase 3 must implement an `offered` mask in the windowing **and** in the metric's series set.
+- **The ~26% post-2021 ICB disagreement** between file and ODS is asserted as real drift and never chased on a sample of disagreeing trusts.
+- `inspect_dataset.ipynb` comments unchanged at 28% against the 78% `fetch_dataset.ipynb` demonstrates.

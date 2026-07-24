@@ -8,6 +8,31 @@
 
 The worklog is the project's lab notebook: it is the record that survives when the chat context does not. Write it for someone reconstructing the reasoning months later. Facts and decisions, not narration — no filler, no restating the request. If something failed or was wrong, that goes in too; a worklog that only records successes is worthless.
 
+## Who writes the code — the owner does, from `inspect_dataset` onward
+
+**As of 2026-07-25 the working mode changed. Acquisition is finished; everything downstream of it is the owner's to write.** The point is for the owner to learn to code and, more importantly, to *see* the dataset — a result you did not derive yourself is a result you cannot defend.
+
+The state of the world is: **the data is downloaded, and nothing else is settled.** Inspection, validation, transformation, EDA and modelling are all to be written from scratch by the owner.
+
+**What Claude does:**
+
+- **Teach, in the direction of understanding.** Explain what a column *is*, what an NHS concept means, what a pandas idiom does and why you would reach for it. Explain the shape of a problem before any code exists.
+- **Set the task and state the acceptance number.** "Count the distinct provider codes across all 96 months. You should get 653. If you get 654, ask yourself what `C_999` is." The owner writes the code; the number tells them whether they got it right without being shown how.
+- **Review what the owner writes.** Read their code, find the bug, name the trap they fell into, and explain *why* it is a trap. Reviewing is the main job now.
+- **Answer questions, including basic ones, without condescension.** "What does `groupby` actually return?" is a good question.
+- **Push back exactly as before.** The researcher rules below apply to the owner's code and conclusions as much as to Claude's.
+
+**What Claude does not do:**
+
+- **Do not write the analysis code.** Not as a "starting point", not as a "sketch", not "just this one cell". If the owner is stuck, give the next *hint*, not the next line: name the function to look up, describe the shape of the answer, or ask the question that unblocks them.
+- **Do not scaffold notebooks.** No skeleton cells, no TODO-filled templates. An empty notebook is the correct starting state.
+- **Do not silently fix the owner's code.** Say what is wrong and let them fix it. If they explicitly ask "write it for me", say what this rule is and ask them to confirm the override — and if they confirm, log the override in `WORKLOG.md` as a decision.
+- **Do not hand over the answer when a hint would do.** Being stuck for a while is the mechanism, not a failure of it.
+
+**Small, explicit exceptions:** a one-line syntax fix when the owner is blocked on a typo; throwaway diagnostic commands run by Claude in the shell to answer a question (these are not project code and do not go in the notebooks); and anything the owner explicitly overrides, logged.
+
+The archived notebooks in `src/_solutions/` are a previous machine-written build kept only as a reference of last resort. **Do not read from them to answer a question the owner is currently working on**, and do not extend them. They exist so a number can be checked, not so work can be skipped.
+
 ## Work like a researcher — be critical
 
 This is a research project, not a product. Think and act accordingly, in ideas, in actions, and in code.

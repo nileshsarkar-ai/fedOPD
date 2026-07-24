@@ -1,0 +1,95 @@
+[NbConvertApp] Converting notebook data_processing.ipynb to notebook
+[IPKernelApp] WARNING | Kernel is running over TCP without encryption. All communication (including code and outputs) is sent in plain text and is susceptible to eavesdropping. Use IPC transport or launch with kernel manager-provisioned CurveZMQ keys to enable transport encryption.
+Traceback (most recent call last):
+  File "/home/garima/fedOPD/src/../fed_learning/bin/jupyter-nbconvert", line 6, in <module>
+    sys.exit(main())
+  File "/home/garima/fedOPD/fed_learning/lib/python3.10/site-packages/jupyter_core/application.py", line 284, in launch_instance
+    super().launch_instance(argv=argv, **kwargs)
+  File "/home/garima/fedOPD/fed_learning/lib/python3.10/site-packages/traitlets/config/application.py", line 1082, in launch_instance
+    app.start()
+  File "/home/garima/fedOPD/fed_learning/lib/python3.10/site-packages/nbconvert/nbconvertapp.py", line 420, in start
+    self.convert_notebooks()
+  File "/home/garima/fedOPD/fed_learning/lib/python3.10/site-packages/nbconvert/nbconvertapp.py", line 597, in convert_notebooks
+    self.convert_single_notebook(notebook_filename)
+  File "/home/garima/fedOPD/fed_learning/lib/python3.10/site-packages/nbconvert/nbconvertapp.py", line 563, in convert_single_notebook
+    output, resources = self.export_single_notebook(
+  File "/home/garima/fedOPD/fed_learning/lib/python3.10/site-packages/nbconvert/nbconvertapp.py", line 487, in export_single_notebook
+    output, resources = self.exporter.from_filename(
+  File "/home/garima/fedOPD/fed_learning/lib/python3.10/site-packages/nbconvert/exporters/exporter.py", line 201, in from_filename
+    return self.from_file(f, resources=resources, **kw)
+  File "/home/garima/fedOPD/fed_learning/lib/python3.10/site-packages/nbconvert/exporters/exporter.py", line 220, in from_file
+    return self.from_notebook_node(
+  File "/home/garima/fedOPD/fed_learning/lib/python3.10/site-packages/nbconvert/exporters/notebook.py", line 36, in from_notebook_node
+    nb_copy, resources = super().from_notebook_node(nb, resources, **kw)
+  File "/home/garima/fedOPD/fed_learning/lib/python3.10/site-packages/nbconvert/exporters/exporter.py", line 154, in from_notebook_node
+    nb_copy, resources = self._preprocess(nb_copy, resources)
+  File "/home/garima/fedOPD/fed_learning/lib/python3.10/site-packages/nbconvert/exporters/exporter.py", line 353, in _preprocess
+    nbc, resc = preprocessor(nbc, resc)
+  File "/home/garima/fedOPD/fed_learning/lib/python3.10/site-packages/nbconvert/preprocessors/base.py", line 48, in __call__
+    return self.preprocess(nb, resources)
+  File "/home/garima/fedOPD/fed_learning/lib/python3.10/site-packages/nbconvert/preprocessors/execute.py", line 103, in preprocess
+    self.preprocess_cell(cell, resources, index)
+  File "/home/garima/fedOPD/fed_learning/lib/python3.10/site-packages/nbconvert/preprocessors/execute.py", line 124, in preprocess_cell
+    cell = self.execute_cell(cell, index, store_history=True)
+  File "/home/garima/fedOPD/fed_learning/lib/python3.10/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
+    return loop.run_until_complete(inner)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/home/garima/fedOPD/fed_learning/lib/python3.10/site-packages/nbclient/client.py", line 1062, in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+  File "/home/garima/fedOPD/fed_learning/lib/python3.10/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
+    raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+------------------
+import re                                         # parse the month and band edges out of names
+from pathlib import Path                          # filesystem paths
+from datetime import datetime                     # sortable month keys
+
+import pandas as pd                               # all tabular work
+import matplotlib.pyplot as plt                   # the continuity plots
+
+DATA = Path("../data")
+RTT_CSV = DATA / "rtt_csv"                        # the 96 validated monthly files
+REF = DATA / "reference"                          # census + lookups from inspect_dataset
+OUT = DATA / "canonical"                          # everything this notebook produces
+OUT.mkdir(parents=True, exist_ok=True)            # no-op if it already exists
+
+AGG = "C_999"                                     # published aggregate row — never a department
+OTHER = "X_OTHER"                                 # our merged residual series
+ERA = datetime(2021, 4, 1)                        # first month of the post-change schema
+
+MONTHS = "JANUARY FEBRUARY MARCH APRIL MAY JUNE JULY AUGUST SEPTEMBER OCTOBER NOVEMBER DECEMBER".split()
+
+def month_of(name):
+    """'RTT-OCTOBER-2019-full-extract.csv' -> datetime(2019, 10, 1)."""
+    m = re.search(r"(" + "|".join(MONTHS) + r")-(\d{4})", name.upper())   # month word + year
+    return datetime(int(m.group(2)), MONTHS.index(m.group(1)) + 1, 1)     # index+1 = month number
+
+csvs = sorted(RTT_CSV.glob("*.csv"), key=lambda p: month_of(p.name))      # chronological order
+census = pd.read_csv(REF / "provider_census.csv")                        # built by inspect_dataset
+SECTOR = dict(zip(census.code, census.sector))                           # code -> public/independent
+ICB = dict(zip(census.code, census.icb_parent))                          # code -> ICB where one exists
+PANEL = set(census[census.fl_client].code)                            # the 126 balanced-panel trusts
+print(f"{len(csvs)} monthly files | {len(census)} providers | {len(PANEL)} panel trusts")
+------------------
+
+
+[0;31m---------------------------------------------------------------------------[0m
+[0;31mAttributeError[0m                            Traceback (most recent call last)
+[0;32m/tmp/ipykernel_2983671/3991402587.py[0m in [0;36m?[0;34m()[0m
+[1;32m     25[0m [0mcsvs[0m [0;34m=[0m [0msorted[0m[0;34m([0m[0mRTT_CSV[0m[0;34m.[0m[0mglob[0m[0;34m([0m[0;34m"*.csv"[0m[0;34m)[0m[0;34m,[0m [0mkey[0m[0;34m=[0m[0;32mlambda[0m [0mp[0m[0;34m:[0m [0mmonth_of[0m[0;34m([0m[0mp[0m[0;34m.[0m[0mname[0m[0;34m)[0m[0;34m)[0m      [0;31m# chronological order[0m[0;34m[0m[0;34m[0m[0m
+[1;32m     26[0m [0mcensus[0m [0;34m=[0m [0mpd[0m[0;34m.[0m[0mread_csv[0m[0;34m([0m[0mREF[0m [0;34m/[0m [0;34m"provider_census.csv"[0m[0;34m)[0m                        [0;31m# built by inspect_dataset[0m[0;34m[0m[0;34m[0m[0m
+[1;32m     27[0m [0mSECTOR[0m [0;34m=[0m [0mdict[0m[0;34m([0m[0mzip[0m[0;34m([0m[0mcensus[0m[0;34m.[0m[0mcode[0m[0;34m,[0m [0mcensus[0m[0;34m.[0m[0msector[0m[0;34m)[0m[0;34m)[0m                           [0;31m# code -> public/independent[0m[0;34m[0m[0;34m[0m[0m
+[1;32m     28[0m [0mICB[0m [0;34m=[0m [0mdict[0m[0;34m([0m[0mzip[0m[0;34m([0m[0mcensus[0m[0;34m.[0m[0mcode[0m[0;34m,[0m [0mcensus[0m[0;34m.[0m[0micb_parent[0m[0;34m)[0m[0;34m)[0m                          [0;31m# code -> ICB where one exists[0m[0;34m[0m[0;34m[0m[0m
+[0;32m---> 29[0;31m [0mPANEL[0m [0;34m=[0m [0mset[0m[0;34m([0m[0mcensus[0m[0;34m[[0m[0mcensus[0m[0;34m.[0m[0mfl_client[0m[0;34m][0m[0;34m.[0m[0mcode[0m[0;34m)[0m                            [0;31m# the 126 balanced-panel trusts[0m[0;34m[0m[0;34m[0m[0m
+[0m[1;32m     30[0m [0mprint[0m[0;34m([0m[0;34mf"{len(csvs)} monthly files | {len(census)} providers | {len(PANEL)} panel trusts"[0m[0;34m)[0m[0;34m[0m[0;34m[0m[0m
+
+[0;32m~/fedOPD/fed_learning/lib/python3.10/site-packages/pandas/core/generic.py[0m in [0;36m?[0;34m(self, name)[0m
+[1;32m   6317[0m             [0;32mand[0m [0mname[0m [0;32mnot[0m [0;32min[0m [0mself[0m[0;34m.[0m[0m_accessors[0m[0;34m[0m[0;34m[0m[0m
+[1;32m   6318[0m             [0;32mand[0m [0mself[0m[0;34m.[0m[0m_info_axis[0m[0;34m.[0m[0m_can_hold_identifiers_and_holds_name[0m[0;34m([0m[0mname[0m[0;34m)[0m[0;34m[0m[0;34m[0m[0m
+[1;32m   6319[0m         ):
+[1;32m   6320[0m             [0;32mreturn[0m [0mself[0m[0;34m[[0m[0mname[0m[0;34m][0m[0;34m[0m[0;34m[0m[0m
+[0;32m-> 6321[0;31m         [0;32mreturn[0m [0mobject[0m[0;34m.[0m[0m__getattribute__[0m[0;34m([0m[0mself[0m[0;34m,[0m [0mname[0m[0;34m)[0m[0;34m[0m[0;34m[0m[0m
+[0m
+[0;31mAttributeError[0m: 'DataFrame' object has no attribute 'fl_client'
+
