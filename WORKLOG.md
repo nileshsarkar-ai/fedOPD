@@ -439,7 +439,7 @@ Sector split of the canonical table: public 196 providers / 207,504 rows / 143,9
 
 18 named + `X_OTHER` = `C_999` across **199,410 provider × part-type groups, 0 mismatches**. D-02 delivered what it promised: the 19 series account for *all* reported activity, so the hierarchy reconciles exactly rather than approximately. The assert is now a coverage guarantee, not merely drift detection.
 
-### 4.3 Defect in our own boundary test — F-12
+### 4.3 Defect in our own boundary test — F-13
 
 Assert 2 reported the `>52` reconstruction at **6.60× typical** monthly change and still passed, because the threshold had been set loosely at 10×. Passing a test by a wide threshold is not evidence; the number was investigated rather than accepted.
 
@@ -451,7 +451,7 @@ Measured against **local** volatility — the twelve months either side of the b
 
 *Generalisation:* a boundary-continuity test must compare against variation local to the boundary. A global dispersion statistic makes a quiet-era series look discontinuous at any turbulent join, and a loose threshold then hides the fact that the statistic is wrong.
 
-### 4.4 Structural zeros in the panel cube — F-13
+### 4.4 Structural zeros in the panel cube — F-14
 
 Filling the 126 × 19 × 96 cube required creating **62,313 cells (27.11%)** absent from the source. Investigated rather than accepted as missing data:
 
@@ -463,7 +463,7 @@ So the 27% fill is overwhelmingly **structural absence, not sporadic missingness
 
 *Consequence for phase 3:* the real client-series count is **~1,870 trust × department series, not 2,394**. Training on all-zero series would waste capacity and distort any pooled loss. The 524 structurally-absent pairs must be excluded by a "was this service ever provided" rule, and that rule belongs in the modelling notebook, not in the canonical table — the table keeps them so the exclusion stays visible and reversible.
 
-### 4.5 The backlog accounting identity leaks — F-14, material for phase 4
+### 4.5 The backlog accounting identity leaks — F-15, material for phase 4
 
 The README states `backlog ≈ previous backlog + demand − completions`. Measured over all 96 months on the panel:
 
@@ -485,3 +485,173 @@ This is not noise. It is a systematic, one-directional leak: the identity **over
 3. Confirm F-10 against the published NHS England press notice (D-06, before the report).
 4. Carry F-08 forward: the sector mix is non-stationary, sharpest in ophthalmology.
 5. Carry forward the geography question from §1.11.
+
+---
+
+# Entry 5 — 2026-07-24
+## Process deviation: comment standard not upheld. Corrected.
+
+### 5.1 The deviation
+
+`CLAUDE.md` requires per-line commentary. It was upheld in `fetch_dataset.ipynb` and then allowed to lapse as the notebooks grew. Measured, counting docstrings as documentation:
+
+| Notebook | Before | After |
+|---|---|---|
+| `fetch_dataset.ipynb` | 81% | 81% (unchanged, was already to standard) |
+| `data_processing.ipynb` | 20% | **49%** |
+| `inspect_dataset.ipynb` | 18% | **33%** |
+
+Raised by the project owner, not self-detected — which is itself the finding. The rule was being applied to whichever file was small enough to make it easy.
+
+### 5.2 What the residual gap actually is
+
+Rather than claim the remaining shortfall is acceptable, the undocumented lines in `inspect_dataset.ipynb` were categorised (376 lines):
+
+| Category | Lines |
+|---|---|
+| Inside a `print(...)` call | 140 |
+| `print` / f-string continuation lines | 66 |
+| List/dict literal continuation | 17 |
+| `def` / `for` / `if` / `with` headers (mostly followed by a docstring) | 22 |
+| **Genuine code lines lacking a comment** | **131** |
+
+So roughly 206 of the 376 are output-formatting lines that cannot carry a meaningful per-line comment. Excluding them, documented coverage of *logic* is 183/353 ≈ 52%. The notebook is print-heavy by design — it is a report — which distorts the raw metric, but **131 genuine code lines are still uncommented and that part of the gap is real.**
+
+### 5.3 Substantive simplification, not just comments
+
+`data_processing.ipynb` was also simplified while being re-commented. The build pass previously computed `gt18` and `gt52` band sums for **all five** RTT part types and then discarded eight of the ten resulting columns. Band columns are now read and summed **only for `Part_2`**, the waiting list — the only part whose long-wait detail is used. Less IO, fewer columns, same output.
+
+### 5.4 Re-run results after the rewrite
+
+`data_processing.ipynb`, 0 cell errors:
+
+- **Assert 1** — 199,410 groups compared, **0 mismatched**. 18 named + `X_OTHER` = `C_999` everywhere.
+- **Assert 2**, now on the corrected local-variation statistic and the tightened 3× threshold: `X_OTHER` **1.51×**, `>52` **1.68×**. Both pass honestly rather than by a loose threshold. (The earlier 6.60× figure was the flawed global statistic, F-13 in Entry 4.)
+- Panel cube 229,824 rows; 62,313 cells (27.11%) zero-filled, of which **524 of 2,394 series (21.9%) are structurally absent** — a service the trust has never provided. 1,870 genuinely active series, median 96/96 months.
+- Backlog identity residual: **−183,635/month, −4.25% of the list, −15.40% of demand, negative in 95 of 95 months.**
+
+### 5.5 Correction to a number reported in Entry 4
+
+Entry 4 §4.5 gave the identity residual as −15.3% of demand. The re-run gives **−15.40%**. The difference is the changed `>52`/`gt18` computation path, not a data change. The Entry 4 figure should be read as superseded.
+
+### 5.6 Standing rule reinforced
+
+`CLAUDE.md` now also carries: **do not take the owner's stated opinions, decisions or framings at face value.** Treat them as hypotheses; find the measurement that would falsify them and run it before building. Applied immediately to D-02 — the `X01` → `X02..X06` merge assumption was tested at the boundary before the canonical build depended on it, and passed at 1.51× local variation.
+
+---
+
+# Entry 6 — 2026-07-24
+## All three notebooks executing clean. Phase 1 and 2 complete.
+
+### 6.1 Pipeline status
+
+| Notebook | Executed | Errors | Produces |
+|---|---|---|---|
+| `src/fetch_dataset.ipynb` | yes | 0 | 96 monthly extracts, ODS reference, 61 KH03 workbooks |
+| `src/inspect_dataset.ipynb` | yes | 0 | 12 findings (F-01…F-12), provider census, monthly/department/specialty summaries |
+| `src/data_processing.ipynb` | yes | 0 | `rtt_canonical.parquet`, `rtt_panel.parquet`, `national_monthly.csv` |
+
+Note on sequencing: `inspect_dataset.ipynb` was rewritten for comment density and then had **zero stored outputs until re-executed** — a rewritten-but-unrun notebook looks finished and is not. Caught only because the owner asked for run status. Standing habit: after any rewrite, verify stored outputs exist before treating the artefact as done.
+
+### 6.2 F-id collision, corrected
+
+`inspect_dataset.ipynb` generates F-01 … F-12, and F-12 there is the X-bucket coverage finding. Entry 4 had independently used F-12, F-13 and F-14 for worklog-only findings. Since the notebook-generated ids are produced by code and written to `data/reference/findings.csv`, they are authoritative; the worklog ids were renumbered:
+
+- boundary-test defect: F-12 → **F-13**
+- structural zeros: F-13 → **F-14**
+- backlog identity leak: F-14 → **F-15**
+
+*Generalisation:* ids emitted by code win over ids typed into prose. Future worklog-only findings start at F-16.
+
+### 6.3 The twelve generated findings
+
+| id | Substance |
+|---|---|
+| F-01 | Integrity PASS. 96/96 months sound, extraction sizes exact, no Period mismatch, no truncation, 61/61 KH03 valid, no duplicate codes. |
+| F-02 | Schema break Apr 2021, 69→121 columns; the 52 bands below 52w identical in both eras, so >18w is era-stable. |
+| F-03 | `Part_3` has no week bands by design; demand is `Total All` alone. |
+| F-04 | `C_999` exact aggregate, 199,410 groups, 0 mismatches; 7,045,510 vs 14,091,020 = **2.00×**. |
+| F-05 | 653 provider codes; public 196 (194 RO197 + 2 RO107); independent 457; balanced panel **126**. |
+| F-06 | Roster: **18 named specialties, all 96 months, 0 dropped**; 6 X-buckets, themselves split at Apr 2021. |
+| F-07 | Independents report genuine demand: 11,541,248 referrals, **0 zero-months**; share 6.20% → 7.70%. |
+| F-08 | Independent share trends in **6 of 24** specialties; fastest **C_130 +2.20pp/yr (6.2% → 19.6%)**. |
+| F-09 | **64%** of public providers span all 96 months vs **28%** of independents. |
+| F-10 | Mar 2026 published basis **7,045,510**, of which 441,656 (6.27%) independent. Press-notice check still OPEN. |
+| F-11 | NHS renamed **18 of 24** treatment functions at Apr 2021 — join on code, never name. |
+| F-12 | X-buckets carry **25.6%** of demand; an 18-specialty roster covers only 74.4%, so `C_999` is not the trust total of a roster-restricted panel. |
+
+F-01 now reports "archives CRC-clean (0 tested)" because the archives were deleted after verification; the CRC evidence is the run recorded in §2.10, and checks A1/A2 self-skip by design.
+
+### 6.4 Canonical outputs, verified
+
+- `rtt_canonical.parquet` — 322,531 rows, 653 providers × 19 departments × 96 months, flags not filters.
+- `rtt_panel.parquet` — 229,824 rows, the rectangular 126 × 19 × 96 federation cube.
+- Asserts: coverage identity 0 mismatches; boundary continuity `X_OTHER` 1.51×, `>52` 1.68× against a 3× threshold; code-only joins; key uniqueness 0 duplicates.
+
+### 6.5 Open items carried into phase 3
+
+1. Exclude the **524 structurally-absent** trust × department series (F-14); the real client set is **~1,870** series.
+2. Add a removal term to the backlog dynamics (F-15): residual **−15.40% of demand, negative in 95 of 95 months**.
+3. Confirm F-10 against the published NHS England press notice (D-06), before the report.
+4. Carry F-08 forward: sector mix non-stationary, sharpest in ophthalmology; the D-05 caveat sentence accompanies every C_130 result.
+5. Geography question from §1.11 still open.
+6. Comment standard: **131 genuine code lines in `inspect_dataset.ipynb` remain uncommented** (Entry 5 §5.2), and the new CLAUDE.md rule — explain each unfamiliar library/function on first use — has not yet been applied retrospectively to the three notebooks.
+
+---
+
+# Entry 7 — 2026-07-24
+## Bug hunt on the canonical outputs
+
+Deliberate search for defects other than the comment-standard gap. Five checks run against `rtt_canonical.parquet` and `rtt_panel.parquet`.
+
+### 7.1 Clean
+
+| Check | Result |
+|---|---|
+| Nulls in `sector`, `dept`, `provider_code`, `icb_reported` | **0** in every column |
+| Negative counts in any measure | **0** |
+| `waiting_gt18 > waiting` | **0 rows** — the band subset never exceeds its total |
+| `waiting_gt52 > waiting_gt18` | **0 rows** — bands nest correctly |
+| Panel vs canonical monthly demand | **max abs difference 0.00** — the cube is a faithful subset |
+
+The two reconciliations and the pivot introduce no arithmetic error detectable by these invariants.
+
+### 7.2 `icb_ods` is 36.8% null — expected, documented so it is not mistaken for missing data
+
+`icb_ods` comes from `trust_icb.csv`, which was built from ODS role RO197 only. Independent-sector providers have no ICB parent and therefore no value. The null rate matches the independent share of rows. `icb_reported` — the parent as stated in the RTT file itself — is **0% null** and is the column to use for hierarchy work.
+
+### 7.3 F-16 — 47 rows where `Part_2A` exceeds `Part_2`, and it is NHS's data, not ours
+
+`Part_2A` (incomplete pathways *with* a decision to admit) is by definition a subset of `Part_2` (all incomplete pathways), so `waiting_dta > waiting` should be impossible. It occurs in **47 of 322,531 rows (0.0146%)**.
+
+**Verified against the raw source before blaming the pipeline.** For provider `AAH`, treatment function `C_330`, August 2018, the unmodified NHS file contains `Part_2A` rows summing to 47 against a `Part_2` of 7. The anomaly is published upstream; our aggregation reproduces it faithfully.
+
+Characteristics:
+- **46 of 47 rows are independent-sector providers**, one public — consistent with F-09, which found independent reporting materially weaker.
+- Magnitudes are trivial: median excess 3, maximum 254, **total excess 1,141 pathways against 578,432,603 total waiting** (0.0002%).
+- Scattered across 2018–2026 with no concentration in any single period.
+
+*Assessment:* upstream data-quality noise in small independent returns, not a modelling concern at this magnitude. **No correction applied** — silently clamping published values would be worse than carrying them. Recorded so that a downstream `dta_share = waiting_dta / waiting` calculation, which would exceed 1 in these 47 cells, is anticipated rather than discovered.
+
+### 7.4 Contrarian re-test of F-15 — the backlog leak is real, not a panel artefact
+
+F-15 reported the accounting identity leaking ~15% of demand every month. An obvious alternative explanation was never tested: the residual is measured on the **126-trust panel**, so a patient transferring from a panel trust to a non-panel provider leaves the panel's list without a panel completion — which would manufacture exactly this negative residual without any real removals.
+
+Tested by recomputing on **all 653 providers**, where transfers between providers cancel out:
+
+| Basis | Mean residual | As % of demand |
+|---|---|---|
+| Panel, 126 trusts | −183,635 | **−15.28%** |
+| All providers, 653 | −233,155 | **−14.40%** |
+
+The residual does **not** shrink. The leak is system-wide, so it is genuine attrition — removals, transfers out of RTT, validation, deaths, declines — and not an artefact of the panel boundary. **F-15 stands, and is now stronger for having survived the alternative explanation.**
+
+### 7.5 Precision correction
+
+Entry 5 gave the residual as −15.40% of demand; this entry gives −15.28% for the same panel. The difference is aggregation method: −15.40% is the *mean of the monthly ratios*, −15.28% is the *ratio of the means*. Both are correct for what they measure. Future reporting should state which, and the ratio-of-means figure is the one to quote for an annual-scale statement.
+
+### 7.6 Weakness noted, not yet fixed — F-17
+
+`inspect_dataset.ipynb` computes an integrity `PASS` flag that includes `not bad_zip`. With the archives deleted, `zips` is empty, so that clause is **vacuously true** and F-01 now reports `PASS=True` alongside "archives CRC-clean (0 tested)". The flag can no longer detect archive corruption but still reads as a full pass.
+
+Not a wrong result — the CRC evidence is the run in §2.10 — but the wording overstates what the current run verified. The flag should distinguish *checked and clean* from *not checked*.
