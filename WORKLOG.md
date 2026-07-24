@@ -655,3 +655,112 @@ Entry 5 gave the residual as −15.40% of demand; this entry gives −15.28% for
 `inspect_dataset.ipynb` computes an integrity `PASS` flag that includes `not bad_zip`. With the archives deleted, `zips` is empty, so that clause is **vacuously true** and F-01 now reports `PASS=True` alongside "archives CRC-clean (0 tested)". The flag can no longer detect archive corruption but still reads as a full pass.
 
 Not a wrong result — the CRC evidence is the run in §2.10 — but the wording overstates what the current run verified. The flag should distinguish *checked and clean* from *not checked*.
+
+---
+
+# Entry 8 — 2026-07-24
+## Notebook audit against CLAUDE.md, and the column contract
+
+Two questions asked: do the three `src/` notebooks obey CLAUDE.md and do what was requested; and can `data_processing.ipynb` be taken further by dropping columns that earn nothing and merging the RTT files into one table. Both answered by measurement, and one genuine defect found in the process.
+
+## 8.1 Audit — rule adherence
+
+| Rule | fetch_dataset | inspect_dataset | data_processing |
+|---|---|---|---|
+| Notebook, not script | yes | yes | yes |
+| No `try`/`except`/retry/logging | **0 occurrences** | **0** | **0** |
+| Fail-loud asserts instead | n/a | 1 | 3 → **6** |
+| Per-line comments | 88 code lines, 19 uncommented (**78%**) | 526 lines, 379 uncommented (**28%**) | 209 lines, 122 uncommented (**42%**) |
+| Executed with stored outputs | 6/7 cells | 30/30 | 12/12 |
+
+No production-style error handling anywhere — the ban holds. The comment standard does not: `inspect_dataset.ipynb` is still the weak notebook at 28% trailing-comment coverage, unchanged from Entry 5. (The raw count overstates the gap — continuation lines inside multi-line expressions cannot carry a trailing comment — but the direction is right and the gap is real.)
+
+## 8.2 Audit — did each notebook do what was asked
+
+- **fetch_dataset** — yes. Three datasets, correct folders, resumable downloads, ODS reference built from the live API rather than the 403-ing static file.
+- **inspect_dataset** — yes for validation, inventory, `C_999`, the provider census, the roster, the independent-sector gate. **Two defects found in section G** (below). Section I (KH03) is four lines: the workbooks are counted and nothing else. KH03 has never been joined to anything and no README component consumes it — it is currently dead weight, and should either be given a role or dropped from the acquisition.
+- **data_processing** — yes for the era reconciliations, the coverage identity, the panel and the backlog residual. Extended this entry.
+
+## 8.3 F-18 — the "per region" averages in section G are fragmented, and the entity is not stable
+
+Section G groups public-provider demand by `["Provider Parent Org Code", "Provider Parent Name"]` and reports **111 regions**. England has 7 NHS regions and 42 ICBs. Measured on `provider_month_demand.csv`, public providers only:
+
+| | |
+|---|---|
+| groups by code **and** name | **111** |
+| distinct parent **codes** | **56** |
+| parent codes carrying more than one name | **51 of 56** |
+| median months spanned per code+name group | **27 of 96** |
+
+This is **exactly the F-11 trap on a different axis**. F-11 established that NHS renames entities while keeping codes stable, and that every join must therefore be on code. The fix was applied to treatment functions and never carried across to the provider parent. Consequence: each real organisation appears two or more times, and `avg_per_month = total_demand / months` is computed over a ~27-month fragment rather than the window, so every figure in the section-G region table is wrong.
+
+Grouping by code alone would fix the fragmentation but **not** the deeper problem — see F-20.
+
+## 8.4 F-19 — the department averages predate the X_OTHER merge
+
+The same section reports "avg new referrals per department per month: 83,880" over 24 treatment function codes, with `X01` (36 months) and `X02`–`X06` (60 months) appearing as six separate departments alongside the 18 real specialties. The canonical universe is **19 series**, not 24, and the six X codes are two eras of one thing. The averages section was written before D-02 and never revisited. The named-specialty rows are unaffected; the X rows and the mean across departments are not comparable to anything downstream.
+
+## 8.5 F-20 — `Provider Parent Org Code` is not an ICB, and cannot be the escalation key
+
+The README's decision layer escalates trust → ICB → national, so it needs a stable ICB per trust. The obvious candidate is the parent code stated in the RTT file. It fails. Agreement against `icb_ods` (the ODS `RE5` "is commissioned by" parent), public providers only:
+
+| Year | rows | distinct reported parents | agreement with ODS |
+|---|---|---|---|
+| 2018 | 19,205 | 14 | **0.0%** |
+| 2019 | 25,971 | 14 | **0.0%** |
+| 2020 | 25,981 | 56 | 56.2% |
+| 2021 | 25,815 | 42 | 74.2% |
+| 2022 | 25,610 | 42 | 73.8% |
+| 2023–2026 | ~81,400 | 42 | 72.8–74.1% |
+
+The 2018–19 rows are not a bad ICB — they are **NHS regions**, a different level of the hierarchy, which is why agreement is exactly zero and there are only 14 of them. 2020 is the transition year (56 values). From 2021 the file names 42 ICBs and still disagrees with ODS in ~26% of rows.
+
+*Decision:* the canonical table carries a single resolved `icb`, taken from ODS and backfilled from the reported parent only where ODS has no answer — one public provider, `TAD` (Bradford District Care NHS FT, the RO107 care trust), whose reported parent Q72 is a real ICB code. Asserted: **0 panel trusts without an ICB**. `icb_reported` and `icb_ods` leave the fact table and survive as provenance columns in `provider_dim.csv`.
+
+Note this makes the hierarchy **time-invariant by construction**: every month is attributed to the trust's present-day ICB. That is the right choice for an escalation simulation — the board that would receive a request today is today's board — but it is a modelling decision, not a property of the data, and any historical ICB-level statement must say so.
+
+## 8.6 The column contract — 121 raw columns to 14
+
+The request was "drop unnecessary columns, decided by whether the column contributes to the README's goals". Each drop is justified by a measurement now printed in the notebook, not by assertion.
+
+**Contrarian note on the framing:** "merge all the CSVs into one" was already done — `rtt_canonical.parquet` has been the merge of all 96 files since Entry 5. The work that remained was the contract, not the merge. A CSV copy is now written alongside for tools that cannot read parquet.
+
+### Dropped, and why
+
+| Dropped | Measurement |
+|---|---|
+| `Total` | Summed by part type, it is **identically zero** for `Part_2`, `Part_2A` and `Part_3` in both eras. Populated only for the two completed part types, where it equals `Total All` minus the unknown-clock-start count. `Total All` is the only headline column populated for all five part types — the choice made in Entry 5 is now proved rather than assumed. |
+| `Patients with unknown clock start date` | 0.0061% of `Total All` pre-2021, 0.0066% post, and already included in it. |
+| `Commissioner Org/Parent Code` + names | A second hierarchy (who pays), orthogonal to provider → ICB → national. The raw file is at provider × commissioner grain: **~145,000 rows/month collapse to ~16,000** provider × dept × part groups, a 8.8–9.6× multiplier. Assert 1 (full-coverage identity vs `C_999`) passes *after* the collapse, so nothing about provider totals is lost. |
+| `Provider Parent Name`, `Commissioner *Name`, `RTT Part Description`, `Treatment Function Name` | Labels for codes already carried, and F-11/F-18 show the labels are unstable while the codes are not. Carrying them is an active hazard. |
+| bands 0–18 weeks | Within-standard waits. The agent's state is the breach count. |
+| bands on `Part_1A/1B/2A/3` | `Part_3` has **0 of 29,155 rows** with any band populated (F-03 reconfirmed). For the completed parts the bands are realised wait — a plausible future feature, in no README state variable, dropped deliberately and recoverable from raw. |
+| `provider_name` | One value per code occupying 30 MB of a 170 MB in-memory table. Moved to `provider_dim.csv`. |
+| `icb_reported`, `icb_ods` | Superseded by `icb` (F-20); kept as provenance in `provider_dim.csv`. |
+| `in_roster` | Exactly `dept != X_OTHER`, verified. Two ways to state one fact is two ways to disagree. |
+
+`completed` is **kept** despite being exactly `admitted + nonadmitted`: it is a measure the README names directly. The rule adopted is *drop derivable flags, keep derived measures*.
+
+### Kept: 14 columns
+
+`month`, `provider_code`, `dept`, `sector`, `icb`, `panel_member`, `demand`, `completed_admitted`, `completed_nonadmitted`, `completed`, `waiting`, `waiting_gt18`, `waiting_gt52`, `waiting_dta`.
+
+Every one maps to a named consumer in the README — forecast target, throughput split, backlog stock, the 18-week standard, breach severity, the bed-linked admission queue, the substitution-capacity split, the escalation key, the client selector.
+
+## 8.7 New standing asserts
+
+Two added, taking the notebook from 4 to 6:
+
+5. **Hierarchy completeness** — 0 panel trusts without an ICB, or escalation has nowhere to go.
+6. **Round trip** — the written parquet is read back and must return the same shape with `month` still a datetime, because a written file that cannot be read is not an output.
+
+## 8.8 README
+
+Rewritten for structure rather than content: the project prose was six unbroken paragraphs. Now sectioned — problem, the two engines as a division-of-labour table, the RTT-concept → project-role mapping, the three baselines, bounded scope, repository, data layout, the canonical schema table, measured facts, environment. Notebook and worklog references are links. No claim was added that is not measured somewhere in `src/`.
+
+## 8.9 Open
+
+- **F-18 and F-19 are not yet fixed** — the defect is in `inspect_dataset.ipynb` section G, which was not in scope this turn. The region table there should not be quoted until it groups on code alone and, better, on the resolved `icb`.
+- **F-17** (vacuous integrity `PASS` flag) still open from Entry 7.
+- **KH03 has no consumer.** Decide whether the bed data enters the model or leaves the repository.
+- The `inspect_dataset.ipynb` comment gap (§8.1) is unchanged.
