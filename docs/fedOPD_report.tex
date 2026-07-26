@@ -598,16 +598,16 @@ average. Fine-tuning helped 45\% of sites and hurt 55\%. This is reported as it 
 \subsection{Two things that must not be read from that table}
 
 \textbf{Do not read ``pooling hurts''.} \texttt{central} came last, which would be a striking claim.
-It is almost certainly an artefact of unequal training budget: \texttt{central} receives 1.54m
-sample-updates, \texttt{fedavg} receives \textbf{4.63m} --- three times as many. The
-federation-versus-pooling comparison \emph{has not yet been made}, and the table must not be quoted as
-making it.
+At this point it was confounded: \texttt{central} received 1.54m sample-updates against
+\texttt{fedavg}'s \textbf{4.63m}, three times as many. Section 7 repeats the comparison with the
+budgets matched, and the answer changes character --- but not in the direction this table suggests.
 
 \textbf{There is a concrete, testable reason the network loses.} The validation window sits
 \textbf{0.53 standard deviations above the training mean} --- demand genuinely rose. The network is
 scaled by each series' \emph{training} mean, so it is anchored to a level the data has since left.
 The naive baseline is anchored to the \emph{last observed value} and gets that shift for free.
 Prediction, stated before testing: rescaling to the last observation should close much of the gap.
+Section 7 tests it.
 
 \begin{figure}[H]
 \centering
@@ -850,15 +850,224 @@ presented to the board together, not a first choice and a fallback.
 \end{itemize}
 
 % ============================================================================
+\section{Does any of it get better? Eleven configurations and seven policies}
+
+Sections 5 and 6 established one model configuration and one allocation rule. Neither had been
+compared with an alternative. This section varies both, and it closes the training-budget confound
+that Section 5 had to leave open.
+
+\keypoint{\textbf{Method note.} One factor at a time from a declared reference configuration ---
+\emph{not} a full grid. A cross-product of every option would be 54 runs, and reporting the best cell
+of 54 is selecting a result rather than measuring one. Every configuration run is reported below,
+including the ones that lose badly. One seed throughout. All scoring on the validation year; the test
+year is still sealed.}
+
+\subsection{Every method now gets the same training budget}
+
+Section 5's comparison gave FedAvg three times the gradient work of the pooled model. Here every method
+receives \textbf{30 epochs of work over its own data}: 15 rounds of 2 local epochs for the federated
+runs, 30 epochs for the pooled model, and 30 epochs for each per-site model.
+
+\subsection{Result}
+
+\begin{center}
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Configuration} & \textbf{MASE} & \textbf{RMSE} & \textbf{Within $R^2$} & \textbf{Prec. ``up''} & \textbf{$n$ up} \\
+\midrule
+anchoring: last\_value & 0.503 & 70.330 & $-0.500$ & 69.3\% & 482 \\
+\emph{reference}: mlp, train-mean, fedavg & 0.507 & 69.659 & $-0.488$ & 70.0\% & 387 \\
+algorithm: fedprox & 0.507 & 69.044 & $-0.513$ & 66.7\% & 402 \\
+\textbf{baseline: naive (repeat last value)} & \textbf{0.510} & 72.778 & $-0.667$ & 68.7\% & 549 \\
+features: + backlog + throughput & 0.533 & 71.926 & $-0.619$ & 57.9\% & 916 \\
+mode: local (matched budget) & 0.556 & 77.412 & $-0.802$ & 62.4\% & 370 \\
+mode: central (matched budget) & 0.603 & 87.909 & $-1.354$ & 66.4\% & 330 \\
+architecture: linear & 0.611 & 86.166 & $-1.183$ & 48.8\% & 557 \\
+anchoring: delta & 0.612 & 85.011 & $-1.138$ & \textbf{71.4\%} & 248 \\
+architecture: gru & 0.676 & 86.395 & $-1.286$ & 53.8\% & 480 \\
+algorithm: fedavgm & \textbf{2.159} & 265.349 & \textbf{$-24.965$} & 46.0\% & 1{,}970 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\keypoint{\textbf{Finding 5. The null of Section 5 was partly a training-length artefact.} The same
+architecture that scored 0.553 at 30 rounds scores \textbf{0.507} at 15 --- it was overtrained. Against
+the naive baseline's 0.510, the federated model is now \emph{level}, not behind.
+
+\textbf{But the gap is 0.003 at one seed, and that is noise.} The honest statement is that the null is
+\emph{softened, not overturned}. Anyone quoting ``the federated model beats the baseline'' off three
+thousandths would be overclaiming.}
+
+\subsection{Four results that do not depend on that margin}
+
+\textbf{Pooling still loses, and now the excuse is gone.} With budgets matched, \texttt{central} scores
+\textbf{0.603} against \texttt{fedavg}'s 0.507 and \texttt{local}'s 0.556 --- worse than \emph{both}.
+The budget explanation offered in Section 5 was insufficient. The mechanism is not established; the
+plausible one is that repeated averaging across 141 heterogeneous sites regularises, while a single
+pooled model with per-series scaling has the site-level structure scaled out of it. That is a
+hypothesis, and it rests on one seed.
+
+\textbf{Federation does beat going it alone} --- 0.507 against \texttt{local}'s 0.556, and 70.0\%
+against 62.4\% on the growth call. That is the clearest thing the federation buys.
+
+\textbf{Neither more nor less model capacity helps.} A linear model scores 0.611 and a GRU 0.676,
+against the two-layer network's 0.507. The null is not the obvious capacity artefact in either
+direction.
+
+\textbf{Server momentum destroys it.} FedAvgM at the standard 0.9 gives MASE \textbf{2.159} and a
+within-series $R^2$ of \textbf{$-24.965$}, calling ``up'' on 1{,}970 of roughly 1{,}980 services. Not a
+near-miss on tuning --- heavy-ball momentum is simply destructive at this client count.
+
+\keypoint{\textbf{Finding 6, and it is counter-intuitive. The unused measures hurt.} Adding backlog and
+throughput as input channels moves MASE from 0.507 to \textbf{0.533} and drops precision on the growth
+call from 70.0\% to \textbf{57.9\%}. The intuition that a long queue suppresses referrals, and a
+cleared one releases them, is strong --- and on this data it is wrong. They carry no usable signal
+about future demand and cost accuracy to include.}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/nb08_fig1.png}
+\caption{Every configuration on both metrics. Left: point accuracy against the naive baseline (dashed).
+Right: precision on the growth call against the base rate (dashed). Note that the two panels do not
+agree on an ordering --- \texttt{anchoring: delta} is among the worst on MASE and the best on the
+decision metric, which is the Section 6 result reappearing.}
+\end{figure}
+
+\subsection{Allocation policies, scored against hindsight}
+
+Seven policies for spending a fixed capacity budget, compared at five budget levels. Each policy sees
+only what was known on the decision date. They are scored against \textbf{hindsight}: using what each
+service's over-18-week count actually did over the horizon, which services genuinely needed capacity.
+
+\keypoint{\textbf{The metric had to be chosen carefully, and the first choice was wrong.} Histogram
+overlap with the hindsight target, and recall of realised need, both \emph{mechanically reward
+spreading} --- give every service a token amount and recall is 1.0 by construction. Leading on those
+would have reported the wrong winner. The metric used instead is \textbf{budget precision}: the share
+of the budget that landed on services whose queues actually grew. A \textbf{random} allocation scores
+\textbf{0.439}, and that is the only line worth reading against.}
+
+\begin{center}
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Policy (10\% budget)} & \textbf{Budget precision} & \textbf{vs random} & \textbf{Recall} & \textbf{Services funded} \\
+\midrule
+\texttt{equal} & \textbf{0.444} & $+0.005$ & 1.000 & 1{,}871 \\
+\texttt{proportional} \emph{(what 07 uses)} & 0.399 & $-0.040$ & 1.000 & 1{,}871 \\
+\texttt{severity\_first} & 0.396 & $-0.043$ & 0.026 & 30 \\
+\texttt{forecast\_led} & \textbf{0.390} & $-0.049$ & 0.250 & 426 \\
+\texttt{marginal\_benefit} & 0.183 & $-0.256$ & 0.037 & 144 \\
+\texttt{optimiser} & 0.181 & $-0.258$ & 0.042 & 158 \\
+\midrule
+\emph{random allocation} & \emph{0.439} & --- & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\keypoint{\textbf{Finding 7. No policy beats random targeting.} \texttt{equal} matches it to within
+noise ($+0.005$); everything that concentrates capacity is markedly worse, because concentrating
+policies aim at the largest and most-breached services and \emph{those are not the ones whose queues
+grow}. The proportional rule the decision layer currently uses scores 0.399 --- \emph{below} random.}
+
+\keypoint{\textbf{Finding 8, and it is the sharpest negative result in the project.} The
+\texttt{forecast\_led} policy --- allocate in proportion to the federated model's predicted growth ---
+scores \textbf{0.390}, below random. This is the payoff path of the entire system and it does not work.
+
+The reason is precise: the model predicts \textbf{demand growth}, and what determines who needed
+capacity is \textbf{breach growth}. Those are different quantities, and the 67\%-precision demand call
+from Section 6 does not transfer to the allocation question.
+
+This is a finding about the \emph{architecture}, not the model. The direction call is genuinely useful
+for deciding whether to expand a service over years, which is what the decision rule uses it for. It is
+not useful for deciding where next month's spare capacity goes, and the system as designed assumed one
+signal would serve both.}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/nb09_fig1.png}
+\caption{Allocation policies across budget levels. Left: overlap with the hindsight target --- note how
+strongly this metric favours the spreading policies, which is why it was demoted. Right: the share of
+realised need receiving any capacity. The spreading policies reach 1.0 trivially by funding everyone,
+which is exactly the artefact that made budget precision the metric of record.}
+\end{figure}
+
+% ============================================================================
+\section{Everything on one page}
+
+Every headline number in this report, with the notebook that produced it. All figures are validation-year
+unless stated; the test year has never been opened.
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{5.6cm}p{5.4cm}rl@{}}
+\toprule
+\textbf{Question} & \textbf{Best answer found} & \textbf{Value} & \textbf{Source} \\
+\midrule
+\multicolumn{4}{@{}l}{\textit{The data}} \\
+Months acquired, gaps & 96 months, zero gaps & 96 & \texttt{01}, \texttt{02} \\
+Provider universe & all codes ever seen & 653 & \texttt{02} \\
+Eligible sites (clients) & $\geq$48 months, still reporting & 150 & \texttt{03} \\
+Departments per site & 18 named + merged Other & 19 & \texttt{03} \\
+Evaluated series & site $\times$ department & 2{,}085 & \texttt{05} \\
+Raw columns kept & of 121 & 15 & \texttt{03} \\
+\midrule
+\multicolumn{4}{@{}l}{\textit{Projection --- the strongest result}} \\
+Identity over-predicts, months & out of 95 & 95 & \texttt{03} \\
+Leak, share of demand & mean of ratios & 15.40\% & \texttt{03} \\
+Projection MAE, corrected & per service, 6 months out & \textbf{682} & \texttt{07} \\
+Projection MAE, naive identity & same services & 990 & \texttt{07} \\
+Bias, corrected vs naive & per service & $-16$ vs $+565$ & \texttt{07} \\
+\midrule
+\multicolumn{4}{@{}l}{\textit{Forecasting --- point accuracy}} \\
+Baseline to beat & naive, median MASE & 0.510 & \texttt{05} \\
+Best federated, unmatched budget & 30 rounds & 0.553 & \texttt{06} \\
+Best federated, matched budget & 15 rounds & \textbf{0.507} & \texttt{08} \\
+Best of all configurations & last-value anchoring & \textbf{0.503} & \texttt{08} \\
+Pooled, matched budget & \texttt{central} & 0.603 & \texttt{08} \\
+Per-site, matched budget & \texttt{local} & 0.556 & \texttt{08} \\
+Services with within-series $R^2>0$ & of 2{,}085 & 9.3\% & \texttt{06} \\
+\midrule
+\multicolumn{4}{@{}l}{\textit{Forecasting --- the decision question}} \\
+Base rate, services growing & three-class & 45.9\% & \texttt{06} \\
+Best broad detector & \texttt{drift}, direction accuracy & 66.3\% & \texttt{05} \\
+Post-training precision on ``up'' & \texttt{fedavg\_ft} & \textbf{67.3\%} & \texttt{06} \\
+Per-site precision on ``up'' & \texttt{local} & 55.5\% & \texttt{06} \\
+Best precision, all configurations & delta anchoring & 71.4\% & \texttt{08} \\
+\midrule
+\multicolumn{4}{@{}l}{\textit{Allocation}} \\
+Services in crisis & of 2{,}046 & 80.3\% & \texttt{07} \\
+Total capacity requested & treatments/month & 419{,}220 & \texttt{07} \\
+Internal capacity available & treatments/month & \textbf{657} & \texttt{07} \\
+Random targeting baseline & budget precision & 0.439 & \texttt{09} \\
+Best policy & \texttt{equal} & 0.444 & \texttt{09} \\
+Forecast-led policy & \texttt{forecast\_led} & \textbf{0.390} & \texttt{09} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\keypoint{\textbf{Read the table as three blocks.} The projection block is a clear positive result. The
+point-accuracy block is a draw against a trivial baseline. The allocation block is a negative result:
+nothing computable on the decision date aims capacity better than chance. A system built on this
+evidence should lead with the projection correction and be explicit that the targeting problem is
+unsolved.}
+
+% ============================================================================
 \section{What this project does not show}
 
 Stated explicitly, because a report that lists only its strengths cannot be audited.
 
 \begin{itemize}[leftmargin=1.3em]
 \item \textbf{One split, one seed.} Every number is a single held-out year with a fixed seed. The
-ranking's stability across origins has not been established.
+ranking's stability across origins has not been established, and differences of a few thousandths in
+MASE should be read as noise rather than as an ordering.
 
-\item \textbf{Federation versus pooling is untested.} The training budgets differ by a factor of three.
+\item \textbf{Federation versus pooling rests on one seed.} The budgets are now matched, so the
+comparison is finally valid, but a single run is not enough to assert that averaging beats pooling.
+
+\item \textbf{Training length was sampled at two points, not swept.} Finding 5 shows the result is
+sensitive to it. The curve between 15 and 30 rounds has not been measured, and the true optimum may
+sit elsewhere.
 
 \item \textbf{No privacy guarantee.} FedAvg moves weights instead of records, which is a
 data-governance property, not a privacy proof. Weights leak information about the data that produced
@@ -900,25 +1109,45 @@ It is useless for the question that was asked first.}
 \textbf{Finding 4 reframes the architecture.} With 80\% of services in breach there is no internal
 slack to reallocate, so a tiered escalation built on moving surplus around has almost nothing to move.
 
-\keypoint{\textbf{Taken together: the defensible contribution is the decision layer, not the
-forecaster.} The projection correction is measurable, validated and materially large. The forecasting
-gain is absent on point accuracy and modest but real on direction. A claim of better forecasts would be
-fighting for a margin that is not there; the allocation result is real and, as far as the literature
-search extends, unclaimed --- federated learning in healthcare is overwhelmingly clinical outcome
-prediction, not operational capacity planning.}
+\textbf{Findings 5 to 8 sharpen all three and add a fourth.} With training budgets matched the
+forecasting null softens to a draw --- and federation clearly beats per-site training, which is the
+thing federation was supposed to buy. But the allocation side gets worse: no policy for spending a
+capacity budget aims it better than chance, and the forecast-led policy, which is the payoff path of
+the whole design, does worse than random.
+
+\keypoint{\textbf{Taken together: the defensible contribution is the projection correction, and the
+targeting problem is open.} Finding 1 is measurable, validated out of sample and materially large ---
+it belongs in the system and it changes what a planner would do. The forecasting gain is a draw against
+a trivial baseline on point accuracy and modest but real on growth direction. The allocation result is
+negative and it is the most useful thing here for anyone building this next: \textbf{a good demand
+forecast does not tell you where to put capacity}, because demand growth and breach growth are
+different quantities. Any system that assumes one signal serves both --- and this one did --- is
+carrying an untested and, on this evidence, false assumption.
+
+As far as the literature search extends, that gap is unclaimed. Federated learning in healthcare is
+overwhelmingly clinical outcome prediction; operational capacity planning is barely represented, and
+the coupling between forecast and allocation appears not to have been measured at all.}
 
 \subsection{Immediate next steps}
 
+In priority order, and the first is now clearly the most valuable.
+
 \begin{enumerate}[leftmargin=1.5em]
-\item Match training budgets so federation versus pooling is actually tested.
-\item Test the level-anchoring hypothesis: rescale to the last observation rather than the training
-mean.
-\item Feed the forecaster the seven measures it currently ignores --- backlog and throughput are
-plausibly informative about demand and have never been tried.
-\item Wire the direction call and its confidence into the decision layer, replacing the placeholder
-forecast.
+\item \textbf{Forecast breach growth, not demand growth}, and re-run the forecast-led policy. Finding 8
+says the two are not interchangeable, and the allocation question is the one the system exists to
+answer. This is the direct consequence of the sharpest result here.
+\item \textbf{Repeat the comparison across seeds.} Every ordering in Section 7 rests on one run, and
+the margin at the top is three thousandths.
+\item \textbf{Sweep training length properly.} Finding 5 shows the result moves with it; two sample
+points is not a curve.
+\item Wire the direction call and its measured confidence into the decision layer, replacing the
+placeholder forecast --- but only for the expansion branch, which is the one it is fit for.
 \item Then, and only once, open the test year.
 \end{enumerate}
+
+\textbf{Two things are already settled and need no further work.} Adding backlog and throughput as
+forecaster inputs makes it worse (Finding 6), and server momentum diverges. Both were plausible ideas
+and both are closed.
 
 \vspace{1em}
 \hrule

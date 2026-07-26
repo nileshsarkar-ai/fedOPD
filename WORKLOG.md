@@ -4351,3 +4351,62 @@ says that even given a budget, nothing we can compute on the decision date aims 
 4. Regenerate `docs/fedOPD_report.pdf` with these figures; its Section 5 currently reports the
    unmatched-budget numbers, which F-47 and F-48 supersede.
 5. Test year still sealed.
+
+---
+
+# Entry 40 - 2026-07-27
+## Report rebuilt with the 08/09 results. 25 pages, 16 figures, and a one-page comparison table.
+
+### 40.1 What changed in the report
+
+Two new sections and a corrected one.
+
+- **Section 7, new** - the eleven-configuration algorithm comparison and the seven-policy allocation
+  comparison, each with its figure and its full table.
+- **Section 8, new** - **everything on one page**: every headline number in the project with the
+  notebook that produced it, grouped into four blocks (data, projection, forecasting, allocation).
+- **Section 5, corrected** - it previously said the pooling result was "almost certainly an artefact of
+  unequal training budget". Section 7 matched the budgets and the gap survived, so that sentence was
+  overconfident and now points forward instead of explaining away.
+- **Conclusion, rewritten** - Findings 5 to 8 change it materially. The forecasting null is now a draw
+  rather than a loss, and the allocation result is negative, so the conclusion leads on the projection
+  correction and states plainly that targeting is unsolved.
+- **Limitations** - three items added: single seed on the federation-versus-pooling claim, training
+  length sampled at two points rather than swept, and the explicit note that thousandths of MASE are
+  noise.
+- **Next steps reordered** - "forecast breach growth, not demand growth" is now first, because F-52
+  makes it the highest-value experiment. Two items were *removed* as settled: the extra features hurt,
+  and server momentum diverges.
+
+### 40.2 Numbers were generated, not retyped
+
+Every figure in the two new tables was produced by reading `algorithm_comparison.csv` and
+`allocation_policies.csv` and emitting LaTeX rows directly, rather than copying from the chat. The
+owner asked for exact numbers from the notebook results and that is the only reliable way to get them -
+transcription is where the sixteen corrections in this worklog mostly came from.
+
+### 40.3 Three build defects, all mine, all fixed
+
+1. **`	exttt` was destroyed by a blanket underscore escape.** Escaping the whole generated row turned
+   `	exttt{...}` into a literal tab plus `exttt{...}`. Fixed by escaping only the policy *name*, never
+   the markup around it.
+2. **`\input` inside a `tabular` broke the table** with `Misplaced 
+oalign`, twice, including after
+   the trailing row separator was stripped. Abandoned in favour of inlining the rows directly. The
+   generated `.tex` fragments were deleted rather than left as dead files.
+3. **One overfull box** from an over-long configuration label. Shortened rather than shipped.
+
+Final build: **25 pages, 16 figures, 0 overfull, 0 underfull, 0 undefined references, 1.19 MB.**
+
+### 40.4 Note on the report's honesty structure
+
+The comparison table in Section 8 is deliberately arranged so the three blocks read in order of how
+much they support the project: projection is a clear positive, point accuracy is a draw, allocation is
+a negative. A reader who reads only that table gets the same conclusion as a reader who reads all 25
+pages, which is the test a summary table should pass.
+
+### 40.5 Open
+
+Unchanged from 39.7, with priority now explicit in the report itself: predict breach growth rather than
+demand growth; repeat across seeds; sweep training length; wire the direction call into the expansion
+branch only. The test year is still sealed.
