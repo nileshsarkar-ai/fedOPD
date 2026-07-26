@@ -41,7 +41,16 @@ This is a research project, not a product. Think and act accordingly, in ideas, 
 - **No filler.** No hedging, no restating the question, no "great idea", no padding a summary to look thorough. Lead with the finding. If a result is uncertain, say how uncertain and why.
 - **Prefer the simple thing that can be checked** over the clever thing that can't. Fewer moving parts means fewer places for a silent bug to hide.
 
+**Domain terms that must not be blurred.** Getting these wrong changes what a result claims.
+
+- **Independent-sector providers are private companies delivering NHS-funded care.** They are not "NHS private" and not NHS bodies. This is why capacity can be *bought* from them but never *allocated* to them, and it is the reason `fl_client` and `allocatable` are two flags rather than one.
+- **Pathways are not patients.** `demand` counts RTT clock starts. NHS's own March 2026 figures are 7.1m pathways against about 6.0m unique patients, so no per-patient claim is supportable from this data.
+- **Capacity is treatments per month**, split admitted and non-admitted. The data holds no money, staffing or estate, so "expanding" or "upgrading" a trust is not measurable here and must not be claimed.
+- **`Part_2` is a stock, `Part_1A`/`1B`/`3` are flows.** Nothing in the file stops you adding them, and the result is meaningless.
+
 ## Code style — simple notebook code only
+
+**The standing bar: simple and powerful. Code that explains itself on the first read.** A cell should be short, do one thing, and be understandable without running it or looking anything up. Prefer one clear line over three clever ones, and one obvious pandas call over a chain nobody can debug. Power comes from picking the right operation, never from density — if a line needs a paragraph to justify it, it is the wrong line.
 
 - All code in this project is written in Jupyter notebooks (under `src/`), not standalone scripts or modules.
 - Keep code simple and research-grade: NO production-style safety nets — no try/except blocks, no retry wrappers, no input validation, no logging frameworks, no defensive checks. Straight-line code that does the job.
@@ -61,7 +70,7 @@ This is a research project, not a product. Think and act accordingly, in ideas, 
 - Preferred, because you can reattach and watch it: `tmux new -s <job>` then run inside; detach with `Ctrl-b d`, reattach with `tmux attach -t <job>`.
 - Otherwise: `nohup ./fed_learning/bin/python ... > logs/<job>.log 2>&1 &`, then `tail -f logs/<job>.log`.
 - To run a whole notebook headless and keep the outputs in the file:
-  `tmux new -s fetch -d '../fed_learning/bin/jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=-1 --ExecutePreprocessor.kernel_name=fed_learning fetch_dataset.ipynb'`
+  `tmux new -s fetch -d '../fed_learning/bin/jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=-1 --ExecutePreprocessor.kernel_name=fed_learning 01_fetch_dataset.ipynb'`
 - nbconvert runs in its own process, separate from the IDE kernel: its variables won't appear in the interactive session, and running the same cells manually at the same time would have both processes writing the same files.
 
 ## GPU — usable through MIG

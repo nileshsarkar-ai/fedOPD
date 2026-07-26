@@ -12,7 +12,7 @@ This document explains **what the data is** and **what the project is trying to 
 
 Every section ends with **tasks**. Each states what to find and, where a definite answer exists, **the number you should get**. That number is the whole mechanism: you write the code, run it, compare. If you match, you understood it. If you don't, the gap between your number and the target tells you exactly what you missed - and working that out yourself is worth more than being handed the line that would have worked.
 
-Do not look in `src/_solutions/`. Those archived notebooks exist so a number can be checked when everything else has failed. Reading them costs you the exercise.
+`src/` holds all three notebooks: `01_fetch_dataset.ipynb`, `02_inspect_dataset.ipynb` and `03_data_processing.ipynb`. If you are working a task, try it before reading the corresponding cell - the target number is there so you can check yourself without being shown the line that would have worked.
 
 ### Two kinds of fact live in this guide, and they are marked differently
 
@@ -128,7 +128,7 @@ Two consequences worth carrying from the start:
 - Because the return is provider-by-commissioner, the raw file has **multiple rows per provider × treatment function × part type** - one per commissioner. That commissioner split is the only genuine second dimension in the file (Part 6).
 - Independent-sector providers are **in scope of the same collection**: where NHS care is commissioned from them, they "should engage in the RTT data collection process … in the same way as NHS provider organisations" **[G §10.1.1.1, p.40]**. So independent rows are real submitted data, not an artefact (Part 5).
 
-### What `fetch_dataset.ipynb` did
+### What `01_fetch_dataset.ipynb` did
 
 Acquisition is the one part already written. Read it - it is short, and it is the model for the commenting standard the rest of your code should meet.
 
@@ -339,7 +339,7 @@ Two things to carry forward, both of which matter later:
 
 Files before it have **69 columns**; from it, **121** (measured). The changes were made deliberately, and NHS lists them. From **[G §10.1.1.3, p.42]** and restated in **[SPN §4, p.13]**, three changes landed at once for April 2021 data:
 
-1. **"Phased out the use of X24 code entirely and moved to the more granular NHS England commissioning codes."** The commissioner axis got finer - previously everything NHSE-commissioned sat under one code `X24`.
+1. **"Phased out the use of X24 code entirely and moved to the more granular NHS England commissioning codes."** The commissioner axis got finer - previously everything NHSE-commissioned sat under one code `X24`. **Careful with the date on this one.** The guidance lists it under April 2021 because that is when it *completed*; it *began* a year earlier. The July-2020 press notice states X24 "is being phased out from the monthly RTT data return with effect from the **April 2020** data return onwards", and that X24 remained available for providers who could not switch "because of the need to divert resources to support the response to COVID-19" **[SPN-Jul20 p.2]**. So this is a phased change spanning April 2020 to April 2021, not a step at April 2021. The same press notice records a second April-2020 change to the same file: the 14 NHS England Region/Local Offices (Direct Commissioning Offices) "were replaced by 42 sustainability and transformation partnerships (STPs) as the Higher-Level Health Authority", so "the Provider/Commissioner Parent Org Code/Parent Name columns in the Full CSV data file now show the relevant STP code/name" **[SPN-Jul20 p.3]**. That is Part 7's problem, and it starts in April 2020.
 2. **"Additional weekly time bands from 52-53 weeks to 104+ added to Parts 1A, 1B, 2 and 2A of the collection."** The long-wait tail went from one column to weekly bands.
 3. **"Changes to the treatment function categories"**: (a) treatment-function **name** updates, and (b) the single **"Other" category split into five** (X02–X06).
 
@@ -557,7 +557,7 @@ The project escalates **trust → ICB → national**. An **ICB** (Integrated Car
 
 The obvious way to get a trust's ICB is `Provider Parent Org Code`. **It does not work, and how it fails is instructive.**
 
-England's commissioning structure was reorganised inside the window. Before 2020 the recorded parent is an **NHS region** - there are only 14, a different level of the hierarchy entirely. One column, two kinds of thing, depending on the month. This is visible in the collection too: the April-2021 switch from the single `X24` commissioner code to "more granular NHS England commissioning codes" **[G §10.1.1.3, p.42]** is the same reorganisation showing up on the commissioner axis.
+England's commissioning structure was reorganised inside the window, and the exact chain is now sourced. Before April 2020 the recorded parent is one of **14 NHS England Region/Local Offices, also called Direct Commissioning Offices (DCOs)** - a different level of the hierarchy entirely. From April 2020 those 14 "were replaced by 42 sustainability and transformation partnerships (STPs) as the Higher-Level Health Authority in NHS Organisation Reference Data. As a result, the Provider/Commissioner Parent Org Code/Parent Name columns in the Full CSV data file now show the relevant STP code/name" **[SPN-Jul20 p.3]**. Those STPs later became the 42 ICBs, statutory from July 2022. So the chain is **DCO to STP to ICB**, and the column changes meaning at **April 2020**, not April 2021. One column, two kinds of thing, depending on the month. This is visible in the collection too: the April-2021 switch from the single `X24` commissioner code to "more granular NHS England commissioning codes" **[G §10.1.1.3, p.42]** is the same reorganisation showing up on the commissioner axis.
 
 The alternative is the ODS `RE5` relationship: one fixed value per trust. NHS's commissioner-assignment rule itself is layered - NHSE code where NHSE commissions, `NONC` for non-English commissioners, otherwise a SUB-ICB code "of GP practice if known; then … of residence if no GP; then 'host' SUB-ICB" **[G §10.1.8, p.47]** - which is why the "who paid" axis and the "who is the trust's ICB" question are not the same thing.
 

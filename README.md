@@ -49,6 +49,22 @@ sector's aggregate volume in that ICB as revealed, purchasable substitution capa
 allocate-or-buy decision made concrete. De-escalation is symmetric: gaps that stay closed release
 their allocation.
 
+**Independent providers are private companies delivering NHS-funded care, not NHS bodies.** That
+distinction is the whole reason the project carries two separate flags rather than one: an ICB can
+*buy* capacity from an independent provider, but it cannot *direct* NHS staff and capital into one.
+So `fl_client` marks who trains the forecaster (the 126 public trusts) and `allocatable` marks who
+can receive capacity (public only). Neither implies the other.
+
+**Measured constraint on how fast the buy side responds.** The intuitive mechanism, namely public backlog
+rises, so work is bought from independents that month, was tested and **is not present in the
+data**. Correlating the monthly change in independent share against the change in public backlog
+across the 18 named specialties gives +0.08 contemporaneously and essentially zero at 3, 6 and 12
+months (7 of 18 specialties positive at 6 months, i.e. chance). What is real is the *slow* shift:
+independent share of ophthalmology moved 6.2% → 19.6% across the window. Substitution operates on a
+multi-year contracting timescale, consistent with NHS's own encouragement of "long-term contractual
+relationships" with the sector. **The agent must therefore treat independent volume as a standing
+stock of purchasable capacity, not as a lever that responds inside a monthly decision loop.**
+
 ---
 
 ## The testbed
@@ -100,13 +116,15 @@ Each notebook is named for exactly what it does, and does only that.
 
 | Notebook | Responsibility |
 |---|---|
-| [`src/fetch_dataset.ipynb`](src/fetch_dataset.ipynb) | **Acquisition only.** Scrapes the eight NHS RTT financial-year pages, downloads the 96 monthly Full CSV archives, extracts them, builds the provider→ICB reference from the ODS ORD API, and fetches the KH03 bed workbooks. Idempotent: reruns resume rather than restart. |
-| [`src/inspect_dataset.ipynb`](src/inspect_dataset.ipynb) | **Validation and inspection only.** Proves the download is intact, then establishes what is in the data — provider census, department roster, hierarchy, per-region and per-department averages, and the blocking verification gate on the independent sector. Transforms nothing. |
-| [`src/data_processing.ipynb`](src/data_processing.ipynb) | **Transformation.** Merges the 96 monthly files into one canonical table on an explicit column contract, reconciles the April 2021 schema break, resolves the ICB escalation key, and builds the federation panel. |
-| [`src/eda/EDA.ipynb`](src/eda/EDA.ipynb) | Exploratory analysis on the processed table. |
+| [`src/01_fetch_dataset.ipynb`](src/01_fetch_dataset.ipynb) | **Acquisition only.** Scrapes the eight NHS RTT financial-year pages, downloads the 96 monthly Full CSV archives, extracts them, builds the provider→ICB reference from the ODS ORD API, and fetches the KH03 bed workbooks. Idempotent: reruns resume rather than restart. |
+| [`src/02_inspect_dataset.ipynb`](src/02_inspect_dataset.ipynb) | **Validation and inspection only.** Proves the download is intact, then establishes what is in the data — provider census, department roster, hierarchy, per-region and per-department averages, and the blocking verification gate on the independent sector. Transforms nothing. |
+| [`src/03_data_processing.ipynb`](src/03_data_processing.ipynb) | **Transformation.** Merges the 96 monthly files into one canonical table on an explicit column contract, reconciles the April 2021 schema break, resolves the ICB escalation key, and builds the federation panel. |
+| [`src/eda/EDA.ipynb`](src/eda/EDA.ipynb) | Exploratory analysis on the processed table. *(not present in the current tree)* |
 
-The reasoning behind every decision, including the failures and dead ends, is in
-[`WORKLOG.md`](WORKLOG.md). Working conventions are in [`CLAUDE.md`](CLAUDE.md).
+What NHS England says about the collection, read from their own documents with every claim cited, is
+in [`RTT_SOURCE_DOSSIER.md`](RTT_SOURCE_DOSSIER.md). The reasoning behind every decision, including
+the failures and dead ends, is in [`WORKLOG.md`](WORKLOG.md). Working conventions are in
+[`CLAUDE.md`](CLAUDE.md).
 
 ### Data layout
 
@@ -123,14 +141,14 @@ data/
   kh03/         61 quarterly overnight bed workbooks
 ```
 
-The downloaded archives are deleted once `inspect_dataset.ipynb` has CRC-verified them against
+The downloaded archives are deleted once `02_inspect_dataset.ipynb` has CRC-verified them against
 the extracted files; the CSVs are the only copy retained.
 
 ### The canonical table
 
 One row per **provider × department × month**. 121 raw columns reduce to 14, and a column is kept
 only if some part of the system above consumes it — the contract, with the measurement justifying
-every drop, is a section of `data_processing.ipynb`.
+every drop, is a section of `03_data_processing.ipynb`.
 
 | Column | Meaning | Consumed by |
 |---|---|---|
@@ -150,7 +168,7 @@ every drop, is a section of `data_processing.ipynb`.
 
 ## Facts about the data that shape the build
 
-Measured in `inspect_dataset.ipynb` and `data_processing.ipynb`, not assumed. Full detail, with
+Measured in `02_inspect_dataset.ipynb` and `03_data_processing.ipynb`, not assumed. Full detail, with
 the numbers and the reasoning, is in `WORKLOG.md`.
 
 - **`C_999` is an aggregate row, not a department.** The `Treatment Function Code` column contains
