@@ -1175,3 +1175,15 @@ Owner flagged the Task 1.1 reminder as "lame": it scolded over trivial arithmeti
 each names the concrete failure mode or consequence instead (Task 1.1 now points at gaps/duplicates;
 9.2 "advertising your result, not testing it"; Appendix C "a loaded gun aimed at your own learning").
 Same idempotent script, values only. GUIDE.pdf still 18 pages, 45 reminders, 0 em-dashes.
+
+### 11.11 CLAUDE.md working-mode change: coding restriction removed
+
+Owner decision: remove the rule barring Claude from writing analysis code, and remove the note-taking
+gates and learning-method scaffolding along with it. Kept: the "simple notebook code" quality rules
+(per-line comments, no production safety nets), the "Work like a researcher" critical rules, the
+communication style, and a slim "who the owner is / wants detail" note. Replaced the whole "Who writes
+the code" section with a short **"Working mode - Claude can help write the code"**: Claude may hand over
+working code, held to the research-grade quality bar (no BS, no production-looking scaffolding); explain
+as you go so numbers stay defensible, but this is guidance not a gate. `NOTES.md` and the per-task note
+gates are retired; `WORKLOG.md` stays as the project record. This supersedes the D-08-era "owner writes
+everything from inspect_dataset onward" mode.

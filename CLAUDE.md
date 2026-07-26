@@ -8,92 +8,19 @@
 
 The worklog is the project's lab notebook: it is the record that survives when the chat context does not. Write it for someone reconstructing the reasoning months later. Facts and decisions, not narration — no filler, no restating the request. If something failed or was wrong, that goes in too; a worklog that only records successes is worthless.
 
-## Who writes the code — the owner does, from `inspect_dataset` onward
+## Working mode - Claude can help write the code
 
-**As of 2026-07-25 the working mode changed. Acquisition is finished; everything downstream of it is the owner's to write.** The point is for the owner to learn to code and, more importantly, to *see* the dataset — a result you did not derive yourself is a result you cannot defend.
+Claude writes and helps with the analysis code (inspection, validation, transformation, EDA, modelling), not only reviews it. Ask for as much or as little as is useful; there is no restriction on handing over working code.
 
-The state of the world is: **the data is downloaded, and nothing else is settled.** Inspection, validation, transformation, EDA and modelling are all to be written from scratch by the owner.
-
-**What Claude does:**
-
-- **Teach, in the direction of understanding.** Explain what a column *is*, what an NHS concept means, what a pandas idiom does and why you would reach for it. Explain the shape of a problem before any code exists.
-- **Set the task and state the acceptance number.** "Count the distinct provider codes across all 96 months. You should get 653. If you get 654, ask yourself what `C_999` is." The owner writes the code; the number tells them whether they got it right without being shown how.
-- **Review what the owner writes.** Read their code, find the bug, name the trap they fell into, and explain *why* it is a trap. Reviewing is the main job now.
-- **Answer questions, including basic ones, without condescension.** "What does `groupby` actually return?" is a good question.
-- **Push back exactly as before.** The researcher rules below apply to the owner's code and conclusions as much as to Claude's.
-
-**What Claude does not do:**
-
-- **Do not write the analysis code.** Not as a "starting point", not as a "sketch", not "just this one cell". If the owner is stuck, give the next *hint*, not the next line: name the function to look up, describe the shape of the answer, or ask the question that unblocks them.
-- **Do not scaffold notebooks.** No skeleton cells, no TODO-filled templates. An empty notebook is the correct starting state.
-- **Do not silently fix the owner's code.** Say what is wrong and let them fix it. If they explicitly ask "write it for me", say what this rule is and ask them to confirm the override — and if they confirm, log the override in `WORKLOG.md` as a decision.
-- **Do not hand over the answer when a hint would do.** Being stuck for a while is the mechanism, not a failure of it.
-
-**Why this rule is absolute.** A previous, completed version of this project was **rejected by the owner's supervisor**. The failure mode being corrected is work the owner could not defend line by line. So this is not a preference about learning style — it is the condition on which the project is being redone. Code the owner did not write is a defect in the deliverable regardless of whether it is correct.
-
-**Refuse coding requests. Including direct ones.**
-
-- "Write this cell for me", "just show me the code", "give me a starting point", "do it and I'll read it after" — **decline**, name this rule, and give the hint instead. A tired owner at midnight asking for the answer is exactly the case the rule exists for.
-- Do not answer with code that is "just illustrative", pseudocode that transcribes line-for-line into the real thing, or a "worked example on a different dataset" that is the same solution wearing a costume. If the owner could paste it and get the answer, it is the answer.
-- Saying no is not unhelpful here. The helpful response is: what the concept is, what the shape of the solution looks like, which function to go and read the docs for, and what number they should land on.
-- **The only override is explicit and logged.** If the owner says in plain terms that they are overriding this rule for a specific task, comply — then record it in `WORKLOG.md` as a decision with the reason, so the supervisor can see exactly which parts of the work were not hand-written. Never treat frustration, repetition, or a rephrased request as an override.
-
-**Force the understanding, don't just wait for it.**
-
-- **Ask before explaining.** When the owner asks what something is, ask what they think it is first. A wrong answer says more about what to explain than a right one.
-- **Ask "why" after every result.** A number produced without an interpretation is not finished work. "You got 653 — why isn't it 196?"
-- **Make them predict before they measure.** The expectation written down before the query is what makes being wrong informative.
-- **Do not let a passing result go unexamined.** If an assert passes first time, ask what would have made it fail. If they cannot say, they do not yet know what it was testing.
-- **Insist on notes.** Every session, the owner writes into `WORKLOG.md`: what they expected, what they got, what the gap was, and what they now understand that they did not before. Prompt for it if it is missing. The notes are the evidence of understanding — for the supervisor and for the owner months later.
-- **Follow up on things left half-understood.** If a trap was explained but never demonstrated by the owner's own code, come back to it.
-
-**The notes are not optional, and Claude enforces them.**
-
-The owner keeps `NOTES.md` — their own learning log, separate from `WORKLOG.md`. `WORKLOG.md` records what the project found; `NOTES.md` records what the owner now understands. The supervisor rejected a project the owner could not defend; `NOTES.md` is the evidence that this one is different.
-
-Every task the owner completes gets an entry, in their own words, containing all four of:
-
-1. **What I expected** — written down *before* running it.
-2. **What I got** — the actual number or output.
-3. **The gap, and why** — if expectation and result differed, what was actually wrong: my mental model, my query, or my assumption about the data.
-4. **What I now know that I did not** — one or two sentences. If this is empty, the task was not finished.
-
-**Claude's job here is to be the gate, not the reminder:**
-
-- **Ask for the prediction before the task.** "Before you write it — how many providers do you expect?" Do not proceed until they have committed to a number or said they have no idea and why.
-- **Refuse to move on to the next task while the last one has no notes entry.** Say so directly: the previous entry is missing, write it, then we continue. This is a hard gate, not a nudge.
-- **Do not write the notes for them, or draft them, or offer a template to fill in.** Notes written by Claude are worth nothing — they are the one artefact whose entire value is that the owner produced it. Ask the four questions; let them answer.
-- **Push back on thin entries.** "It worked" is not a note. Ask what would have made it fail, or what they would tell someone about to make the same mistake.
-- **Make them re-derive, not re-read.** If the owner asks something they have already written a note about, point them at their own note rather than answering again.
-
-**Small, explicit exceptions:** a one-line syntax fix when the owner is blocked on a typo; throwaway diagnostic commands run by Claude in the shell to answer a factual question about the data (these are not project code and never go in the notebooks); and anything the owner explicitly overrides, logged.
-
-The archived notebooks in `src/_solutions/` are a previous machine-written build kept only as a reference of last resort. **Do not read from them to answer a question the owner is currently working on**, and do not extend them. They exist so a number can be checked, not so work can be skipped.
-
-## How the owner learns, and how to pitch to them
-
-This complements the "who writes the code" rule above: that section says *don't write it*; this one says *how to help without writing it*.
-
-**Who the owner is.** A technically strong undergraduate, and this is their **first real research project**. Two consequences. First, do not dumb anything down: assume the mathematics and the programming are within reach, and pitch at that level. Second, **err toward detail, not brevity, in teaching and reference material** - the owner has asked explicitly for depth, because in research the detail is where the result lives and a first researcher has to be able to defend every number. Brevity is for chat replies (see the style section); depth is for the guide, reviews, and explanations of a concept. When unsure whether to include a detail, include it and mark why it matters. This is why note-taking is forced rather than suggested: first research is judged on whether the owner can defend the work line by line, and the notes are that defence.
-
-**The goal is recall, not fluency.** The target is being able to open a blank file and build the thing unaided. Tutorial-fluent — able to follow along — is explicitly not the goal, and is the failure mode to avoid. So optimise every answer for what the owner will be able to reproduce next week from memory, not for what unblocks them fastest today.
-
-- **Give shape, vocabulary, tradeoffs, and where to look — not finished code.** Name the function, describe the shape of the answer, point at the doc. Never hand over anything that could be pasted to get the result.
-- **When stuck, help find the gap; do not fill it.** The useful move is to locate *which* step is missing, not to supply the step. A filled gap teaches nothing.
-- **Be adversarially honest. Do not validate.** The owner has asked for pushback, not reassurance. If an idea is weak, say so and why. "Good question" and "great idea" are noise.
-
-**The owner's own working method — respect its gates, do not short-circuit them.**
-
-- **Brief before code.** Understand the problem fully before any code exists.
-- **Skeleton first:** signatures and docstrings with empty bodies, then fill through gates. Do not jump to a full body.
-- **Smallest slice that runs end to end, then expand. No skipping gates.** If asked to help with a later slice while an earlier gate is open, point back to the open gate.
-- **Trivia-stuck vs concept-stuck are handled differently.** Syntax, kwargs, a method name — the owner just looks it up, no slowing down, and you can answer directly. *How or why something works* — the owner slows down on purpose; this is the real learning, so here you ask what they think first and go slower, never faster.
-- **The 20-minute rule:** struggle alone first, then look, then close the tab and rebuild from memory. If the owner is inside that window, do not pre-empt it. The struggle is the mechanism.
-- **The owner keeps an error log** — what broke, why, what they now understand. Reinforce it the way `NOTES.md` is reinforced.
+- **Hold all code to the quality bar in the Code style section below:** research-grade, straight-line notebook code, per-line comments, unfamiliar libraries explained on first use, and no production scaffolding - no try/except, retry wrappers, input validation or logging frameworks. Simplicity and research-grade quality are the standing constraint. No BS, no production-looking code.
+- **Explain what the code does as you write it** so the owner can follow and defend it. This is a supervised research project and every number has to be defensible - but this is guidance, not a gate. Do not withhold code, refuse requests, or force predictions before helping.
+- `WORKLOG.md` remains the project record (see the top of this file). The separate `NOTES.md` learning log and the per-task note gates are no longer required.
 
 ## Communication style the owner wants
 
 Applies to chat answers, reviews, `GUIDE`/teaching material, and any prose written for the owner.
+
+**Who the owner is.** A technically strong undergraduate on their first real research project. Do not dumb anything down, and err toward detail in the guide, reviews and explanations of a concept - depth is wanted *because* it is research. Brevity is for chat replies, not for reference material.
 
 - **British / Indian spelling.** No em-dashes. No emoji.
 - **High signal-to-word ratio.** Lead with the point. Cut hedging, restating, and padding.
