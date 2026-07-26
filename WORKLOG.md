@@ -4410,3 +4410,86 @@ pages, which is the test a summary table should pass.
 Unchanged from 39.7, with priority now explicit in the report itself: predict breach growth rather than
 demand growth; repeat across seeds; sweep training length; wire the direction call into the expansion
 branch only. The test year is still sealed.
+
+---
+
+# Entry 41 - 2026-07-27
+## F-53: the training-length question is settled. More training makes it monotonically worse.
+
+The owner proposed that longer training and more epochs might improve the result. The evidence already
+pointed the other way - `06` scored 0.553 at 30 rounds against `08`'s 0.507 at 15 - but two points are
+not a curve and neither run was built to answer it. `10_training_length.ipynb` measures the whole thing:
+one continuous run to 60 rounds, evaluated on validation after **every** round, with training loss
+recorded alongside.
+
+### 41.1 The curve
+
+| Round | Training loss | Validation MASE | Precision on `up` |
+|---|---|---|---|
+| 3 | 0.3957 | 0.6261 | 44.6% |
+| 8 | 0.2627 | 0.5254 | 63.6% |
+| 10 | 0.2522 | 0.5125 | 68.4% |
+| **13** | 0.2439 | **0.5019** | **70.3%** |
+| 15 | 0.2403 | 0.5072 | 70.0% |
+| 20 | 0.2342 | 0.5105 | 69.4% |
+| 30 | 0.2262 | 0.5383 | 68.2% |
+| 40 | 0.2218 | 0.5618 | 67.6% |
+| 60 | 0.2148 | **0.6206** | 67.5% |
+
+**Training loss falls the entire way, 0.8945 to 0.2148. Validation error bottoms at round 13 and then
+climbs steadily, ending 24% worse at round 60 than at its minimum.** Textbook overfitting: the model
+keeps learning the training windows and progressively unlearns the future.
+
+The owner's hypothesis is cleanly falsified, and the disagreement between `06` and `08` is explained
+exactly - 0.5072 at 15 rounds against 0.5383 at 30. `06` was on the wrong side of the turn.
+
+### 41.2 Local epochs barely matter; total work does
+
+Sweeping local epochs at 1, 2 and 4:
+
+| Local epochs | Best validation MASE | Reached at | Total local epochs |
+|---|---|---|---|
+| 1 | 0.5088 | round 35 | 35 |
+| **2** | **0.5019** | round 13 | 26 |
+| 4 | 0.5040 | round 6 | 24 |
+
+All three land within 0.007 of each other at roughly **24-26 total epochs of local work**, however that
+work is divided between rounds and per-round effort. That invariance is worth more than the ranking:
+the quantity that matters is the total gradient budget, not the synchronisation frequency, at least
+over this range.
+
+### 41.3 F-53 - and the minimum must not be quoted
+
+**0.5019 is the lowest point of a noisy curve located by looking at validation, and minima of noisy
+curves are biased low.** Quoting it as the model's performance would be selecting a result.
+
+The fair estimate is the plateau. Over rounds 8 to 20, validation MASE averages **0.5095 with a
+standard deviation of 0.0058**.
+
+**The naive baseline is 0.510.** The federated model sits within a fifth of a standard deviation of it.
+
+*So the honest conclusion tightens rather than changes:* the model **ties** the trivial baseline, and
+the tie is now measured across thirteen round counts instead of asserted from a single run. Finding 5's
+"softened, not overturned" was the right call, and this is the evidence that makes it defensible rather
+than cautious.
+
+*One thing that did improve:* both metrics agree on where to stop, which has not happened before in
+this project. Precision on the up call peaks at 70.3% at round 13, the same place MASE bottoms. Where
+F-45 found the two metrics ranking methods in opposite orders, they agree on training length.
+
+### 41.4 Report updated
+
+`docs/fedOPD_report.pdf` rebuilt: **26 pages**, new subsection in Section 7 carrying the curve, the
+local-epoch table and the plateau argument, plus a new figure. Three rows added to the one-page
+comparison table - the optimal round count, the plateau estimate with its standard deviation, and the
+60-round figure - so a reader of the table alone sees that the headline is a tie and not the minimum.
+
+0 overfull boxes, 0 underfull, 0 undefined references.
+
+### 41.5 Open
+
+1. **Predict breach growth, not demand growth** (F-52) - still the highest-value next experiment, and
+   now clearly ahead of anything on the training side, which is settled.
+2. Repeat across seeds. Everything above is one seed, and the plateau's standard deviation of 0.0058 is
+   *within-curve* variation, not between-seed variation, which is the larger of the two.
+3. The test year remains sealed.

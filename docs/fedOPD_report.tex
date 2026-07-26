@@ -899,6 +899,62 @@ the naive baseline's 0.510, the federated model is now \emph{level}, not behind.
 \emph{softened, not overturned}. Anyone quoting ``the federated model beats the baseline'' off three
 thousandths would be overclaiming.}
 
+\subsection{So would training longer help? No --- and the curve is unambiguous}
+
+Two data points are not a curve, so the whole thing was measured: one continuous run to 60 rounds,
+evaluated on validation after \emph{every} round, with training loss recorded alongside.
+
+\begin{center}
+\small
+\begin{tabular}{@{}rrrr@{}}
+\toprule
+\textbf{Round} & \textbf{Training loss} & \textbf{Validation MASE} & \textbf{Precision on ``up''} \\
+\midrule
+3 & 0.3957 & 0.6261 & 44.6\% \\
+8 & 0.2627 & 0.5254 & 63.6\% \\
+10 & 0.2522 & 0.5125 & 68.4\% \\
+\textbf{13} & 0.2439 & \textbf{0.5019} & \textbf{70.3\%} \\
+15 & 0.2403 & 0.5072 & 70.0\% \\
+20 & 0.2342 & 0.5105 & 69.4\% \\
+30 & 0.2262 & 0.5383 & 68.2\% \\
+40 & 0.2218 & 0.5618 & 67.6\% \\
+60 & 0.2148 & \textbf{0.6206} & 67.5\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\keypoint{\textbf{Finding 9. More training makes it monotonically worse after round 13.} Training loss
+falls the whole way --- 0.8945 down to 0.2148 --- while validation error bottoms out at
+\textbf{0.5019 at round 13} and then climbs steadily to \textbf{0.6206 by round 60}. That is textbook
+overfitting: the model keeps learning the training windows and progressively unlearns the future.
+
+It also explains the disagreement between Sections 5 and 7 exactly. At 15 rounds validation MASE is
+0.5072; at 30 it is 0.5383. \texttt{06} was simply on the wrong side of the turn.}
+
+\textbf{How the work is split barely matters; how much there is does.} Sweeping local epochs at 1, 2
+and 4 gives best validation MASE of 0.5088, 0.5019 and 0.5040 respectively --- reached at 35, 26 and 24
+\emph{total} local epochs. The optimum is a budget of roughly 25 epochs of local work however it is
+divided between rounds and per-round effort.
+
+\keypoint{\textbf{And the minimum must not be quoted as the result.} 0.5019 is the lowest point of a
+noisy curve chosen by looking at validation, and minima of noisy curves are biased low. The fair
+estimate is the plateau: over rounds 8 to 20 validation MASE averages \textbf{0.5095} with a standard
+deviation of 0.0058.
+
+\textbf{That is the naive baseline's 0.510, to within a fifth of a standard deviation.} Read honestly,
+the federated model does not beat repeating last month --- it ties it, and the tie is now measured
+across thirteen round counts rather than asserted from one.}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/nb10_fig1.png}
+\caption{Left: validation error against total training, for three local-epoch settings, with the naive
+baseline dashed. All three descend to roughly the same floor and then rise. Centre: training loss
+(blue, left axis) against validation error (red, right axis) --- the scissors opening after round 13 is
+the overfitting. Right: the same sweep on the decision metric, which peaks in the same place, so for
+once the two metrics agree on where to stop.}
+\end{figure}
+
 \subsection{Four results that do not depend on that margin}
 
 \textbf{Pooling still loses, and now the excuse is gone.} With budgets matched, \texttt{central} scores
@@ -1024,6 +1080,9 @@ Baseline to beat & naive, median MASE & 0.510 & \texttt{05} \\
 Best federated, unmatched budget & 30 rounds & 0.553 & \texttt{06} \\
 Best federated, matched budget & 15 rounds & \textbf{0.507} & \texttt{08} \\
 Best of all configurations & last-value anchoring & \textbf{0.503} & \texttt{08} \\
+Optimal round count & validation minimum & 13 rounds & \texttt{10} \\
+\textbf{Plateau estimate, rounds 8--20} & \textbf{mean $\pm$ sd} & $\mathbf{0.5095 \pm 0.0058}$ & \texttt{10} \\
+Same model at 60 rounds & overfitted & 0.6206 & \texttt{10} \\
 Pooled, matched budget & \texttt{central} & 0.603 & \texttt{08} \\
 Per-site, matched budget & \texttt{local} & 0.556 & \texttt{08} \\
 Services with within-series $R^2>0$ & of 2{,}085 & 9.3\% & \texttt{06} \\
