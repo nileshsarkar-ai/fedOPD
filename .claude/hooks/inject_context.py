@@ -12,13 +12,15 @@ WORKLOG_LINES = 200
 
 parts = []
 
+# encoding="utf-8" is required, not cosmetic: Python on Windows defaults to the system codepage
+# (cp1252 here), which turns every em-dash in these files into mojibake before Claude ever sees it.
 claude_md = ROOT / "CLAUDE.md"
 if claude_md.exists():
-    parts.append("<CLAUDE.md>\n" + claude_md.read_text() + "\n</CLAUDE.md>")
+    parts.append("<CLAUDE.md>\n" + claude_md.read_text(encoding="utf-8") + "\n</CLAUDE.md>")
 
 worklog = ROOT / "WORKLOG.md"
 if worklog.exists():
-    lines = worklog.read_text().splitlines()
+    lines = worklog.read_text(encoding="utf-8").splitlines()
     tail = "\n".join(lines[-WORKLOG_LINES:])
     note = "" if len(lines) <= WORKLOG_LINES else f" (last {WORKLOG_LINES} of {len(lines)} lines)"
     parts.append(f"<WORKLOG.md{note}>\n{tail}\n</WORKLOG.md>")

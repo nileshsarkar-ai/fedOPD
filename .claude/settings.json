@@ -1,11 +1,22 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(python -m jupyter nbconvert:*)",
+      "Bash(python -c:*)",
+      "Bash(ls:*)",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Read"
+    ]
+  },
   "hooks": {
     "UserPromptSubmit": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /home/garima/fedOPD/.claude/hooks/inject_context.py",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/inject_context.py\"",
             "timeout": 10,
             "statusMessage": "Loading CLAUDE.md + WORKLOG.md"
           }

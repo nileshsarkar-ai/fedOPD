@@ -8,7 +8,59 @@
 
 The worklog is the project's lab notebook: it is the record that survives when the chat context does not. Write it for someone reconstructing the reasoning months later. Facts and decisions, not narration — no filler, no restating the request. If something failed or was wrong, that goes in too; a worklog that only records successes is worthless.
 
+## What this project is building — write all code against this
+
+**Objective: operations, not clinical prediction.** Forecast department-level demand across a multi-site provider group without pooling site data, then turn those forecasts into a defensible allocation of finite capacity — for resource allocation, service enhancement and expansion planning, centre-wise and region-wise.
+
+**Three planes, and they fail separately.** A forecast with no allocation logic is a dashboard; allocation logic with no forecast is a budget spreadsheet.
+
+1. **Federation plane** — model weights move between sites, patient data never does. FedAvg over the site silos. `06_federated_forecast.ipynb`.
+2. **Agentic plane** — forecasts become capacity requests, escalated **site → region → group**, each tier settling only what the tier below could not. `07_agentic_layer.ipynb`.
+3. **Human review** — a planner approves, amends or rejects every release. The system is decision support; it does not allocate autonomously.
+
+**The pipeline is: demand prediction → allocation → human-reviewed release.** In that order, and step 2 is not allowed to skip step 1's uncertainty.
+
+**What crosses between the planes is a call with a confidence, not a number (D-08).** The forecaster hands the agentic layer a direction — *up / flat / down* over the horizon — together with **how often that call is right**, which is the per-class precision measured on held-out months. A board commits capacity on the second number, not the first: "growing" is worth nothing until it comes with "and we are right about that 66% of the time". A point forecast passed across on its own overstates what is known, and F-45 is the evidence — the method with the best MASE never calls growth at all.
+
+**Hierarchy and roles.** Public sites are federated clients *and* allocation targets (`fl_client`, `allocatable`). Independent-sector providers are the **buy** side — capacity is purchased from them, never allocated to them. They attach to a region by **who commissions them**, not who owns them (F-40).
+
+### Measured constraints any design must respect
+
+These are findings, not preferences. Code that contradicts them is wrong.
+
+- **Buying external capacity is a slow lever, not a spot valve.** No month-scale purchasing response exists in eight years (`04_eda`, lags 0/3/6/12 ≈ 0). The independent share moves over *years*, tracking multi-year framework contracts. (Entry 29.6b)
+
+  **The decision rule that follows, and it is settled (D-07):** the split is on *how fast the need is*, which decides which levers exist — not on temporary-versus-sustained deciding whether to buy.
+  - **Temporary spike → internal absorption only.** Reallocate within the site's own departments, then between sites in the region. Nothing external can respond in that window.
+  - **Sustained growth → both levers, evaluated together.** Expand public establishment *and* contract external capacity are both legitimate answers, they operate on the same multi-year timescale, and the agent presents them as a costed choice to the board rather than picking one silently.
+- **The buy lever is specialty-specific.** Independent capacity ranges from 25.6% of public demand in ophthalmology to 0.3% in general medicine, and is **under 5% in 11 of 19 departments**. Never offer "purchase externally" as a generic option. (Entry 29.5)
+- **Forecast skill at site × department granularity is poor.** Every baseline has a *negative* within-series R², and seasonal-naive is beaten by a trailing mean (F-38, F-39). Any rule keying on a trend-versus-transient distinction must report its classifier's error rate, not assume it. Carry forecast uncertainty into the allocation rather than hiding it behind a point estimate.
+- **The removal term is split, never lumped.** ~15% of referrals leave the list with no recorded completion; NHS's own linkage says 49% of that is treatment that happened and was filed late. That half is capacity, not attrition.
+
+### Evaluation integrity — build the system, do not chase the number
+
+**This is version one of a process that will keep evolving.** The metrics exist to tell us whether the system works, not to be maximised. A design chosen because it moved RMSE is a design nobody can defend, and it produces exactly the odd, brittle evals that make a reviewer stop reading.
+
+- **The test year is spent once.** Every look at it while iterating burns a little of it. Develop and compare against the **validation** window; touch the test window when the system is built, once, and report what it says.
+- **Never tune the data to the metric.** Changing which series are admitted, which split is used, or which horizon is scored, and *then* observing the number improve, is not an improvement — it is a different question. Eligibility rules are justified on coverage and semantics, never on error.
+- **Report every variant run, not the best one.** One declared seed. If several seeds or configurations were tried, say so and give the spread.
+- **Choose the metric before the run**, and keep reporting the pair that cannot both be gamed: pooled R² flatters, within-series R² does not.
+- **A model that beats the baseline for the wrong reason is a failure**, not a result. Ask what else would produce that number before accepting it.
+- Negative and flat results are publishable here. "The federated model did not beat a trailing mean" is a finding about the problem, and it is worth more than a tuned number nobody can reproduce.
+
+### The data, as measured
+
+150 eligible sites, 34 regions, 19 departments, 96 months, **2,103 evaluated site × department series**. 121 raw columns → **15 canonical** → **36 model inputs**. All counts come from the notebooks, never from prose.
+
 ## Working mode - Claude can help write the code
+
+**Work at the level of a researcher with ten years in AI and distributed systems.** That is the standard for the reasoning, not a costume: someone at that level has seen federated setups fail for boring reasons, is unsurprised by a model that beats a baseline for the wrong cause, and reaches for the measurement that would falsify a design before building on it. Concretely, it means:
+
+- **Name the failure mode before the feature.** Leakage across a split, a metric flattered by between-series variance, a client-weighting choice that quietly hands the model to the largest sites, a test passed by a wide threshold. Say which one applies here, not in general.
+- **Know what the literature already settles**, and say when a choice is standard, when it is contested, and when this project is departing from convention and why.
+- **Distinguish an engineering problem from a research one.** Most of what looks like modelling work here is data semantics and provenance; treat it that way.
+- **Have opinions and defend them with numbers.** Experience shows up as a sharper prior about what will not work, and as being willing to say so before the run rather than after.
+- Seniority is *not* longer answers, more hedging, or more jargon. It is fewer, better-founded claims.
 
 Claude writes and helps with the analysis code (inspection, validation, transformation, EDA, modelling), not only reviews it. Ask for as much or as little as is useful; there is no restriction on handing over working code.
 
@@ -54,8 +106,14 @@ This is a research project, not a product. Think and act accordingly, in ideas, 
 
 - All code in this project is written in Jupyter notebooks (under `src/`), not standalone scripts or modules.
 - Keep code simple and research-grade: NO production-style safety nets — no try/except blocks, no retry wrappers, no input validation, no logging frameworks, no defensive checks. Straight-line code that does the job.
-- **Comment on a per-line basis.** Nearly every line gets a trailing `#` comment saying what it does, plus a markdown cell above each section. Explain the non-obvious bits explicitly — what a regex captures, what a magic constant means, why a flag is set. Verbose comments are wanted; verbose *code* is not.
-- **Explain every unfamiliar library, function, method or idiom the first time it appears** — say what the thing *is*, not just what the line does. The reader is a researcher, not a Python specialist, and should never have to look something up to follow the notebook. For example: `zipfile.testzip()` decompresses every member of an archive and returns the name of the first corrupt one, or `None` if all pass; `pd.MultiIndex.from_product` builds every combination of the given lists, which is how a ragged table is made rectangular; `np.polyfit(x, y, 1)` fits a straight line and returns `[slope, intercept]`; the walrus `:=` assigns inside a condition so a read can be tested and reused in one line. Name the library too when it is not obvious which one a call belongs to.
+- **Every line has a purpose, and the purpose is visible.** If a line can be deleted without changing a number, delete it. That covers: a variable assigned and never used, a `fillna` that fills nothing, a default that never fires, a column selected and then dropped, a parameter passed at its own default value. These are worse than clutter — each one reads as a decision that was taken, so a reviewer spends time working out what it guards against, and the answer is nothing.
+- **One function, one job.** A function that branches on the *type* of its argument is two functions wearing one name; write the two. Same for a flag parameter that switches the body in half.
+- **A guard is arithmetic, not defence.** `np.where(denominator > 0, ...)` earns its place because dividing by zero is a real case in this data and the alternative is a silent `inf`. A `try/except` around it does not, because it converts a fact about the data into a swallowed error. If a guard is there, its comment says which real input makes it fire.
+- **Asserts are the exception, and they are encouraged.** They are not defensive scaffolding: they are the mechanism that turns a silent wrong number into a stopped notebook, which is the failure mode this project keeps hitting. Every assert should have an answer to "what input would have made this fail".
+- **No smoke tests, no synthetic fixtures, no test harnesses** (added 2026-07-27, at the owner's instruction). A notebook is verified by running it headless on the real data and reading its stored outputs — that is the only evidence this project accepts. Building a synthetic dataset to prove code "runs" proves it runs on data you invented, which is a weaker claim than it looks and costs time that belongs to the real run. If a notebook cannot be run yet, say so and leave it unrun rather than manufacturing a stand-in.
+- **No standalone scripts.** Runners, helpers and utilities go in the notebook that needs them or nowhere. A `.py` or `.sh` in `src/` is scaffolding by another name; `jupyter nbconvert` is invoked directly from the shell.
+- **Short comments, not essays** (revised 2026-07-27, at the owner's instruction — the previous standard demanded multi-line explanations of every library and idiom, and the notebooks became more comment than code). A trailing `#` on the lines that need one, saying what the thing is and what it does. One line, occasionally two. An import gets a few words, not a paragraph.
+- **Comment what is not obvious from reading the line**: what a regex captures, what a magic constant means, why a flag is set, what an unfamiliar call returns. Skip the ones that restate the code. The reasoning that needs more than two lines belongs in the markdown cell above the section, or in `WORKLOG.md`, not inline.
 - Minimal exceptions are allowed only when they serve the data itself (e.g. downloading to a `.part` file and renaming on completion so reruns resume cleanly), not generic error handling.
 
 ## Environment

@@ -2764,3 +2764,1465 @@ were: quoting a prior run as though it were this one, mixing two measurements th
 reporting the subset of a result that fits, and describing a file without opening it. All four are
 failures of **provenance**, not of calculation, and the fix in every case was the same: go to the
 artefact rather than to the memory of it.
+
+---
+
+# Entry 26 - 2026-07-27
+## Notebooks renumbered, commentary raised to the CLAUDE.md standard, and all stored outputs lost and rebuilt
+
+### 26.1 Renumbering
+
+`src/` notebooks now carry ordering prefixes, so the pipeline reads in execution order rather than
+alphabetically:
+
+| Was | Now |
+|---|---|
+| `fetch_dataset.ipynb` | `01_fetch_dataset.ipynb` |
+| `inspect_dataset.ipynb` | `02_inspect_dataset.ipynb` |
+| `data_processing.ipynb` | `03_data_processing.ipynb` |
+| `eda.ipynb` | `04_eda.ipynb` |
+
+Cross-references were rewritten inside the notebooks themselves (6 cells across three files) and in
+`README.md`, `PROGRESS.md`, `CLAUDE.md` and `GUIDE.md`. The regex used a negative lookbehind so an
+already-prefixed name could not be prefixed twice.
+
+### 26.2 The commentary standard, applied properly for the first time
+
+`CLAUDE.md` has required since Entry 11 that every unfamiliar library, function or idiom be explained
+**at first use, saying what the thing IS and not merely what the line does**. That had been applied to
+`01_fetch_dataset.ipynb` and allowed to lapse everywhere else - the same failure mode Entry 5 recorded
+for comment density, recurring on a different axis.
+
+Now applied across all four. Every import carries a two-part note: what the library is, then what it
+does in this notebook. Idioms explained at first use rather than assumed:
+
+- `stream=True`, and why a 100 MB download otherwise becomes a 100 MB Python object
+- `1 << 20` as a bit-shift giving exactly 1,048,576
+- the `.part`-then-rename pattern, and that a rename is atomic so a finished filename means a
+  finished file
+- `pivot_table`, and that `fill_value=0` is a modelling decision rather than formatting
+- `pd.MultiIndex.from_product`, and how it makes a ragged table rectangular
+- `.shift(1)`, and that the frame must be sorted by month first or it compares unrelated months
+- `.diff()` and `.pct_change()`, and why differencing is what isolates a response from a trend
+- `np.polyfit(x, y, 1)` returning [slope, intercept]
+- `assert`, and the question to ask of each one: what input would have made this fail
+- why `csv` is imported as `csvmod` and read row-wise rather than through pandas, with the 221-vs-214
+  quoted-comma incident as the reason
+
+### 26.3 F-36 - every stored output was destroyed, and the cause is now known
+
+Discovered while checking that a comment-only edit had preserved outputs: **all four notebooks had
+zero stored outputs**, despite having run clean earlier the same session.
+
+**Cause, from the evidence in the file itself.** `01_fetch_dataset.ipynb` showed
+`execution_count = 1` on its first cell and `None` on every other, with no outputs anywhere. That is
+the signature of a notebook being **executed from the editor** rather than headless: the IDE resets
+execution counts and clears outputs when a run starts. The owner had the file open at the time.
+
+**This is the second occurrence.** Entry 1.9 recorded the same class of loss when editing cells
+discarded stored outputs, and Entry 6.1 warned that "a rewritten-but-unrun notebook looks finished and
+is not". The failure is silent in both directions: the notebook still opens, still parses, and still
+looks complete.
+
+**Recovery considered and rejected.** Commit `70f7a7a` holds the outputs (02 at 34/34, 03 at 14/14),
+but that commit predates the F-09 and F-21 corrections and the column-contract section. Restoring
+from it would attach an older run's results to newer code, which is precisely the provenance error
+Entry 24 was written about. **Re-running is the only honest fix**, and it is cheap because acquisition
+is idempotent.
+
+`01` re-run and verified: 6 of 7 code cells carry outputs, reporting 96 months, 96 CSVs extracted, 544
+trusts, 61 KH03 files. `02`, `03` and `04` queued behind it.
+
+**Working rule, now explicit:** read the notebooks in the editor freely, but do not execute cells or
+save while a headless run is in flight, and do not execute cells at all if the stored outputs are the
+artefact of record. The `nbconvert` command in `PROGRESS.md` section 9 is the way to run them.
+
+### 26.4 Column question raised by the owner, partially answered
+
+The owner asked how many columns the raw files have, believing it to be around 150. Measured: **121
+post-2021 and 69 pre-2021**, with a union of 122. The full list was printed for them.
+
+The structural point that makes the contract tractable: **105 of the 121 are a single waiting-time
+histogram** sliced weekly from 0-1 through 104+. They are not 105 decisions. The genuine decision set
+is the **16 non-band columns**, which are identical in both eras, plus two cut points on the
+histogram that NHS fixes at 18 and 52 weeks.
+
+### 26.5 Three decisions raised with the owner, not yet taken
+
+1. **Put `provider_name` into the canonical table.** My original reason for excluding it was size,
+   which is weak; the real risk is people joining on names, and that is prevented by keeping the code
+   as the key, not by hiding the name. Recommendation: add it.
+2. **Region.** The owner is right that it is missing. We carry the 42 ICBs; the **7 NHS regions above
+   them have never been fetched**, and they are the natural top tier for the trust -> ICB -> national
+   escalation. Offered to pull them from ODS.
+3. **Remove independent providers from the cleaned table.** Flagged once that they are the "buy" side
+   of the allocate-or-buy decision in the problem statement, and proposed writing both files, since
+   the filter is one line and keeping both costs nothing. Awaiting the owner's decision.
+
+---
+
+# Entry 27 - 2026-07-27
+## The dataset was gone. Comment standard cut back at the owner's instruction. Notebooks 05, 06 and 07 written and smoke-tested.
+
+Asked for: project status, the remaining pipeline code, and shorter comments throughout.
+
+### 27.1 F-37 - `data/` did not exist on this machine, and the notebooks had no outputs
+
+Status check at the start of the turn, measured rather than assumed:
+
+| | |
+|---|---|
+| `data/` directory | **absent.** No `rtt_zips`, `rtt_csv`, `reference`, `kh03`, `canonical` |
+| `01_fetch_dataset.ipynb` | 6 of 7 code cells carrying outputs, reporting 96 zips, 96 CSVs, 544 trusts, 61 KH03 files |
+| `02`, `03`, `04` | **zero stored outputs**, 35, 17 and 6 code cells respectively |
+
+Those two rows contradict each other, so the evidence was chased rather than reconciled by assumption.
+`01`'s download cell prints a line only when a file is *freshly* downloaded - the `dest.exists()` check
+`continue`s before the print - so 96 printed lines means 96 files were actually written during the
+02:26 run recorded in `logs/fetch.log`. A search of the whole of `C:\Users\heave` found no `rtt_csv`,
+`rtt_zips`, `canonical` or `kh03` directory anywhere. The data existed at roughly 02:29 and was gone
+by 02:30.
+
+**Cause not established.** No deletion step in `01` touches those folders; `02`'s archive-deletion
+section removes `rtt_zips` only, and `02` never completed - its log ends after the kernel banner with
+no traceback and no "Writing" line, the signature of the process being killed mid-run rather than
+failing. Recorded as unexplained rather than guessed at.
+
+*Consequence, which is the part that matters:* `02`, `03` and `04` could not have run against data
+that was not there, and their empty output sets are consistent with that. **No current canonical table
+existed at the start of this turn**, so nothing downstream could be verified against anything.
+
+*Recovery:* `01` re-run headless. Acquisition is idempotent by design, so this is the cheap fix rather
+than the careful one. Completed: 96 archives, 96 extracted CSVs, `trust_icb.csv`, 61 KH03 workbooks.
+`02` -> `03` -> `04` -> `05` chained behind it via a new `src/run_pipeline.sh`, which stops at the
+first notebook that fails rather than carrying a broken table forward.
+
+### 27.2 The comment standard was cut back, and `CLAUDE.md` changed with it
+
+The owner's instruction: comments are far too long, short ones saying what a thing is and what it does
+are enough. `CLAUDE.md` carried the opposite - Entry 26.2 had *just* raised every notebook to a
+standard demanding a paragraph per import and an explanation of every idiom at first use.
+
+Treated as a decision to take rather than a preference to absorb quietly, because it reverses a
+standing rule: **`CLAUDE.md` has been edited to match.** The per-line rule is now "short comments, not
+essays - one line, occasionally two", with the note that reasoning needing more than two lines belongs
+in the markdown cell above the section or in this worklog. The old text is quoted in the replacement so
+the reversal is visible rather than looking like drift.
+
+Applied to all four existing notebooks. The heaviest cut is the import block: `02`'s ran to 60 lines
+of prose for 10 imports and is now 12 lines. Duplicated explanations found and removed while doing it -
+`03` explained `pivot_table` twice in consecutive comment blocks, and `MultiIndex.from_product` twice
+in the same cell, both left over from an earlier edit.
+
+### 27.3 New notebooks
+
+**`05_baselines.ipynb`** - roadmap step 2, the bar. Four baselines (naive, seasonal-naive, 12-month
+mean, drift) on `demand`, from a single forecast origin at the end of training, 12 months out.
+
+- Masked on `usable`, not `service_exists`, so a suspended return cannot be scored as a zero month.
+- Temporal split, last 12 months held out. COVID stays in training, never in test.
+- **MASE**, denominator = in-sample seasonal-naive MAE on the *training* portion only. MAPE is refused
+  outright: it divides by the actual and this data has real zero months.
+- Writes `series_index.csv`, which fixes which series and which split every later model must use.
+  Two models scored on two different series sets is not a comparison, and this is what stops it.
+
+**`06_federated_forecast.ipynb`** - roadmap step 3. FedAvg over 126 trust silos, hand-implemented in
+torch rather than through `flwr`, since `flwr` is not installed on this laptop and a hundred lines of
+plain torch is auditable.
+
+- Four models, not one: `local` (floor), `fedavg`, `fedavg_ft`, `central` (pooled ceiling). A federated
+  number without both bounds says nothing about whether federating bought anything or what it cost.
+- Per-**series** scaling from training months only. Per-trust scaling was rejected: within one trust
+  ophthalmology can be a hundred times neurosurgery, and the large department would set the loss.
+- Windows may not straddle the split, asserted by construction.
+- Both weighting schemes run and reported - by sample count (standard FedAvg, gives the largest trusts
+  the most say) and uniform - because on this data trusts differ in size by two orders of magnitude and
+  the choice is a policy question, not a hyperparameter.
+- L1 loss, matching the metric. Training on squared error and scoring on absolute error optimises for
+  a different thing.
+
+**`07_agentic_layer.ipynb`** - roadmap step 4. State vector, gap classification, capacity ask,
+three-tier escalation, allocation, release.
+
+- **The removal term is split, not lumped**, which is the whole point of the notebook. Each service's
+  removal rate is measured from its own history on NHS's identity, then split by NHS's published
+  reasons: 49% treatment that happened but was filed late, 23% decision not to treat, 11% first-
+  appointment DNA. The 49% is **added back to effective capacity**; only the rest is exit. A single
+  attrition rate understates throughput by about half the leak.
+- The notebook prints the naive-identity projection alongside the corrected one, so the size of the
+  escalation the naive version would raise for nothing is on the page.
+- Escalation is trust -> ICB -> national, each tier settling proportionally and passing up only the
+  residual, with an assert that the allocation neither creates nor destroys capacity.
+- Independents appear only as a market to buy from, never as an allocation target, and the tier carries
+  the `04_eda.ipynb` finding that independent share does not respond to public backlog at a monthly
+  cadence - substitution is a multi-year contracting shift, not a valve openable inside a 6-month plan.
+- Uses the seasonal-naive forecast so it runs without `06` having executed; the swap is one marked line.
+
+### 27.4 Verified by execution on synthetic data, because the real table did not exist yet
+
+Rather than ship three unrun notebooks, a synthetic `canonical/` was built to the exact schemas -
+20-column panel, 15-column canonical, 11-column `provider_dim` - and all three were executed against it
+headless. All three complete with 0 cell errors.
+
+**One real defect found this way.** `05` failed at the first cell: `np.sort(panel.month.unique())`
+returns `numpy.datetime64` objects, and a `%Y-%m` format specifier on one of those raises
+`ValueError: Invalid format specifier ... for object of type 'str'`. Replaced with
+`pd.DatetimeIndex(sorted(...))`, which yields Timestamps. This would have aborted the run at the very
+end of the chain, after `02` and `03` had spent their time.
+
+Two sanity checks the synthetic run happened to provide:
+
+- The synthetic panel was built with `waiting = cumsum(demand - completed)`, so the accounting identity
+  holds *exactly*. `07` measured the removal rate as **0.0%** on it. The estimator recovers a zero leak
+  when there is no leak, which is the behaviour that would be hard to trust otherwise.
+- `06` on synthetic data ordered as `local` 1.356 >> `fedavg` 0.774 ~ `central` 0.773, all beating
+  `seasonal_naive` 1.031. Sharing helps when the clients genuinely share structure, which is exactly
+  what that data was constructed to have. **This is a smoke test, not a result.** Nothing about the
+  real data is implied by it.
+
+### 27.5 A defect of my own, caught before it ran
+
+The first draft of `07`'s escalation cell assigned `state["spare"]` three times in succession, one of
+those through a `groupby.apply(lambda d: 0)` that did nothing at all. It would have executed without
+error and produced an allocation nobody could defend. Rewritten as one symmetric `settle()` that
+updates both sides of the transfer and asserts that capacity is conserved.
+
+Recorded because it is the failure mode `CLAUDE.md` warns about in its own words - the clever thing
+that cannot be checked, rather than the simple thing that can - and it was written here, not inherited.
+
+### 27.6 Open
+
+1. **`02` -> `03` -> `04` -> `05` are running now on the restored data.** Nothing in this entry about
+   the real canonical table is verified until they finish; the previous table's numbers must not be
+   quoted as if they described this build (Entry 24.8).
+2. **`06` and `07` have never run on real data.** Only synthetic. `06` on 126 trusts x 30 rounds on a
+   CPU is the long pole and belongs on the A100 box.
+3. F-37 has no cause. If `data/` disappears again, that is a pattern and needs chasing properly.
+4. Everything still open from Entry 26.5: `provider_name` into the canonical table, the 7 NHS regions
+   above the ICBs, and whether to write an independents-excluded variant of the cleaned table.
+
+### 27.7 Metrics extended to RMSE and R squared, and the network made a real one
+
+Asked for by the owner: evaluation metrics and performance graphs at the end, RMSE and R squared, and
+the federated model to be a neural network.
+
+**On the last point:** it already was one - `06` has always been a torch MLP, not a linear fit. It has
+been made a more serious one rather than left as it stood: two hidden layers of 128 with ReLU and
+dropout, and, more importantly, **12 month-of-year inputs alongside the 24 lags**. Without them the
+network receives 24 unlabelled numbers and cannot tell January from July, and since training windows
+start in every month of the year, position carries no calendar information either. Given how strong the
+annual shape is in referrals, that feature is doing more work than the extra depth.
+
+**RMSE** added per series and pooled. It punishes one large miss far harder than MAE, which is the
+right emphasis for a decision layer: it is broken by the month it gets badly wrong, not by being
+slightly off every month.
+
+**R squared is reported twice, and the pair is the point.**
+
+- `R2_pooled` - all series-months against one grand mean.
+- `R2_within_median` - each series against **its own** test-window mean.
+
+Almost all variance in the pooled data is *between* series rather than within them, so `R2_pooled`
+largely measures whether a model knows which trust is large. The gap between the two is that
+between-series variance, and quoting the pooled figure alone is the standard way to make a forecast
+look far better than it is. Both are printed side by side for that reason, in both `05` and `06`.
+
+A performance section was added to the end of each: predicted against actual on log axes, the residual
+distribution scaled by each series' own mean (which says whether the forecast runs high or low overall),
+RMSE by horizon, the models ranked, the within-series R squared distribution, and a per-service scatter
+of model MASE against baseline MASE where every point below the diagonal is a service the model helped.
+
+### 27.8 Own-code audit against the "every line has a purpose" rule
+
+The owner restated the coding standard and it was applied to the three new notebooks rather than
+assumed to hold. Four genuine violations, all mine, all found by looking:
+
+| | |
+|---|---|
+| `05` | `per_series` dict built every iteration and **never read**. Removed; the loop is now a comprehension |
+| `06` | `np.random.seed(0)` with a comment claiming it seeded client sampling. Nothing in the notebook draws from numpy's RNG - all randomness is torch's. Removed |
+| `06` | `evaluate()` branched on `isinstance(x, np.ndarray)`, i.e. two functions sharing one name. Split into `predict()` and `evaluate()` |
+| `07` | two `if h < demand_fc.shape[1]` branches that **cannot fire** - the frame is always exactly `HORIZON` wide. Replaced with one assert on that fact, which is the useful version |
+
+Also `07` split its capacity ask using `adm_share.fillna(0.5)`. 0.5 was invented. It now falls back to
+the panel's own median admitted share, which is measured.
+
+`CLAUDE.md` gained the rules these came from: every line has a purpose and deleting it changes a
+number; one function, one job; a guard is arithmetic and its comment names the input that makes it
+fire, while a `try/except` in its place converts a fact about the data into a swallowed error; asserts
+are encouraged for exactly the opposite reason.
+
+### 27.9 Smoke tests: used, then prohibited
+
+Because no canonical table existed (§27.1), `05`, `06` and `07` were verified by building a synthetic
+`canonical/` to the real schemas and executing all three against it. That did find two real defects -
+the `np.sort` datetime64 formatting failure, and the dead branches above.
+
+**The owner has since ruled this out, and `CLAUDE.md` now prohibits it.** Verification in this project
+is running the real notebook headless on the real data and reading the stored outputs; a synthetic
+fixture proves the code runs on data that was invented for it, which is a weaker claim than it appears
+and spends time that belongs to the real run.
+
+*The consequence for anything already written:* the synthetic figures produced during that exercise -
+including a `fedavg_ft` median MASE of 0.760 against a seasonal-naive 1.031 - **are not results and
+must never be quoted as any**. They describe a dataset that was constructed to have shared structure
+across clients, so a federated model beating a baseline on it was close to guaranteed by construction.
+The real numbers do not exist yet.
+
+`src/run_pipeline.sh` was also written this turn as a chain runner. It is a standalone script in `src/`,
+which `CLAUDE.md` has always disallowed, and it is removed once the run currently using it finishes.
+`nbconvert` is invoked directly.
+
+### 27.10 Status at the end of the turn
+
+- `01` complete and verified: 96 archives, 96 CSVs, 544 trusts, 61 KH03 workbooks.
+- `02` running on the real data; it has written `csv_manifest.csv`, `monthly_summary.csv`,
+  `provider_month_demand.csv` and `tf_month_demand.csv` so far. `03`, `04`, `05` queued behind it.
+- `06` and `07` have **never been run on real data**. Nothing about their behaviour on the real panel
+  is known.
+
+---
+
+# Entry 28 - 2026-07-27
+## First real-data run of the baselines. The seasonal prediction was wrong. Project reframed to a multi-site hospital group.
+
+### 28.1 Pipeline complete on restored data
+
+`01` -> `02` -> `03` -> `04` -> `05` all executed headless, 0 cell errors, on the data refetched after
+F-37. `data/canonical/` rebuilt: `rtt_canonical.parquet`, `rtt_panel.parquet`, `provider_dim.csv`,
+`national_monthly.csv`, and new from `05`, `baselines.csv`, `baselines_by_horizon.csv`,
+`series_index.csv`.
+
+Panel structure, re-measured rather than carried over: **126 sites, 34 ICBs above them (median 3
+sites per ICB, max 10), 19 departments, 96 months, 1,870 active site x department series**, median 17
+active departments per site.
+
+**One structural fact worth recording.** All 1,870 series are `usable` in all 96 months; the strict
+"no gaps anywhere in the window" rule excluded **nothing**, and cost 0.00% of panel demand. That is
+not luck. The balanced panel is *defined* as trusts filing `Part_3` in all 96 months, so a demand gap
+inside the panel is impossible by construction. The `usable` mask therefore does no work here beyond
+`service_exists` - it will start doing work the moment the panel rule is relaxed, which is the point
+at which it must not be forgotten.
+
+### 28.2 F-38 - the seasonal-naive prediction was stated in advance and was wrong
+
+`05_baselines.ipynb` recorded, before the run, that `seasonal_naive` was "the one to beat" because
+referrals carry a strong annual shape. Measured on the 1,870 series, 12 months ahead from a single
+origin:
+
+| Baseline | Median MASE | Pooled R2 | Within-series R2 (median) |
+|---|---|---|---|
+| `mean12` | **0.576** | 0.956 | -0.430 |
+| `naive` | 0.591 | 0.956 | -0.521 |
+| `seasonal_naive` | 0.650 | 0.949 | -1.145 |
+| `drift` | 0.720 | 0.911 | -1.314 |
+
+**Seasonal-naive came third of four**, beaten by both a trailing 12-month mean and by simply repeating
+the last value. The prediction has been left in the notebook alongside the outcome rather than edited
+to match, because a falsified prediction is evidence and a rewritten one is not.
+
+*Reading:* the annual pattern is real in the national aggregate - `04_eda.ipynb` shows it plainly - and
+does **not** survive disaggregation to one department in one trust, where month-to-month noise swamps
+it. Anything that assumes strong seasonality at series level on this data should be re-examined,
+including the month-of-year features just added to `06`; whether they help is now an open measurement
+rather than an assumption.
+
+### 28.3 F-39 - every within-series R squared is negative
+
+Against the null of a flat line at each series' own test-window mean, **no baseline explains any of
+the month-to-month shape**: best is -0.430. Meanwhile pooled R2 sits at 0.956 for the same forecast.
+
+The gap between those two numbers is entirely between-series variance. A pooled R2 of 0.956 here means
+the forecast knows which trust is large, which is not a forecasting achievement - it is arithmetic on
+the level. This is exactly why both are reported, and it vindicates carrying the pair rather than the
+single flattering figure.
+
+*Consequence for the project's claim, and it is a significant one.* If month-level movement at
+site x department granularity is largely unpredictable, a contribution framed as "we forecast better"
+is competing for a thin margin on a hard problem. The defensible claim moves to the decision layer:
+**allocating well under acknowledged forecast uncertainty**, with that uncertainty carried into the
+allocation rather than concealed behind a point estimate. Recorded now, before any model result exists
+to be tempted by.
+
+### 28.4 Reframe: from NHS trusts to a multi-site hospital group
+
+The owner reframed the work toward a private multi-hospital group - a Manipal-style organisation with
+a headquarters, regional clusters and departments per site - with the objective being strategic
+planning: resource allocation, service enhancement and expansion, centre-wise and region-wise, with
+demand prediction feeding allocation feeding human review.
+
+**The structure already fits.** 126 sites, 34 regional clusters, 19 departments, 96 months is exactly
+the shape the reframing needs, and the trust -> ICB -> national hierarchy is the site -> region -> group
+hierarchy under another name.
+
+**Two things flagged rather than implemented.**
+
+1. **The data is English public sector.** Framing it as a private Indian group is a *structural
+   analogue*, not a substitute, and the paper must say so in those words. No claim about any actual
+   group is supportable from it. What it does provide is what such groups never publish: eight
+   unbroken years of department-level volumes across a real multi-site, multi-region hierarchy.
+2. **The proposed "6 hospitals x 5-6 departments" is too small to be an experiment.** That is ~30
+   series and 6 federated clients. With 6 clients the differences between `local`, `fedavg` and
+   `central` are not measurable, and the federated result would be a demonstration. The full 126-site
+   panel is the experiment; a 6-site vignette drawn from it is the illustration. The owner has since
+   confirmed using all sites and departments, which resolves this.
+
+`ART` in this context is **Assisted Reproductive Technology** - fertility and IVF services. It is not
+an RTT treatment-function code and does not appear in this data; the nearest codes are `C_502`
+Gynaecology and `C_501` Obstetrics.
+
+### 28.5 Literature position, from a search rather than from memory
+
+Federated learning in healthcare is overwhelmingly **clinical outcome prediction** - ICU mortality on
+eICU across 200+ hospitals, multi-centre sepsis, COVID mortality across 21 Brazilian hospitals. Papers
+on **operational** federated forecasting - demand, capacity, allocation - are scarce, and papers
+coupling that to a hierarchical agentic allocation layer with human approval scarcer still. The
+adjacent work is multi-agent bed allocation and patient flow, which is single-organisation and not
+federated.
+
+*Assessment:* the gap is real and is the paper's positioning. Stated as a search result, not as a
+novelty claim - a proper related-work pass has not been done.
+
+### 28.6 Housekeeping
+
+- `src/run_pipeline.sh` **deleted**. It was a standalone script in `src/`, which `CLAUDE.md` has
+  always disallowed; it survived only as long as the run using it.
+- A concept note with the architecture diagrams was published as an artifact: the three planes
+  (federation, agentic, human review), the escalation sequence from a department request to a board
+  decision, the measured data substrate, and the baseline table above.
+
+### 28.7 Open
+
+1. **`06` and `07` have still never run on real data.** `06` on 126 clients x 30 rounds on CPU is the
+   long pole and belongs on the A100 box.
+2. **Do the month-of-year features in `06` help?** F-38 makes this genuinely uncertain. Measure it;
+   do not assume.
+3. **Are the agents rules or LLMs?** The escalation logic in `07` is deterministic and auditable. An
+   LLM layer adds negotiation and explanation, and non-determinism a board must accept. Undecided,
+   and it is the central design question.
+4. **Where does forecast uncertainty enter the allocation?** Given F-39, a point forecast overstates
+   confidence. Unresolved.
+5. **Does the region tier earn its place?** Testable directly: run the allocation with and without it
+   and measure the residual it absorbs.
+
+---
+
+# Entry 29 - 2026-07-27
+## Panel widened to every eligible site. F-40: independents DO have a region, via the commissioner. Normalised dataset compiled.
+
+### 29.1 The balanced-panel rule was costing 20% of public demand
+
+The owner asked for all eligible sites and departments, not a subset. Measured before changing anything:
+
+| Rule | Sites | Series | % of public demand |
+|---|---|---|---|
+| public AND present in all 96 months (the old `panel_member`) | 126 | 1,870 | 80.19% |
+| public AND >=48 months of demand AND still reporting in the final month | **150** | **2,198** | **95.39%** |
+
+Thresholds of 48, 36, 24 and 12 months all return the same 150 sites, so **every eligible site has at
+least 48 months of history** and nothing is gained by going lower. The widening **adds 24 sites and
+drops none**.
+
+*Why the old rule was wrong rather than merely strict.* It excluded a site that reorganised or merged
+mid-window even though that site runs a full service today, and it did so silently - the count 126
+looked like a fact about the data rather than a consequence of a choice. Sites that have **stopped**
+reporting are still excluded, deliberately: capacity cannot be allocated to a hospital that no longer
+files.
+
+`fl_client` in `03_data_processing.ipynb` is now this eligibility rule, computed in the notebook and
+printed against the old one so the change is a measurement. The census `panel_member` column is left
+as it was - it records a different, still-true fact.
+
+### 29.2 "All clients" and "all 96 months" are in tension, and the ragged panel resolves it
+
+Only 126 sites have all 96 months, so those two requirements cannot both be taken literally. The
+resolution: the **window** is all 96 months and every eligible site is a client; months a site did not
+report are marked unusable rather than filled with a fake zero.
+
+That makes the `usable` mask do real work for the first time. Entry 28.1 recorded that it was
+redundant under the balanced panel, and predicted it would matter the moment the rule was relaxed.
+It does. `05_baselines.ipynb` accordingly splits its admission rule in two:
+
+- **test window**: every month must be usable, or the model is scored against a month nobody reported;
+- **training window**: only the most recent 36 months must be usable - one 24-month lookback plus a
+  12-month horizon - and older gaps are tolerated.
+
+Result: **2,850 cells, 2,198 real services, 2,103 admitted** (+12.5% on the previous 1,870), 95
+excluded carrying 5.81% of panel demand. The strictest alternative is printed alongside for comparison.
+
+### 29.3 F-38 survives the wider panel
+
+Re-measured on 2,103 series rather than 1,870, the seasonal result is unchanged in rank:
+
+| Baseline | Median MASE | Within-series R2 |
+|---|---|---|
+| `mean12` | **0.544** | -0.415 |
+| `naive` | 0.566 | -0.529 |
+| `seasonal_naive` | 0.619 | -1.124 |
+| `drift` | 0.691 | -1.333 |
+
+Seasonal-naive is still third of four and every within-series R2 is still negative. The finding is not
+an artefact of which sites were in the panel, which is the obvious thing it could have been.
+
+### 29.4 F-40 - independents have an ICB after all, through who commissions them
+
+Standing since Entry 20 as a **dataset limit**: "No ICB mapping for independent providers, so the
+local substitution test cannot be run at all."
+
+**That was wrong, and the fix was in a column the contract drops.** `Provider Parent Org Code` is
+meaningless for independents, but `Commissioner Parent Org Code` is not: an independent site delivering
+NHS-funded work is commissioned by an ICB, and the file names it. Measured on March 2026:
+
+- 34,276 independent rows, **96.9% carry a commissioner parent**
+- 42 distinct values, of which **30 are ICB codes our own census resolved for public trusts**
+- those cover **72.4% of independent rows**; median **60 independent sites per ICB**
+
+*Interpretation:* independents attach to a region by **who pays**, not by who owns them. That is
+arguably the more relevant relation for an allocation decision anyway - the question is which board's
+budget buys the capacity. Coverage is 72.4%, not 100%, and the 12 unmatched parents are not yet
+identified, so this is an opening rather than a solved problem.
+
+*Consequence:* the ICB tier can now consider purchased capacity, and the local substitution test that
+was declared impossible becomes runnable.
+
+### 29.5 Where buying capacity is actually possible - it is not most places
+
+Prompted by the owner's proposal that surplus public demand be routed temporarily to independents.
+Independent throughput over the last 12 months, expressed against public demand in the same specialty:
+
+| Department | Independent capacity as % of public demand |
+|---|---|
+| C_130 Ophthalmology | **25.6%** |
+| C_110 Trauma & Orthopaedics | 21.9% |
+| C_330 Dermatology | 14.8% |
+| C_150 Neurosurgery | 10.2% |
+| C_100 General Surgery | 10.0% |
+| ... | ... |
+| C_340 Respiratory, C_300 General Medicine | **0.4%, 0.3%** |
+
+**In 11 of 19 departments the independent sector is under 5% of public demand.** The owner's framing
+that independents could "take half of what we have in the government" is not supported anywhere: the
+maximum observed is a quarter, in one specialty, and the median department has almost no external
+market at all.
+
+*So the buy lever is specialty-specific, and the agent must treat it as such.* An escalation that
+offers "purchase externally" as a generic option would be proposing something impossible in most of
+the panel.
+
+### 29.6 The sustained-versus-temporary rule: assessment
+
+The proposal - sustained growth triggers a request to expand public capacity, a transient spike is
+bought externally - is sound in structure, and it maps a forecasting question (is this movement trend
+or noise) onto an economic one (durable establishment change versus reversible spot purchase). It is
+implementable in `07_agentic_layer.ipynb` today.
+
+**Two constraints it must be built under, both measured:**
+
+1. **The empirical one.** `04_eda.ipynb` found no association between independent share and public
+   backlog at lags 0, 3, 6 and 12 (+0.078, -0.015, -0.018, +0.008). The substitution valve this rule
+   assumes **has not been used at monthly cadence in eight years of data**. The rule can therefore be
+   simulated as a counterfactual policy; it cannot be validated against observed behaviour, and the
+   paper must say which of the two it is doing.
+2. **F-39.** Within-series R2 is negative for every baseline, so distinguishing "sustained" from
+   "temporary" at site x department granularity is exactly the thing the data has so far proved hard.
+   A rule that keys on that distinction needs its classifier's error rate reported, not assumed. If
+   the trend/transient split cannot be made reliably, the rule degrades to noise deciding capital
+   allocation, which is worse than no rule.
+
+### 29.6b The owner was right about the policy, and the data says something sharper
+
+The owner challenged 29.6 directly: does the UK government not already buy independent capacity when
+public hospitals cannot meet demand? **Yes, and it is formal policy, not an occasional expedient.**
+NHS England runs a published partnership agreement with the independent sector, and the National
+Increasing Capacity Framework is a four-year agreement under which ICBs and trusts may procure up to
+**GBP 2.5 billion a year** of elective activity from pre-approved independent providers. The February
+2022 Elective Recovery Plan names the sector explicitly in the plan to clear 52-week waits.
+
+So the mechanism the owner described exists. The question is what it looks like in this data, which is
+where it gets interesting. Independent **share of completed pathways**, measured:
+
+| Month | Independent share | Public completions | Independent completions |
+|---|---|---|---|
+| 2018-04 | 7.26% | 1,200.3k | 94.0k |
+| 2020-03 | 7.92% | 1,096.5k | 94.4k |
+| **2020-05** | **3.44%** (series minimum) | - | - |
+| 2020-06 | 3.89% | 730.9k | 29.6k |
+| 2021-03 | 8.51% | 1,133.2k | 105.4k |
+| 2023-03 | 9.65% | 1,392.8k | 148.8k |
+| **2025-08** | **10.17%** (series maximum) | - | - |
+| 2026-03 | 7.77% | 1,564.1k | 131.7k |
+
+**Two findings, and the first is counter-intuitive.**
+
+1. **At the moment of maximum stress the independent share collapsed rather than surged.** In April
+   and May 2020 - precisely when NHS England block-contracted the independent sector nationally -
+   independent RTT completions fell from 94.4k to 26.3k and their share more than halved to 3.44%.
+   The requisitioned capacity went to urgent, cancer and COVID work, which is not elective RTT
+   activity, and elective work stopped across both sectors. So the single clearest instance of the
+   government buying private capacity leaves a signature in this dataset that points the **opposite**
+   way to the intuition. Anyone reading a rising independent share as "the buy lever being pulled"
+   would have read 2020 exactly backwards.
+2. **The lever is visible, but only over years.** From 2021 the share climbs steadily, 8.51% to a
+   10.17% peak in August 2025 - a four-year rise matching the timescale of a four-year framework
+   agreement, not a monthly response. It then *falls* to 7.77% by March 2026 as public throughput
+   reaches a record 1,564.1k.
+
+**Reconciliation with `04_eda.ipynb`.** The null correlation at lags 0/3/6/12 and the owner's claim are
+both correct and are not in tension: the earlier test was specifically a test for a **fast** valve, and
+`04_eda` said so at the time. Substitution is real and is procured through multi-year contracts.
+
+**Consequence for the agentic design, and it inverts part of 29.6.** The owner's proposed rule routed
+*temporary* spikes to independents and *sustained* growth to public expansion. The data supports the
+opposite assignment on the timescale axis:
+
+- **Temporary spike** - cannot be bought quickly. There is no evidence of a month-scale purchasing
+  response in eight years. It has to be absorbed internally, which is exactly what escalation tiers 1
+  and 2 already do: move capacity between a site's own departments, then between sites in a region.
+- **Sustained growth** - *this* is what the independent market actually absorbs, through contracting
+  over quarters and years, and it is a genuine alternative to expanding public establishment rather
+  than a fallback from it.
+
+So the rule survives, and becomes sharper: the branch is not temporary-versus-sustained deciding
+*whether* to buy, it is **how fast the need is** deciding *which levers are even available*. Buying is
+a planning-horizon lever; internal reallocation is the only fast one.
+
+### 29.7 Normalised dataset compiled
+
+`data/canonical/rtt_normalised.csv` - **201,888 rows x 21 columns**, 143 sites x 19 departments x 96
+months, 2,103 series, tidy long form: keys, `split`, the 8 raw measures and a z-scored copy of each.
+`rtt_normalised_scalers.csv` holds the 16 parameters per series so the transform is reversible.
+
+**The scaler is fitted on training months only.** Fitting over all 96 would carry the held-out year's
+mean and spread into the training rows - leakage that silently inflates every result downstream. An
+assert checks the training rows come back centred; measured, `demand_z` over the training window has
+mean -0.000000 and sd 0.9921.
+
+*A finding that fell out of the check:* the **test window's `demand_z` mean is +0.532**. The held-out
+year sits half a standard deviation above the training mean, i.e. demand is materially higher in the
+test year than in the history the model learns from. Any model trained on this and scored on that is
+being asked to extrapolate a level shift, which is part of why the within-series R2 figures are as
+poor as they are. Recorded because it was visible only as a by-product of validating the scaler.
+
+Note 143 sites, not 150: seven eligible sites have no individual series passing the test-window rule.
+
+### 29.8 Three defects in `.claude/settings.json` and its hook
+
+Asked to update the settings; found the file could not have worked on this machine at all.
+
+1. **The hook pointed at `/home/garima/fedOPD/.claude/hooks/inject_context.py`** - the *previous*
+   owner's Linux path. On this Windows box it resolves to nothing, so the CLAUDE.md + WORKLOG.md
+   injection has been silently doing nothing for the whole handover.
+2. **The interpreter was `python3`**, which on this machine is the Windows Store stub: measured exit
+   code 49. `python` works, exit 0.
+3. **The hook read both files without an encoding.** Python on Windows defaults to the system
+   codepage, so every em-dash in `CLAUDE.md` arrived as mojibake. Fixed with an explicit
+   `encoding="utf-8"`, and verified: 25,169 characters injected, no mojibake, em-dashes intact.
+
+The path is now `$CLAUDE_PROJECT_DIR`-relative so it works on either machine. Permissions were added
+for the read-only and notebook-execution commands this project runs constantly.
+
+*Generalisation:* a hook that fails produces no error the user ever sees. Same class as F-37 and the
+"rewritten but unrun notebook" of Entry 6.1 - the failure is silent and the artefact still looks
+correct.
+
+### 29.9 Open
+
+1. Identify the 12 commissioner-parent codes that are not known ICBs, and raise F-40 coverage above
+   72.4% or state why it cannot go higher.
+2. Build the trend/transient classifier the 29.6 rule needs, and **report its error rate** before any
+   allocation depends on it.
+3. `06` and `07` still have never run on real data, and now must run on 150 sites / 2,103 series.
+4. `07` must carry the specialty-specific buy constraint from 29.5 rather than offering purchase
+   generically.
+
+---
+
+# Entry 30 - 2026-07-27
+## D-07 settled. Goals written into CLAUDE.md. Column and feature contract restated from the notebooks.
+
+### 30.1 D-07 - the escalation splits on speed, not on cause
+
+Settled with the owner after 29.6b. The branch is **how fast the need is**, because that is what decides
+which levers physically exist, rather than temporary-versus-sustained deciding whether to buy:
+
+- **Temporary spike -> internal absorption only.** Reallocate inside the site's own departments, then
+  between sites in the region. Nothing external responds on that timescale; eight years of data show
+  no month-scale purchasing response.
+- **Sustained growth -> both levers, evaluated together.** Expanding public establishment and
+  contracting external capacity operate on the *same* multi-year timescale, so they are alternatives
+  to be costed against each other, not a first choice and a fallback. The agent presents both to the
+  board rather than selecting one silently.
+
+This supersedes the owner's original framing (temporary -> private, sustained -> public), which had the
+timescales the wrong way round, and it also supersedes my 29.6 reading that treated the external option
+as merely constrained. Recorded in `CLAUDE.md` so code is written against it.
+
+### 30.2 Goals section added to CLAUDE.md
+
+`CLAUDE.md` is injected into every turn by the hook fixed in 29.8, so it is the right place for the
+system definition rather than a document nobody re-reads. Added, deliberately short: the objective
+(operations, not clinical prediction), the three planes and how they fail separately, the
+predict -> allocate -> human-review pipeline, the site/region/group hierarchy, the allocatable-versus-
+purchasable distinction, and the four **measured constraints** any design must respect - D-07, the
+specialty-specific buy lever, the poor site-level forecast skill, and the split removal term.
+
+Each constraint cites the entry that measured it, so the guidance can be audited rather than believed.
+Verified the hook now injects it: 27,819 characters, goals section present.
+
+### 30.3 The column and feature contract, restated from the notebooks
+
+The owner asked how many of "about 150" raw features are selected. **The raw file is 121 columns
+post-2021 and 69 before, union 122** - the 150 figure is not right and was corrected once before in
+Entry 26.4. Three separate counts get conflated and they are not the same thing:
+
+| Stage | Count | What it is |
+|---|---|---|
+| Raw monthly extract | **121** (16 descriptive/measure + **105 waiting-time bands**) | what NHS publishes |
+| Canonical table | **15** | 3 keys + 4 attributes + 8 measures |
+| Model input | **36** | 24 monthly lags of `demand` + 12 month-of-year one-hot |
+
+The 105 band columns are **one histogram**, not 105 decisions: a weekly slice of waiting time from 0-1
+through 104+. The genuine decision set is the 16 non-band columns, identical in both eras, plus two cut
+points NHS itself fixes at 18 and 52 weeks.
+
+**The gap worth stating plainly: the forecaster uses ONE of the eight canonical measures.** `waiting`,
+`waiting_gt18`, `waiting_gt52`, `waiting_dta`, `completed` and its two splits exist for the agentic
+layer and are never fed to the model. Backlog and throughput are plausibly informative for demand -
+a long queue plausibly suppresses referrals, and a cleared queue plausibly releases them - and **nobody
+has tested it**. `rtt_normalised.csv` already carries all eight z-scored, so the experiment costs one
+change to the windowing cell. Left as the owner's decision rather than done silently.
+
+### 30.4 Notebook state
+
+All changes this session are in the `.ipynb` files themselves, not in side scripts. Stored outputs,
+measured:
+
+| Notebook | Code cells | With stored outputs |
+|---|---|---|
+| `01_fetch_dataset` | 7 | 6 |
+| `02_inspect_dataset` | 35 | 35 |
+| `03_data_processing` | 17 | 17 |
+| `04_eda` | 6 | 6 |
+| `05_baselines` | 9 | 9 |
+| `06_federated_forecast` | 11 | **0** |
+| `07_agentic_layer` | 10 | **0** |
+
+01-05 have run end to end on the real widened panel. **06 and 07 have never run on real data** and
+nothing about their behaviour on it is known.
+
+### 30.5 Open
+
+1. Decide whether the forecaster takes the other seven measures as inputs (30.3).
+2. Run `06` and `07` on the real 150-site, 2,103-series panel.
+3. Implement D-07 in `07`, including the specialty-specific buy constraint from 29.5.
+4. Build the trend/transient classifier D-07 depends on and report its error rate before any
+   allocation keys on it.
+
+---
+
+# Entry 31 - 2026-07-27
+## Seniority bar written into CLAUDE.md
+
+The owner asked that `CLAUDE.md` set the expectation of a researcher with ten years in AI and systems.
+Added to the working-mode section rather than the persona-free preamble, because it governs *how the
+work is done*, not who the reader is.
+
+Written as a standard for the reasoning rather than a costume, with the failure mode of the instruction
+stated inside it: seniority is not longer answers, more hedging or more jargon, it is fewer and
+better-founded claims. The four concrete behaviours it asks for - name the failure mode before the
+feature, know what the literature already settles, separate engineering problems from research ones,
+and hold defensible opinions stated *before* the run - are the ones this project has actually needed.
+Each maps to a defect already in this worklog: the flattered pooled R2 (F-39), the falsified seasonal
+prediction (F-38), the boundary test passed by a loose threshold (F-13), and the ICB mapping wrongly
+recorded as a dataset limit for nine entries (F-40).
+
+Hook verified: **29,784** characters injected, section present.
+
+*Correction, made immediately.* This line first read 28,832 - a number I wrote from expectation before running the check, in the same entry that asks for claims to be founded. Measured, it is 29,784. Left visible rather than silently overwritten, because the point of Entry 24.8 is that quoting a figure you have not just measured is the project's most repeated defect.
+
+*Note on placement.* `CLAUDE.md` is injected on every prompt, so anything added there is paid for every
+turn. This section earns its place; the file should not become a style anthology, and the next addition
+should displace something rather than accumulate.
+
+---
+
+# Entry 32 - 2026-07-27
+## F-41 - format drift audit across the eight years. Two real drifts, both benign, one load-bearing line.
+
+The owner asked whether eight years of files carry formatting differences that need normalising, and
+to check properly. Checked across all 96 months rather than sampled, and the audit is now **in
+`02_inspect_dataset.ipynb` as section K** rather than in a shell session - the defect Entry 25.1 was
+written about.
+
+### 32.1 What was checked, and what is clean
+
+Seven surfaces, chosen because each fails *silently* rather than loudly:
+
+| Surface | Result |
+|---|---|
+| UTF-8 byte order mark | **0 of 96** files carry one. A BOM turns the first header into `﻿Period` and breaks every join against it |
+| Header spelling | **0** columns have more than one raw spelling once whitespace and case are normalised |
+| Header padding | **0** headers carry leading or trailing whitespace |
+| Join keys (`Provider Org Code`, `Treatment Function Code`) | **clean in all 96** - no padding, no mixed case |
+| `RTT Part Type` vocabulary | `Part_1A/1B/2/2A/3` in all 96 months, no drift |
+| `Total All` | numeric everywhere: **0 blanks, 0 negatives, 0 non-numeric**. No thousands separators, no `*` suppression markers |
+| Column counts | 69 x 36 months, 121 x 60 months - F-02, already known |
+
+Three of these are now **asserts** rather than prints, because they are the ones a future format change
+would break silently: join-key hygiene, `Total All` numeric, and the part-type vocabulary.
+
+### 32.2 Two real drifts, both benign
+
+1. **The `Period` string changes case mid-window.** 24 distinct shapes across 96 files:
+   `RTT-April-2018` in the early months against `RTT-APRIL-2021` later, with the case flipping more
+   than once. A string comparison on it would report mismatches on roughly half the window.
+2. **Line endings switch at the same April-2021 break**: **36 files LF, 60 files CRLF**. Harmless to
+   pandas, which reads universal newlines, but it is independent evidence that the producing system
+   changed at the break rather than only the schema.
+
+### 32.3 The line that was doing the work by accident
+
+Our pipeline never noticed the `Period` drift, and the reason is one method call. `month_of()` does
+`name.upper()` before applying its regex, and `02` compares `month_of(period)` against
+`month_of(filename)` - **the same parser on both strings**, so case cancels on both sides.
+
+That is good design, but it was not deliberate defence against this drift, and nothing recorded that
+removing the `.upper()` would break the Period check on about half the window while leaving it passing
+on the other half. F-41 now says so explicitly, and the audit would catch it.
+
+*Generalisation:* a check that passes can be passing for a reason nobody has written down. The audit's
+value here is less the two drifts it found than the dependency it made visible.
+
+### 32.4 Band blanks are a decision, restated
+
+Band cells are **blank, not zero**, and the blank rate moves with the break: 22.8% (2018-04), 21.2%
+(2021-03), **36.4%** (2021-04), 30.4% (2026-03). The jump is the 53-to-105 band widening - more bands
+over the same patients means more empty ones.
+
+`03` fills them with 0, which is correct, but it is a modelling decision rather than a parse detail and
+the rate discontinuity is the schema break appearing a third time. Recorded so nobody reads the jump as
+a data-quality problem.
+
+### 32.5 A defect of my own while writing this
+
+The three new cells were first written with their escape sequences collapsed - the BOM literal became
+the actual bytes, the CRLF probe became a real carriage return, and a `print` newline broke its own
+string literal. Two of three cells would not compile. Caught by compiling every cell before running,
+not by the run.
+
+Fixed by building the byte and backslash literals from `bytes((0xEF, 0xBB, 0xBF))` and `chr(92)`
+instead of escaping them, which is both correct and easier to read. **Standing habit: compile every
+cell of a notebook after editing it programmatically, before spending a ten-minute run finding out.**
+
+### 32.6 Status
+
+`02` re-running with section K to store the F-41 outputs. No normalisation code was needed anywhere:
+the drift that exists does not reach the canonical table, and the audit now proves that rather than
+assuming it.
+
+---
+
+# Entry 33 - 2026-07-27
+## Test year sealed behind a validation window. Evaluation-integrity rules written into CLAUDE.md. F-38 replicates.
+
+### 33.1 The instruction, and why it changes the code rather than only the tone
+
+The owner: do not gamify or optimise for RMSE and R squared, build the system well, this is version one
+of something that keeps evolving, and the evaluation against the test set comes **once everything is
+built**.
+
+That is not only a standard to agree with - it has a concrete structural consequence that was being
+ignored. **The test year had already been looked at.** `05` had scored all four baselines on
+2025-04..2026-03 and those numbers were reported and quoted. Every further iteration checked against
+that window spends a little more of it, and by the time `06` and `07` are tuned there would be nothing
+held out at all.
+
+### 33.2 Three windows, and the test year is sealed
+
+`05_baselines.ipynb` now splits the 96 months three ways, not two:
+
+| Window | Months | Role |
+|---|---|---|
+| train | 2018-04 to 2024-03 | 72 months |
+| **validation** | 2024-04 to 2025-03 | 12 months - **every development decision is made here** |
+| **test** | 2025-04 to 2026-03 | 12 months - **sealed** |
+
+Controlled by one constant, `EVAL = "validation"`, flipped to `"test"` once at the end. The switch
+prints a warning when the test window is opened, and the admission rule and the scored slice are both
+cut to exactly the `H` months of the chosen window, so a validation run **cannot see the test year
+sitting after it** - previously `test = series.loc[:, columns >= split]` would have swept it in.
+
+*Honest note on what was already spent:* the test-window baseline figures in Entry 29.3 exist and were
+reported. Baselines carry no tuned parameters, so the cost is small, but they should be treated as
+already-observed and the validation figures below are the ones development runs against.
+
+### 33.3 F-38 replicates on an independent window
+
+Baselines re-scored on validation, 2,085 series:
+
+| Baseline | Median MASE (validation) | Median MASE (test, Entry 29.3) | Within-series R2 |
+|---|---|---|---|
+| `naive` | **0.510** | 0.566 | -0.667 |
+| `mean12` | 0.512 | **0.544** | -0.492 |
+| `seasonal_naive` | 0.617 | 0.619 | -1.488 |
+| `drift` | 0.641 | 0.691 | -1.451 |
+
+**Seasonal-naive is third of four on both windows**, and every within-series R2 is negative on both.
+`naive` and `mean12` swap first and second by 0.002, which is a tie rather than a finding. F-38 is
+therefore not an artefact of one held-out year, which was the obvious thing it could have been - it now
+has an independent replication.
+
+### 33.4 Evaluation-integrity rules added to CLAUDE.md
+
+Six, kept short because the file is injected every turn:
+
+- the test year is spent once; develop on validation;
+- never tune the data to the metric - changing eligibility, split or horizon and *then* seeing the
+  number improve is a different question, not an improvement;
+- report every variant run, one declared seed, give the spread;
+- choose the metric before the run, keep the pair that cannot both be gamed;
+- a model that beats the baseline for the wrong reason is a failure, not a result;
+- **negative and flat results are publishable here.** "The federated model did not beat a trailing
+  mean" is a finding about the problem.
+
+The last one matters most given F-38 and F-39. The temptation this project will actually face is not
+fabricating a number - it is quietly adjusting the panel or the horizon until the federated model wins,
+and every one of those adjustments would look like a reasonable modelling choice in isolation.
+
+### 33.5 The accidental protection is now a tested contract
+
+F-41 recorded that the `Period` case drift was survivable only because `month_of()` upper-cases before
+matching. That was incidental, and a comment saying "do not remove this" is not enforcement.
+
+`02` now carries the direct test:
+
+    assert month_of("RTT-April-2019") == month_of("RTT-APRIL-2019")
+
+Remove the `.upper()` and this fires immediately, instead of the Period check silently passing on one
+era and failing on the other. The audit found the drift; this turns the finding into a guard.
+
+### 33.6 A process defect of my own, worth recording
+
+The first patch to `05` asserted on its third pattern **after** applying the first two to the in-memory
+notebook but **before** writing the file - so nothing was saved, and the run then failed on
+`NameError: EVAL`. Two edits appeared to have been applied and had not.
+
+*Rule adopted:* when patching a notebook programmatically, validate every pattern **first**, then apply,
+then write. Partial application that leaves no trace is worse than a loud failure, because the next
+run's error points somewhere unrelated to the cause.
+
+### 33.7 Status and open
+
+- `02` re-running to store the new assert. `05` re-run and clean on the validation window.
+- `06` and `07` still have never run on real data, and must now be developed against **validation**
+  only.
+- The 7-of-8 unused measures question (30.3) is still open, and is now explicitly a validation-window
+  experiment rather than something to check against test.
+
+---
+
+# Entry 34 - 2026-07-27
+## 07 runs on real data. F-42: the removal correction validates out of sample. F-43: there is no internal slack to reallocate.
+
+### 34.1 Two leaks caught by review before running, not after
+
+The owner asked for a review of every notebook before running the ones that had never run. Both
+unrun notebooks contained the **same class of defect**, introduced when the test year was sealed in
+Entry 33 and neither had been touched since:
+
+1. **`06`**: `future = wide.loc[:, wide.columns >= SPLIT]`. Under the new validation split this
+   returns **24 months - the validation year and the sealed test year** - so the federated model would
+   have been scored partly on the window that exists to be untouched. Pinned to exactly `H` months with
+   an assert.
+2. **`07`**: `latest = panel.month.max()`, i.e. the agent stood in **2026-03**, inside the sealed test
+   year, making decisions nobody could check. It now stands at the **last training month**, so the
+   horizon it plans over consists of months that have already happened and can be scored.
+
+Both were cheap to fix and would have cost an hour of compute and a wrong number each. Reviewing before
+running was worth it exactly once, which is the usual ratio.
+
+### 34.2 F-42 - the split removal term is validated out of sample, and it is not a small effect
+
+`07` now back-tests its own projection: stand at 2024-03, project 6 months, compare against what the
+backlog actually did by 2024-09. 2,046 services scored.
+
+| Projection | Per-service MAE | Bias | Panel total projected | Actual |
+|---|---|---|---|---|
+| **with removal term** | **682** | **-16** | 7.05m | 7.08m |
+| naive identity | 990 | **+565** | 8.24m | 7.08m |
+
+**The correction reduces per-service MAE by 31.0% and removes essentially all bias** - from +565
+per service to -16. The naive identity over-projects the panel backlog by 1.18m pathways over six
+months, which is a 16.9% error on a quantity the escalation sizes are computed from.
+
+*Why this matters more than the MAE.* F-15 measured the leak in Entry 4 and the project has carried it
+as a correction ever since on the strength of that measurement. This is the first time it has been
+**tested on months the correction was not fitted to**, and it holds. The bias figure is the persuasive
+one: a projection that is wrong by a similar amount in both directions is noisy, a projection that is
+wrong by +565 every time is systematically over-escalating.
+
+### 34.3 F-43 - there is almost no internal slack, which challenges the escalation design
+
+Measured at 2024-03 across 2,046 services in scope:
+
+| | |
+|---|---|
+| in crisis (any 52-week wait) | **1,642 (80.3%)** |
+| behind | 291 |
+| on track | 62 |
+| **with slack to give** | **51 (2.5%)** |
+| total capacity asked for | **419,220 treatments/month** |
+| total capacity offered | **657 treatments/month** |
+
+**The offer is 0.16% of the ask.** Tiers 1 and 2 of the escalation - reallocate within a site, then
+between sites in a region - have essentially nothing to settle. Every request passes through to the
+group tier untouched.
+
+*This is a finding about the system, not a bug in the rule.* When 80% of services are in breach, there
+is no surplus anywhere to move: internal reallocation presupposes that someone is comfortable, and on
+this data almost nobody is. The consequence is that **the real levers are expansion and purchase, not
+reallocation**, which is the opposite of the intuition the tiered design was built on.
+
+*The temptation, refused.* Loosening the slack definition - dropping the "projected to shrink" test, or
+raising the 10% cap - would make tiers 1 and 2 look useful and would be exactly the metric-chasing
+`CLAUDE.md` now forbids. The definition is unchanged and the result is reported as it came out.
+
+Also measured, and it validates the state layer: the **panel median removal rate is 15.4% of demand**,
+against the 15.40% national figure `03` computes independently. Two different computations on two
+different groupings agreeing to two decimal places.
+
+### 34.4 A stale claim inside 07, now corrected
+
+`07` printed "No ICB mapping exists for independent providers, so this cannot be resolved below the
+national tier. That is a dataset limit, not a modelling choice." **F-40 disproved that**, and the text
+had survived because the notebook had never been run since. Replaced with what is now known: 96.9% of
+independent rows carry a commissioner parent, 30 of 42 values are known ICBs covering 72.4% of rows, so
+the ICB tier *can* resolve purchased capacity - it is simply not wired in yet.
+
+*Generalisation, and it is the third time:* an unrun notebook holds assertions that were true when
+written. Entry 6.1 said a rewritten-but-unrun notebook looks finished and is not; the same applies to
+its prose.
+
+### 34.5 Notebook status
+
+| Notebook | Code cells | With outputs | State |
+|---|---|---|---|
+| `01_fetch_dataset` | 7 | 6 | run - the 7th is the import cell and prints nothing |
+| `02_inspect_dataset` | 38 | 38 | run, includes F-41 and the case-insensitivity assert |
+| `03_data_processing` | 17 | 17 | run on the 150-site panel |
+| `04_eda` | 6 | 6 | run |
+| `05_baselines` | 9 | 9 | run on the validation window |
+| `06_federated_forecast` | 11 | 0 | **running now**, first time on real data |
+| `07_agentic_layer` | 12 | 12 | **run, first time on real data** |
+
+### 34.6 Open
+
+1. `06` result pending - the first federated numbers on real data.
+2. Wire the F-40 commissioner-parent mapping into `07`'s ICB tier so purchased capacity resolves
+   regionally instead of only nationally.
+3. F-43 asks a design question that is not yet answered: if tiers 1 and 2 settle 0.16% of the ask,
+   does the tiered escalation earn its complexity, or is the honest system a two-tier one - service
+   request, group decision - with the region tier reported as measured-and-dropped?
+4. The 7-of-8 unused measures experiment (30.3), on validation only.
+
+---
+
+# Entry 35 - 2026-07-27
+## F-44: no model beats a naive baseline. The pipeline is complete end to end and the headline result is negative.
+
+`06_federated_forecast.ipynb` executed on real data for the first time. 141 sites, 2,085 series,
+77,145 training windows, scored on the **validation** window 2024-04 to 2025-03. The test year was not
+opened.
+
+### 35.1 The result
+
+| Model | Median MASE | Within-series R2 |
+|---|---|---|
+| **`naive`** (repeat last value) | **0.510** | -0.667 |
+| `mean12` | 0.512 | -0.492 |
+| `fedavg_n` | 0.553 | -0.781 |
+| `local` | 0.556 | -0.786 |
+| `fedavg_uniform` | 0.565 | -0.888 |
+| `fedavg_ft` | 0.568 | -0.936 |
+| `seasonal_naive` | 0.617 | -1.488 |
+| `drift` | 0.641 | -1.451 |
+| **`central`** (pooled) | **0.665** | -1.858 |
+
+**No neural model beat any of the two best trivial baselines.** Fine-tuning helped 45% of sites and
+hurt 55%. Only **9.3%** of services have a within-series R2 above zero, i.e. beat a flat line at their
+own mean.
+
+Reported as it came out. `CLAUDE.md` now says negative results are publishable here, and this is the
+first real test of that rule.
+
+### 35.2 The ordering inside the neural models is confounded - do NOT read it as a finding
+
+`central` came **last** of the neural models, which inverts the expected ceiling and would be a
+striking claim: pooling hurts, federation helps. **It is almost certainly an artefact of unequal
+training budget**, and the arithmetic is not close:
+
+| Model | Gradient work |
+|---|---|
+| `central` | 20 epochs x 77,145 windows = **1.54m** sample-updates |
+| `local` | 20 epochs x each client's own windows = **1.54m** total |
+| `fedavg_n` | 30 rounds x 2 local epochs x 77,145 = **4.63m** |
+
+FedAvg receives **3x** the gradient work of central. The honest statement is that `central` is
+undertrained relative to `fedavg`, so the federation-versus-pooling comparison **has not been made yet**
+and the table must not be quoted as making it. Matching the budgets is the first thing to fix.
+
+This is exactly the check `CLAUDE.md` asks for - a model that beats another for the wrong reason is a
+failure, not a result - and it caught the most quotable number in the run.
+
+### 35.3 A concrete hypothesis for why the network loses to `naive`
+
+Not speculation for its own sake: there is a measured mechanism available.
+
+Entry 29.7 recorded that the held-out window's `demand_z` sits at **+0.532**, i.e. roughly half a
+standard deviation above the training mean. The network is trained on inputs and targets scaled by each
+series' **training mean** and its predictions are multiplied back by that same mean - so it is anchored
+to a level the series has since moved away from. `naive` is anchored to the **last observed value**, and
+therefore gets the level shift for free.
+
+**Testable prediction, stated before running it:** rescaling by the last observed value, or having the
+network predict a delta from the final input month rather than an absolute scaled level, should close a
+large part of the gap. If it does not, the level-shift explanation is wrong and the problem is genuinely
+that month-level movement is unpredictable at this granularity.
+
+That experiment belongs on the validation window and nowhere near the test year.
+
+### 35.4 Correction: this machine has a CUDA GPU
+
+`06` printed `device cuda`. `PROGRESS.md` states in its status section that this laptop has no GPU and
+that training belongs on the A100 box, and that has been repeated in several entries including my own
+summaries this session. It is **wrong**: torch 2.11.0+cu128 reports CUDA available and the run used it.
+
+Consequence: the training experiments above can be run here, and the A100 box is a scale convenience
+rather than a requirement. `PROGRESS.md` needs correcting.
+
+### 35.5 The pipeline is complete
+
+All seven notebooks have now executed on real data:
+
+| Notebook | Cells | With outputs |
+|---|---|---|
+| `01_fetch_dataset` | 7 | 6 (7th is the import cell) |
+| `02_inspect_dataset` | 38 | 38 |
+| `03_data_processing` | 17 | 17 |
+| `04_eda` | 6 | 6 |
+| `05_baselines` | 9 | 9 |
+| `06_federated_forecast` | 11 | 11 |
+| `07_agentic_layer` | 12 | 12 |
+
+Acquisition, validation, cleaning, EDA, baselines, federated forecasting and the agentic layer all run
+end to end. **Version one is built.**
+
+### 35.6 What the project actually has, stated plainly
+
+Two genuine results and one genuine null:
+
+- **F-42, positive and validated out of sample.** The split removal term cuts backlog-projection MAE
+  by 31% and removes the bias entirely (+565 to -16 per service). This is the decision layer's
+  foundation and it holds on months it was not fitted to.
+- **F-43, a finding about the problem.** With 80% of services in breach there is essentially no
+  internal slack: the offer is 0.16% of the ask. Tiers 1 and 2 of the escalation settle almost nothing.
+- **F-44, a null.** A federated neural forecaster does not beat repeating last month's value at
+  site x department granularity.
+
+Taken together these point where Entry 28.3 predicted they would: **the defensible contribution is the
+decision layer, not the forecaster.** The removal-term correction is measurable, validated and
+materially large; the forecasting gain is absent. A paper claiming better forecasts would be fighting
+for a margin that is not there, while the allocation result is real and unclaimed.
+
+### 35.7 Open
+
+1. **Match the training budgets** and re-run, so federation-versus-pooling is actually tested.
+2. **Test the level-anchoring hypothesis** (35.3) on validation.
+3. Feed the other seven measures to the forecaster (30.3) - still untested.
+4. Correct the no-GPU claim in `PROGRESS.md`.
+5. F-43's design question: does the region tier earn its complexity if it settles 0.16%?
+6. The test year remains sealed. Nothing above touched it.
+
+---
+
+# Entry 36 - 2026-07-27
+## F-45: the metric decides the winner. The worst point forecaster is the best growth detector.
+
+The owner pushed back on how F-44 was framed: forecasting matters precisely because a capacity decision
+needs to know whether growth is **sustained**, so a null on point accuracy does not settle whether the
+forecast is useful. That is correct, and it identifies a metric error rather than a modelling one -
+median MASE scores how close a forecast lands each month, and no business decision turns on that.
+
+D-07 splits on sustained-versus-temporary, so the decision-relevant question was scored directly.
+
+### 36.1 The measurement
+
+Growth = mean demand over the scored window / mean demand over the last 12 training months - 1, per
+service, on the validation window. 2,085 services. `GROWTH_THRESH` fixed at 5% **before** running.
+
+- **Base rate: 45.9%** of services genuinely grew more than 5%. Median actual growth **+3.7%**.
+- Always predicting the majority class scores **54.1%**, which is the only number the accuracy column
+  may be read against.
+
+| Baseline | MASE rank | Pearson corr | Direction acc | Accuracy | Precision | Recall |
+|---|---|---|---|---|---|---|
+| `naive` | **1st (0.510)** | 0.01 | 62.6% | 64.5% | 68.7% | 41.5% |
+| `mean12` | 2nd (0.512) | -0.00 | 23.6% | 54.1% | n/a | **0.0%** |
+| `seasonal_naive` | 3rd (0.617) | n/a | 0.4% | 54.1% | n/a | **0.0%** |
+| **`drift`** | **4th, last (0.641)** | 0.02 | **66.3%** | **65.6%** | 62.2% | **63.8%** |
+
+### 36.2 F-45 - the ranking inverts
+
+**`drift` is the worst point forecaster and the best growth detector.** `mean12`, second-best on MASE,
+has **zero recall** - it never calls growth at all, because a flat forecast at the trailing mean implies
+growth of exactly 0 by construction. It scores 54.1% accuracy, which is precisely the majority-class
+rate: it is a classifier that has learned to say "no".
+
+That is the finding. **Which method wins depends entirely on which question is asked**, and the two
+questions this project needs answered have opposite answers. A paper that reported only MASE would
+have selected `mean12` or `naive` and shipped a system structurally incapable of triggering the
+expansion branch of D-07.
+
+*The honest size of the effect.* `drift` beats the majority-class baseline by **+11.5pp** on accuracy
+(65.6% against 54.1%) with balanced precision and recall. Real, and modest. Nobody should describe this
+as accurate growth detection.
+
+### 36.3 The correlation and the accuracy disagree, and the correlation is the unreliable one
+
+Pearson correlation with actual growth is **~0.01-0.02 for every method** - effectively zero - while
+direction accuracy is 62-66%. Those cannot both be describing the same relationship well.
+
+The explanation is that growth rates here have extremely heavy tails: a service with a tiny base
+produces enormous percentage growth, and Pearson is dominated by those points. So the near-zero
+correlation says the **magnitude** of growth is not predicted, and the direction accuracy says the
+**sign** is, modestly.
+
+**Spearman rank correlation should be reported alongside**, since it is not swamped by the tail. Flagged
+rather than swapped in: replacing a metric after seeing it disappoint is the behaviour `CLAUDE.md`
+forbids, so Pearson stays and Spearman is added next to it.
+
+*Standing implication:* any claim about growth magnitude is currently unsupported. Only the direction
+call has evidence behind it.
+
+### 36.4 What this does to the project's story
+
+F-44 stands - no model predicts monthly demand better than repeating last month. F-45 says that was the
+wrong thing to have been measuring alone.
+
+The three results now line up:
+
+- **F-42**: the removal correction cuts projection error 31% and removes the bias. Validated out of
+  sample. Large.
+- **F-45**: growth direction is detectable at ~66%, by the method that looks worst on MASE. Modest but
+  real, and it is what D-07 keys on.
+- **F-44**: monthly point accuracy is not improvable by a federated network here. Null.
+
+So the forecaster is **not** useless for the business question, which is what F-44 alone implied - it is
+useless for the question F-44 asked. The decision layer needs a growth call and a backlog projection,
+and both of those have positive results.
+
+### 36.5 A defect of my own, and it is the second of this kind
+
+The growth section failed on first run: `tr`, the numpy training matrix used by every baseline, had
+been **rebound to a pandas DataFrame** by the normalised-export cell I added in Entry 33
+(`tr = out[out.split == "train"]`). The new section read it and got an `InvalidIndexError` from
+somewhere unrelated.
+
+Renamed to `train_rows_z`, with a comment naming the collision so it is not recreated. This is the same
+shape as the `hist` collision caught in `06` earlier: a short name reused for a second meaning in a long
+notebook. **Rule: in these notebooks a name means one thing for the whole file.**
+
+### 36.6 Open
+
+1. Add Spearman alongside Pearson (36.3).
+2. Score the **neural** models on growth detection too - only the four baselines were scored here, and
+   `06` would have to be re-run to produce per-service growth calls. If a network detects growth better
+   than `drift`, F-44 stops being the headline.
+3. Everything still open from 35.7: matched training budgets, the level-anchoring test, the other seven
+   measures.
+4. The test year remains sealed.
+
+---
+
+# Entry 37 - 2026-07-27
+## F-46: the neural models are poor classifiers and good *selective* growth detectors. D-08 settled.
+
+The owner clarified that **PT means post-training - FedAvg followed by local fine-tuning** - and
+restated the interface the board actually needs: is this service going to be the same as last month,
+more, or less, **with a stated reliability**, which then feeds the human-in-the-loop allocation.
+
+That is a three-class call plus a confidence, and it had never been measured for the neural models.
+`06` re-run with a direction-call section scoring every model on the same definition `05` used.
+
+### 37.1 The three-class result, and it looks bad
+
+1,978 services. Actual outcome over the horizon: **down 25.8%, flat 28.3%, up 45.9%**. Always calling
+"up" scores **45.9%**, which is the only line accuracy may be read against.
+
+| Model | 3-class accuracy |
+|---|---|
+| `local` | 38.6% |
+| `fedavg_n` | 38.0% |
+| `fedavg_uniform` | 37.5% |
+| `central` | 36.1% |
+| **`fedavg_ft`** (post-training) | **35.8%** |
+
+**Every model is below the majority-class line.** As general three-class classifiers they are worse
+than a constant, and post-training is the *worst* of them on this metric. Reported first because it is
+the least flattering reading and it is true.
+
+### 37.2 F-46 - but the `up` call specifically carries real signal
+
+Overall accuracy hides the thing the decision layer needs. Precision on the **up** call, against the
+45.9% base rate:
+
+| Model | Precision on `up` | Lift over base | Services called `up` | Coverage |
+|---|---|---|---|---|
+| `central` | **67.4%** | **+21.5pp** | 264 | 13.3% |
+| **`fedavg_ft`** | **67.3%** | **+21.4pp** | 260 | 13.1% |
+| `fedavg_uniform` | 67.1% | +21.2pp | 283 | 14.3% |
+| `fedavg_n` | 65.0% | +19.1pp | 317 | 16.0% |
+| `local` | 55.5% | +9.6pp | 470 | 23.8% |
+
+**When the post-trained model says a service is growing, it is right 67% of the time against a 46%
+base rate** - a 21-point lift - and it says so for only 13% of services. It is not a classifier that
+answers everything; it is a **selective detector that produces a short, trustworthy list**.
+
+That is a more useful object for a board than a balanced classifier. The board is not asked to rule on
+1,978 services; it is asked where to commit capacity, and a 260-service shortlist that is right two
+times in three beats a full ranking that is right 46% of the time.
+
+*The federation earns something here.* `local` - each site alone - reaches only 55.5% precision at
+nearly double the coverage. Sharing weights lifts the `up` call by roughly **10 points of precision**
+over going it alone. That is the first result in this project where federation demonstrably beats the
+no-sharing alternative, and it appears on the decision metric rather than on MASE.
+
+*Caveat, stated plainly:* `central` matches `fedavg_ft` almost exactly here, and the training-budget
+confound from Entry 35.2 is unresolved, so this does **not** show federation matching pooling. It shows
+both beating `local`.
+
+### 37.3 Two operating points, and the choice is a business one
+
+`05` measured `drift` on the two-class version: **62.2% precision, 63.8% recall**. The neural models
+sit at **~67% precision, ~35% recall**. Neither dominates:
+
+- **`drift`** - broad and balanced. Catches most growing services, more false alarms.
+- **`fedavg_ft`** - narrow and precise. Misses roughly two-thirds of growing services, but its calls
+  hold up.
+
+Which is right depends on the relative cost of a missed growth trend (capacity never built, a service
+degrades for years) against a wasted expansion (capital committed where demand did not come). **That is
+a board's judgement, not a modelling choice**, and the honest system presents both rather than picking
+silently.
+
+### 37.4 D-08 - what crosses between the planes
+
+Settled and written into `CLAUDE.md`: the forecaster hands the agentic layer a **direction with a
+confidence**, not a point estimate. *Up / flat / down* over the horizon, plus the measured per-class
+precision, because a board commits capacity on the second number. "Growing" is worth nothing until it
+arrives with "and that call holds 67% of the time".
+
+F-45 is the evidence for why: the best-MASE method never calls growth at all, so a point forecast
+crossing the boundary alone would have hidden that failure completely.
+
+### 37.5 Reproducibility improvement
+
+`06` now writes **`fl_predictions.csv`** - per-service actual growth, actual class, and every model's
+predicted growth and class. A new question about this run no longer costs 40 minutes of retraining,
+which is what asking this one did.
+
+### 37.6 Open
+
+1. **Score `drift` and the neural models on identical class definitions** - `05` used two classes,
+   `06` uses three. The comparison in 37.3 is across slightly different questions and should be made
+   exact.
+2. Matched training budgets (35.2) - still the blocker on any federation-versus-pooling claim.
+3. The level-anchoring test (35.3) and the seven unused measures (30.3).
+4. Wire the direction call and its precision into `07` in place of the seasonal-naive point forecast,
+   per D-08.
+5. Test year still sealed.
+
+---
+
+# Entry 38 - 2026-07-27
+## Full report written and compiled. `docs/fedOPD_report.pdf`, 20 pages, 13 figures.
+
+Asked for: a LaTeX document compiling everything for a reader who knows nothing about the project,
+from scratch to conclusion, with all graphs and results, detailed rather than summarised, built to PDF.
+
+### 38.1 No LaTeX on the machine, resolved without an install
+
+`pdflatex`, `xelatex`, `latexmk`, `tectonic` and MiKTeX were all absent. Rather than ask for a
+multi-gigabyte TeX distribution and an admin prompt, **Tectonic 0.16.9** was used - a single 50 MB
+self-contained binary that downloads only the packages a document actually needs, on first use. It
+lives in the session scratchpad, not in the repository, so nothing was installed on the machine and
+nothing was added to the project.
+
+*Recorded because the next person will hit this:* the binary is at
+`tectonic-typesetting/tectonic` on GitHub, and the build command is
+`tectonic -X compile fedOPD_report.tex --outdir .` run from `docs/`.
+
+### 38.2 Figures
+
+All 14 figures were extracted programmatically from the **stored notebook outputs** into
+`docs/figures/`, not regenerated by separate plotting code. That matters for provenance: every figure
+in the report is the exact image the notebook produced on its last run, so a figure cannot drift from
+the analysis that made it.
+
+13 of the 14 are used. The unused one is a baseline MASE-distribution panel that duplicates what the
+within-series R2 histogram already shows better.
+
+### 38.3 Structure
+
+20 pages, eight sections, written for a reader with no prior knowledge:
+
+1. **The problem from zero** - what a hospital group is deciding, why data cannot be pooled, why a
+   forecast is not a decision; the four domain traps (pathways are not patients, capacity is treatments
+   per month, independents are bought from not allocated to, stock versus flow).
+2. **The data** - provenance, what one file contains, the integrity table, the four discontinuities,
+   and the aggregate row that would double every total.
+3. **Building the table** - the column contract, eligibility, why independents are context, the era
+   reconciliation.
+4. **The removal-term finding** - the identity, the split, and the out-of-sample validation.
+5. **The federated forecaster** - design decisions stated before results, the metric trap, the null.
+6. **The result that changes the conclusion** - metric inversion, the direction call, the two operating
+   points.
+7. **The decision layer** - state, escalation, the no-slack finding, when buying is possible.
+8. **What this does not show**, then the conclusion.
+
+### 38.4 Editorial decisions worth recording
+
+- **The null is reported before the positive result is used to soften it.** Section 5 ends on "no
+  neural model beats repeating last month" with no hedge; Section 6 then reframes it. Reversing that
+  order would read as burying the null.
+- **The two things that must not be read from the results table** - the pooling artefact and the
+  training-budget confound - are called out in the body, not in a footnote, because both are the kind
+  of number a reader would otherwise quote.
+- **Section 8 lists eight limitations**, including that the allocation itself is never validated and
+  that the purchasing rule is a policy simulation rather than an observed behaviour.
+- The closing note states that the worklog records sixteen instances where a number in this project was
+  found wrong and corrected. A report that lists only its strengths cannot be audited.
+
+### 38.5 Build quality
+
+Final compile is clean: **0 overfull boxes, 0 underfull boxes, 0 undefined references**, 20 pages,
+1.09 MB. One overfull line was found on the first pass, traced to a long inline
+`provider x commissioner x department x pathway-type` construction, and rewritten as prose rather than
+left running into the margin.
+
+### 38.6 A recurring tooling defect, now diagnosed properly
+
+Three times this session, patching files through a quoted shell heredoc **collapsed backslash escape
+sequences** - `\\r\\n` became a real carriage return, `\\x` sequences became literal bytes, and LaTeX
+commands lost their backslashes. Twice it produced notebook cells that would not compile; here it made
+a pattern match fail.
+
+*Rule adopted:* content containing backslashes - LaTeX, regexes, escape sequences - is written with the
+file-writing and file-editing tools, never through a shell heredoc. Where a literal backslash is
+genuinely needed inside generated code, build it with `chr(92)` rather than escaping it.
+
+### 38.7 Open
+
+Unchanged from Entry 37: matched training budgets, the level-anchoring test, the seven unused measures,
+wiring the direction call into the decision layer, and the exact-comparison issue between the two-class
+and three-class growth definitions. The test year remains sealed.

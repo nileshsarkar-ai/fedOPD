@@ -52,7 +52,7 @@ their allocation.
 **Independent providers are private companies delivering NHS-funded care, not NHS bodies.** That
 distinction is the whole reason the project carries two separate flags rather than one: an ICB can
 *buy* capacity from an independent provider, but it cannot *direct* NHS staff and capital into one.
-So `fl_client` marks who trains the forecaster (the 126 public trusts) and `allocatable` marks who
+So `fl_client` marks who trains the forecaster (the 150 eligible public sites) and `allocatable` marks who
 can receive capacity (public only). Neither implies the other.
 
 **Measured constraint on how fast the buy side responds.** The intuitive mechanism, namely public backlog
@@ -60,7 +60,7 @@ rises, so work is bought from independents that month, was tested and **is not p
 data**. Correlating the monthly change in independent share against the change in public backlog
 across the 18 named specialties gives +0.08 contemporaneously and essentially zero at 3, 6 and 12
 months (7 of 18 specialties positive at 6 months, i.e. chance). What is real is the *slow* shift:
-independent share of ophthalmology moved 6.2% → 19.6% across the window. Substitution operates on a
+independent share of ophthalmology moved 6.2% → 19.65% across the window. Substitution operates on a
 multi-year contracting timescale, consistent with NHS's own encouragement of "long-term contractual
 relationships" with the sector. **The agent must therefore treat independent volume as a standing
 stock of purchasable capacity, not as a lever that responds inside a monthly decision loop.**
@@ -102,7 +102,9 @@ with no raw data ever leaving a site, is the project.
 
 - **The currency is operational, not financial** — treatments, queues, waiting-time standards,
   human factor, efficiency. Expansion and revenue are out, because the data has no money in it.
-- **The clients are the 126 public trusts with full history.** Independents stay in the data —
+- **The clients are the 150 public sites still reporting with at least 48 months of history.** The
+  earlier rule of full 96-month history gave 126 sites but discarded 20% of public demand.
+  Independents stay in the data —
   they absorb a real and growing slice of demand, ophthalmology fastest — but enter as context,
   not as clients.
 - **The forecastable universe is 18 named specialties plus one merged `X_OTHER`**, so the tiers
@@ -117,9 +119,59 @@ Each notebook is named for exactly what it does, and does only that.
 | Notebook | Responsibility |
 |---|---|
 | [`src/01_fetch_dataset.ipynb`](src/01_fetch_dataset.ipynb) | **Acquisition only.** Scrapes the eight NHS RTT financial-year pages, downloads the 96 monthly Full CSV archives, extracts them, builds the provider→ICB reference from the ODS ORD API, and fetches the KH03 bed workbooks. Idempotent: reruns resume rather than restart. |
-| [`src/02_inspect_dataset.ipynb`](src/02_inspect_dataset.ipynb) | **Validation and inspection only.** Proves the download is intact, then establishes what is in the data — provider census, department roster, hierarchy, per-region and per-department averages, and the blocking verification gate on the independent sector. Transforms nothing. |
+| [`src/02_inspect_dataset.ipynb`](src/02_inspect_dataset.ipynb) | **Validation and inspection only.** Proves the download is intact, then establishes what is in the data — provider census, department roster, hierarchy, per-region and per-department averages, the independent-sector gate, and the eight-year format-drift audit. Transforms nothing. |
 | [`src/03_data_processing.ipynb`](src/03_data_processing.ipynb) | **Transformation.** Merges the 96 monthly files into one canonical table on an explicit column contract, reconciles the April 2021 schema break, resolves the ICB escalation key, and builds the federation panel. |
-| [`src/eda/EDA.ipynb`](src/eda/EDA.ipynb) | Exploratory analysis on the processed table. *(not present in the current tree)* |
+| [`src/04_eda.ipynb`](src/04_eda.ipynb) | **Exploration.** The 18-week series across the window, the independent-substitution lag test, and the accounting identity worked through one real trust. Reads the canonical table, writes nothing back. |
+| [`src/05_baselines.ipynb`](src/05_baselines.ipynb) | **The bar.** Four baselines, the three-way train/validation/test split, MASE / RMSE / the two R² values, the growth-detection scoring, and the normalised dataset export. Nothing downstream may skip this. |
+| [`src/06_federated_forecast.ipynb`](src/06_federated_forecast.ipynb) | **The federation plane.** FedAvg over the site silos, hand-implemented in torch, against `local`, `central` and post-training baselines. Scores point accuracy and the up/flat/down direction call. |
+| [`src/07_agentic_layer.ipynb`](src/07_agentic_layer.ipynb) | **The agentic plane.** State vector, split removal term, backlog projection, gap classification, site → region → group escalation, and a back-test of the projection against months that already happened. |
+
+### Results so far
+
+The full account, written for a reader starting from zero, is
+**[`docs/fedOPD_report.pdf`](docs/fedOPD_report.pdf)** — 20 pages, 13 figures, every number traceable
+to a stored notebook output.
+
+Everything below is scored on the **validation** year (2024-04 to 2025-03). The test year
+(2025-04 to 2026-03) is sealed and has never been opened.
+
+**1. The backlog identity leaks, and correcting it matters.** The standard
+`backlog + demand − treatments` projection over-predicts in **95 of 95** months. Splitting the leak by
+NHS England's own recorded reasons — 49% of it is treatment that happened and was filed late — and
+adding that half back to capacity, then back-tested six months forward on 2,046 services:
+
+| Projection | Per-service MAE | Bias | Group total projected | Actual |
+|---|---|---|---|---|
+| **With removal term** | **682** | **−16** | 7.05m | 7.08m |
+| Naive identity | 990 | +565 | 8.24m | 7.08m |
+
+31% lower error, and the systematic bias disappears.
+
+**2. A federated neural forecaster does not beat repeating last month.** 2,085 series, median MASE:
+`naive` **0.510**, `mean12` 0.512, `fedavg` 0.553, `fedavg_ft` 0.568, `central` 0.665. Only **9.3%** of
+services achieve a within-series R² above zero. Reported as the null it is.
+
+**3. The metric decides the winner.** Scored on the question a board actually asks — is this department
+growing? — the ordering inverts. `drift`, *worst* on MASE, is the best broad detector (66.3% direction
+accuracy). `mean12`, second-best on MASE, has **zero recall** — it never calls growth at all. And the
+post-trained federated model becomes a selective, high-precision detector:
+
+| Model | Precision on "growing" | Lift over 45.9% base rate | Coverage |
+|---|---|---|---|
+| `fedavg_ft` | **67.3%** | +21.4pp | 13.1% of services |
+| `local` (no sharing) | 55.5% | +9.6pp | 23.8% |
+
+Sharing weights buys roughly **ten points of precision** over each site working alone — and it shows up
+on the decision metric, not on forecast error.
+
+**4. There is no internal slack to reallocate.** At the decision month, 80.3% of services are in
+crisis and 51 have slack. Total ask **419,220** treatments/month against a total offer of **657** —
+0.16%. The first two escalation tiers have almost nothing to settle, which inverts the intuition the
+tiered design was built on.
+
+**Two things that must not be read from these numbers.** `central` coming last is a training-budget
+artefact — it receives 1.54m sample-updates against FedAvg's 4.63m — so federation-versus-pooling has
+**not** been tested. And growth *magnitude* is not predicted; only direction, and only modestly.
 
 What NHS England says about the collection, read from their own documents with every claim cited, is
 in [`RTT_SOURCE_DOSSIER.md`](RTT_SOURCE_DOSSIER.md). The reasoning behind every decision, including
@@ -133,9 +185,9 @@ data/
   rtt_csv/      96 monthly RTT full extracts (~7.7 GB) — the source of truth
   reference/    provider_census.csv, trust_icb.csv, provider_types.csv,
                 monthly_summary.csv, tf_month_demand.csv, findings.csv
-  canonical/    rtt_canonical.parquet   the merged RTT table, 14 columns
-                rtt_canonical.csv.gz    same table as text
-                rtt_panel.parquet       the 126 x 19 x 96 federation cube
+  canonical/    rtt_canonical.parquet   the merged RTT table, 15 columns
+                rtt_normalised.csv      raw + z-scored measures, scaler fitted on train only
+                rtt_panel.parquet       the 150 x 19 x 96 federation cube
                 provider_dim.csv        one row per provider
                 national_monthly.csv    national series + identity residual
   kh03/         61 quarterly overnight bed workbooks
@@ -146,7 +198,7 @@ the extracted files; the CSVs are the only copy retained.
 
 ### The canonical table
 
-One row per **provider × department × month**. 121 raw columns reduce to 14, and a column is kept
+One row per **provider × department × month**. 121 raw columns reduce to 15, and a column is kept
 only if some part of the system above consumes it — the contract, with the measurement justifying
 every drop, is a section of `03_data_processing.ipynb`.
 
