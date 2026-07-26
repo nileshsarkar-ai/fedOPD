@@ -4226,3 +4226,128 @@ genuinely needed inside generated code, build it with `chr(92)` rather than esca
 Unchanged from Entry 37: matched training budgets, the level-anchoring test, the seven unused measures,
 wiring the direction call into the decision layer, and the exact-comparison issue between the two-class
 and three-class growth definitions. The test year remains sealed.
+
+---
+
+# Entry 39 - 2026-07-27
+## Two new notebooks. F-47: the null softens once the budget is matched. F-52: the two planes do not connect.
+
+`08_algorithm_comparison.ipynb` and `09_allocation_policies.ipynb` written and executed. Both score on
+**validation only**; the test year is untouched. README updated with exact figures and pushed
+(`d44912a`).
+
+### 39.1 Design of 08, and the confound it closes
+
+One factor at a time from a declared reference configuration, **not** a full 54-cell grid - a grid
+invites choosing the winning cell after the fact. Every method receives the **same budget**:
+`ROUNDS x LOCAL_EPOCHS = 30` epochs of work over its own data, which is what Entry 35.2 said had to
+happen before federation and pooling could be compared at all.
+
+### 39.2 F-47 - the F-44 null was partly a training-length artefact
+
+| Configuration | Median MASE | RMSE median | Within-series R2 | Precision on `up` | n called up |
+|---|---|---|---|---|---|
+| baseline: naive | 0.510 | 72.778 | -0.667 | 68.670 | 549 |
+| **anchoring: last\_value** | **0.503** | 70.330 | -0.500 | 69.295 | 482 |
+| reference: mlp / train\_mean / fedavg | 0.507 | 69.659 | -0.488 | 70.026 | 387 |
+| algorithm: fedprox | 0.507 | 69.044 | -0.513 | 66.667 | 402 |
+| features: + backlog + throughput | 0.533 | 71.926 | -0.619 | 57.860 | 916 |
+| mode: local (matched) | 0.556 | 77.412 | -0.802 | 62.432 | 370 |
+| mode: central (matched) | 0.603 | 87.909 | -1.354 | 66.364 | 330 |
+| anchoring: delta | 0.612 | 85.011 | -1.138 | **71.371** | 248 |
+| architecture: linear | 0.611 | 86.166 | -1.183 | 48.833 | 557 |
+| architecture: gru | 0.676 | 86.395 | -1.286 | 53.750 | 480 |
+| algorithm: fedavgm | **2.159** | 265.349 | **-24.965** | 46.041 | 1970 |
+
+The same architecture that scored **0.553** in `06` at 30 rounds scores **0.507** here at 15 rounds.
+**`06` was overtrained**, and F-44's headline was measured at the wrong point on the training curve.
+
+*But the margin is 0.003 against naive's 0.510, and this notebook's own preamble says differences of a
+few thousandths are noise.* So the honest statement is that **the null is softened, not overturned**:
+FedAvg is now indistinguishable from repeating last month, rather than clearly worse. Anyone quoting
+"the federated model beats the baseline" off a 0.003 gap at one seed would be overclaiming.
+
+### 39.3 F-48 - pooling loses to federation even at matched budget
+
+`central` scores **0.603** against `fedavg` **0.507** and `local` **0.556**, with the training budgets
+now equal. Entry 35.2 attributed the earlier version of this to the 3x budget difference. **That
+explanation was insufficient** - the gap survives matching, and central is now worse than *both*.
+
+Mechanism not established. The plausible one is that repeated averaging across 141 heterogeneous
+clients regularises, while a single pooled model with per-series scaling has the site-level structure
+scaled out of it and nothing left to separate the clients. Stated as a hypothesis, not a finding, and
+it needs more than one seed.
+
+### 39.4 F-49, F-50, F-51 - three clean negatives
+
+- **FedAvgM diverges.** Server momentum at 0.9 gives MASE **2.159** and within-series R2 **-24.965**,
+  and it calls "up" on 1,970 of ~1,980 services. Not a tuning near-miss; the standard heavy-ball
+  setting is destructive at this client count and scale.
+- **Bigger and smaller models are both worse.** Linear **0.611**, GRU **0.676**, against the MLP's
+  0.507. The null is not the obvious capacity artefact in either direction.
+- **The seven unused measures hurt.** Adding backlog and throughput as channels moves MASE from 0.507
+  to **0.533** and craters up-precision from 70.0% to **57.9%**. Open item 30.3 is now answered, and
+  answered negatively: backlog and throughput carry no usable signal about future demand here, and
+  including them costs accuracy. Worth stating because the intuition that they should help is strong.
+
+### 39.5 F-52 - and this is the important one: the two planes do not connect
+
+`09` compares seven allocation policies at five budget levels, scored against **hindsight**: using what
+each service's over-18-week count actually did over the horizon, which services genuinely needed
+capacity. Policies see only what was known on the decision date.
+
+The metric that matters is **budget precision** - the share of budget landing on services whose queues
+actually grew. A **random** allocation scores **43.9%**, and that is the only line worth reading
+against. Two other metrics were computed and then demoted: histogram overlap and recall both
+mechanically reward spreading, so a policy that gives every service a token amount wins them by
+construction. Recording that because the first version of this notebook led on overlap and would have
+reported the wrong winner.
+
+At a 10% budget:
+
+| Policy | Budget precision | Against random 0.439 |
+|---|---|---|
+| `equal` | 0.444 | +0.005 |
+| `proportional` (what 07 does) | 0.399 | **-0.040** |
+| `severity_first` | 0.396 | -0.043 |
+| **`forecast_led`** | **0.390** | **-0.049** |
+| `optimiser` | 0.181 | -0.258 |
+| `marginal_benefit` | 0.183 | -0.256 |
+
+**No policy beats random targeting.** `equal` matches it to within noise; everything that concentrates
+is markedly worse, because concentrating policies aim at the largest and most-breached services and
+those are not the ones whose queues grow.
+
+**`forecast_led` - allocating in proportion to the federated model's predicted growth - scores 0.390,
+below random.** This is the payoff path of the entire system and it does not work. The reason is
+precise and worth stating: the model predicts **demand growth**, and the thing that determines who
+needed capacity is **breach growth**. Those are different quantities, and F-46's 67%-precision demand
+call does not transfer.
+
+*This is the sharpest negative result in the project*, and it is a finding about the architecture
+rather than about the model. The direction call is useful for deciding whether to *expand a service*
+over years, which is what D-07 uses it for. It is not useful for deciding where to put next month's
+spare capacity, and the system currently assumes one signal serves both.
+
+### 39.6 What this does to the project's story
+
+F-42 stands untouched and remains the strongest result: the removal correction cuts projection error
+31% and removes the bias, validated out of sample.
+
+The forecasting picture improves slightly and gets more honest: matched-budget FedAvg is level with
+naive rather than behind it, and it beats per-site training (0.507 against 0.556) - federation buys
+something over going it alone, but not over a trivial baseline.
+
+The allocation picture gets worse and more interesting. F-43 said there is no slack to move; F-52 now
+says that even given a budget, nothing we can compute on the decision date aims it better than chance.
+
+### 39.7 Open
+
+1. **Predict breach growth, not demand growth**, and re-run `forecast_led`. That is the direct
+   consequence of F-52 and is the highest-value next experiment.
+2. Repeat 08 across seeds - every ordering above rests on one.
+3. Sweep rounds properly: F-47 shows the result is sensitive to training length, so the curve should
+   be measured rather than sampled at two points.
+4. Regenerate `docs/fedOPD_report.pdf` with these figures; its Section 5 currently reports the
+   unmatched-budget numbers, which F-47 and F-48 supersede.
+5. Test year still sealed.
