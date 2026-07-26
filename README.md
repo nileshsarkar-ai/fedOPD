@@ -125,6 +125,52 @@ Each notebook is named for exactly what it does, and does only that.
 | [`src/05_baselines.ipynb`](src/05_baselines.ipynb) | **The bar.** Four baselines, the three-way train/validation/test split, MASE / RMSE / the two R² values, the growth-detection scoring, and the normalised dataset export. Nothing downstream may skip this. |
 | [`src/06_federated_forecast.ipynb`](src/06_federated_forecast.ipynb) | **The federation plane.** FedAvg over the site silos, hand-implemented in torch, against `local`, `central` and post-training baselines. Scores point accuracy and the up/flat/down direction call. |
 | [`src/07_agentic_layer.ipynb`](src/07_agentic_layer.ipynb) | **The agentic plane.** State vector, split removal term, backlog projection, gap classification, site → region → group escalation, and a back-test of the projection against months that already happened. |
+| [`src/08_algorithm_comparison.ipynb`](src/08_algorithm_comparison.ipynb) | **Eleven configurations**, one factor at a time from a declared reference: anchoring, architecture, FL algorithm, feature set. Every method on a **matched training budget** — the confound 06 left open. |
+| [`src/09_allocation_policies.ipynb`](src/09_allocation_policies.ipynb) | **Seven allocation policies** scored against hindsight at five budget levels, using only information available on the decision date. Includes the forecast-led policy the whole system exists to enable. |
+| [`src/10_training_length.ipynb`](src/10_training_length.ipynb) | **Does longer training help?** One continuous run to 60 rounds evaluated every round, with training loss alongside, plus a sweep over local epochs. |
+| [`src/11_postcovid_training.ipynb`](src/11_postcovid_training.ipynb) | **Does cutting the COVID months help?** Six training-start cutoffs at three lookbacks, plus every algorithm re-run on 2022-onward data. |
+
+### How it fits together
+
+![The fedOPD pipeline](docs/figures/flow_full_dataset.jpg)
+
+![Restricting training to post-COVID data](docs/figures/flow_postcovid.jpg)
+
+### Every full-dataset run, in one table
+
+All figures are **validation-year** (2024-04 to 2025-03), 2,085 series. The test year is sealed and has
+never been opened. Lower MASE is better; within-series R² is the honest one and is negative for
+everything.
+
+| Run | Configuration | MASE | RMSE | Pooled R² | Within R² |
+|---|---|---|---|---|---|
+| **05** | naive (repeat last value) — **the bar** | **0.5103** | 72.78 | 0.9675 | −0.6667 |
+| 05 | mean of last 12 | 0.5121 | 72.17 | 0.9655 | −0.4917 |
+| 05 | seasonal naive | 0.6166 | 87.27 | 0.9489 | −1.4877 |
+| 05 | drift | 0.6406 | 88.34 | 0.9360 | −1.4505 |
+| 06 | fedavg *(unmatched budget, 30 rounds)* | 0.5527 | 74.72 | 0.9645 | −0.7812 |
+| 06 | fedavg_ft — post-training | 0.5680 | 79.60 | 0.9593 | −0.9356 |
+| 06 | local *(unmatched)* | 0.5558 | 77.10 | 0.9542 | −0.7857 |
+| 06 | central *(unmatched)* | 0.6655 | 96.09 | 0.9437 | −1.8579 |
+| **08** | **last-value anchoring** — best overall | **0.5030** | 70.33 | — | −0.4997 |
+| 08 | fedprox — **best RMSE** | 0.5075 | **69.04** | — | −0.5130 |
+| 08 | mlp / fedavg reference — **best R²** | 0.5072 | 69.66 | — | **−0.4876** |
+| 08 | + backlog + throughput features | 0.5334 | 71.93 | — | −0.6186 |
+| 08 | local *(matched budget)* | 0.5562 | 77.41 | — | −0.8024 |
+| 08 | central *(matched budget)* | 0.6034 | 87.91 | — | −1.3544 |
+| 08 | linear | 0.6110 | 86.17 | — | −1.1834 |
+| 08 | GRU | 0.6757 | 86.40 | — | −1.2861 |
+| 08 | fedavgm — **diverges** | 2.1586 | 265.35 | — | −24.9649 |
+| 10 | fedavg, plateau over rounds 8–20 | **0.5095 ± 0.0058** | — | — | — |
+| 11 | best post-COVID cut (L=12, from 2020-04) | 0.5073 ± 0.0068 | — | — | — |
+
+**How to read it.** The 08 rows are the fair comparison — every method there gets the same training
+budget, which 06 did not. The three best configurations sit within 0.005 of each other and within
+0.008 of the naive baseline, on one seed. **That is a tie, not a win.** Notebook 10 makes it explicit:
+across thirteen round counts the plateau is 0.5095 ± 0.0058 against the baseline's 0.5103.
+
+**Pooled R² is shown only to be dismissed.** The same forecast reports 0.9675 pooled and −0.6667
+within-series. Pooled R² largely measures that the model knows which site is large.
 
 ### Results so far
 

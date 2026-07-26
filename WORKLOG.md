@@ -4493,3 +4493,105 @@ comparison table - the optimal round count, the plateau estimate with its standa
 2. Repeat across seeds. Everything above is one seed, and the plateau's standard deviation of 0.0058 is
    *within-curve* variation, not between-seed variation, which is the larger of the two.
 3. The test year remains sealed.
+
+---
+
+# Entry 42 - 2026-07-27
+## F-54: cutting to post-COVID data does not help, and it wrecks the growth call. Two reference figures added.
+
+### 42.1 The measurement
+
+`11_postcovid_training.ipynb`. Six training-start cutoffs at three lookbacks, everything else held
+fixed - same validation window, same 2,085 series, same architecture, same plateau statistic from F-53.
+
+The window geometry is the whole problem. A sample needs `L + H` consecutive months, so cutting the
+early months removes the COVID shock and most of the training data at the same time:
+
+| Training starts | Months | Windows/series (L=24) | MASE | Growth precision |
+|---|---|---|---|---|
+| 2018-04 all months | 72 | 37 | **0.5095** | **69.1%** |
+| 2019-04 | 60 | 25 | 0.5247 | 50.6% |
+| 2020-04 from the collapse | 48 | 13 | 0.5482 | 47.4% |
+| 2020-08 after the trough | 44 | 9 | 0.5638 | 46.4% |
+| 2021-04 after the schema break | 36 | 1 | 0.5791 | 47.7% |
+| 2022-04 | 24 | **0** | no data | no data |
+
+### 42.2 F-54 - no gain on accuracy, real damage to the decision metric
+
+Best configuration anywhere in the sweep: **L=12 from 2020-04, MASE 0.5073 +/- 0.0068**, against the
+all-months reference **0.5095 +/- 0.0058**. The gap is **0.0022 against a combined plateau spread of
+0.0089** - inside the noise. Cutting does not improve the forecast.
+
+**But precision on the growth call collapses from 69.1% to 47.4%** once the pre-2020 months go, and
+47.4% is barely above the 45.9% base rate. The long history is what makes the direction call work, even
+though it contributes nothing to point accuracy. That asymmetry is the finding: the two metrics depend
+on different parts of the window.
+
+*Measured beforehand, and it made the result less obvious rather than more:* the correlation between a
+service's pre-COVID trend direction and its 2022-onward direction is **+0.043**, with only 51.0% of
+services trending the same way in both eras. The early months genuinely do not describe the present -
+and removing them still does not help, because they were not being learned from either way.
+
+### 42.3 An interaction nobody had considered
+
+The best cutoff **depends on the lookback**, so "cut or do not cut" was the wrong question:
+
+| Lookback | Best cutoff | MASE |
+|---|---|---|
+| 24 | all months, monotonically worse as data is cut | 0.5095 -> 0.5791 |
+| 12 | 2020-04 | **0.5073**, worse on either side |
+| 6 | 2020-08 | 0.5177 |
+
+Shorter lookbacks recover the windows that cutting destroys, which is why they tolerate a cut that
+ruins the 24-month model. Any future experiment moving one of these two knobs has to move the other
+with it.
+
+### 42.4 2022 onwards, as the owner asked, with every algorithm
+
+At the shortest usable lookback (6), 2022-04 leaves **7 windows per series**:
+
+| Algorithm | MASE plateau | sd | Precision |
+|---|---|---|---|
+| fedavg | 0.6097 | 0.0880 | 58.2% |
+| local | 0.6091 | 0.1313 | 58.8% |
+| central | 0.6254 | 0.0135 | 48.2% |
+| fedprox | 0.6256 | 0.2530 | 57.4% |
+| fedavgm | **1.6328** | 1.0379 | 63.6% |
+
+**Every algorithm is far worse than the naive baseline's 0.510**, and the plateau standard deviations
+of 0.09 to 0.25 are an order of magnitude above the 0.0058 seen on the full window. That instability is
+the real signal: at 7 windows per series the run-to-run variation swamps any difference between
+methods, so no algorithm claim can be made on this data at all.
+
+### 42.5 Two reference figures
+
+`docs/figures/flow_full_dataset.jpg` and `flow_postcovid.jpg`. Monotone, journal-figure styling at the
+owner's request - white boxes, hairline rules, no colour coding.
+
+*Three layout defects found by rendering and looking, not by assuming:* body text overflowing its box
+on the taller nodes, the sealed-test band hatched underneath its own label, and the result boxes on
+figure 2 spilling into the section below. Each was fixed by sizing boxes to their content rather than
+by eye. **A generated figure is not done until it has been looked at** - the same rule this project
+applies to notebook outputs.
+
+### 42.6 README
+
+Rewritten around the results: both figures, the notebook table extended to 08 through 11, and a single
+consolidated table of **every full-dataset run** with MASE, RMSE and both R-squareds. The table carries
+its own reading instructions - that the 08 rows are the fair comparison, that the top three sit within
+0.005 of each other and 0.008 of the baseline on one seed, and that pooled R-squared is shown only to
+be dismissed.
+
+### 42.7 Hook verified
+
+Checked end to end rather than assumed: **30,441 characters injected, CLAUDE.md present, WORKLOG.md
+present as the last 200 of 4,495 lines, no mojibake, latest entry visible.** The truncation is by
+design - the worklog is now long enough that injecting all of it every turn would be the dominant
+context cost.
+
+### 42.8 Open
+
+1. **Predict breach growth, not demand growth** (F-52). Unchanged as the highest-value experiment, and
+   now the only one left that could change the system's conclusion.
+2. Repeat across seeds. Every ordering in 08, 10 and 11 rests on one.
+3. Test year still sealed.
