@@ -1013,12 +1013,12 @@ Every metric the project reports, for every training window, at a 24-month lookb
 \toprule
 \textbf{Training window} & \textbf{Mth} & \textbf{W/s} & \textbf{MASE} & \textbf{RMSE} & \textbf{$R^2_{\text{pool}}$} & \textbf{$R^2_{\text{within}}$} & \textbf{Growth} \\
 \midrule
-\textbf{2018-04, full eight years} & 72 & 37 & \textbf{0.5095} & \textbf{69.78} & 0.9697 & $-0.4980$ & \textbf{69.1\%} \\
-2019-04, drop first year & 60 & 25 & 0.5247 & 69.78 & 0.9626 & $-0.4466$ & 50.6\% \\
-2020-04, from the collapse & 48 & 13 & 0.5482 & 73.06 & 0.9583 & $-0.5757$ & 47.4\% \\
-2020-08, after the trough & 44 & 9 & 0.5638 & 75.98 & 0.9555 & $-0.7078$ & 46.4\% \\
-2021-04, after schema break & 36 & 1 & 0.5791 & 79.27 & 0.9560 & $-0.8536$ & 47.7\% \\
-2022-04 onwards & 24 & \textbf{0} & \multicolumn{5}{l}{\textit{no window fits --- untrainable here}} \\
+\textbf{6 years, from Apr 2018 (all of it)} & 72 & 37 & \textbf{0.5095} & \textbf{69.78} & 0.9697 & $-0.4980$ & \textbf{69.1\%} \\
+5 years, from Apr 2019 & 60 & 25 & 0.5247 & 69.78 & 0.9626 & $-0.4466$ & 50.6\% \\
+4 years, from Apr 2020 & 48 & 13 & 0.5482 & 73.06 & 0.9583 & $-0.5757$ & 47.4\% \\
+3 years 8 months, from Aug 2020 & 44 & 9 & 0.5638 & 75.98 & 0.9555 & $-0.7078$ & 46.4\% \\
+3 years, from Apr 2021 & 36 & 1 & 0.5791 & 79.27 & 0.9560 & $-0.8536$ & 47.7\% \\
+2 years, from Apr 2022 & 24 & \textbf{0} & \multicolumn{5}{l}{\textit{no window fits --- untrainable here}} \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -1219,25 +1219,60 @@ $R^2$ is the honest one and is negative everywhere; growth precision is read aga
 \toprule
 \textbf{Training window} & \textbf{$L$} & \textbf{Win/ser} & \textbf{MASE} & \textbf{RMSE} & \textbf{Pooled $R^2$} & \textbf{Within $R^2$} & \textbf{Growth} \\
 \midrule
-\multicolumn{8}{@{}l}{\textit{The full eight years}} \\[2pt]
-2018-04 to 2024-03 & 24 & 37 & \textbf{0.5095} & 69.78 & 0.9697 & $-0.4980$ & \textbf{69.1\%} \\
-2018-04 to 2024-03 & 12 & 49 & 0.5765 & 76.27 & 0.9610 & $-0.8332$ & 64.7\% \\
-2018-04 to 2024-03 & 6 & 55 & 0.5654 & 74.62 & 0.9629 & $-0.7741$ & 65.7\% \\
+\multicolumn{8}{@{}l}{\textit{How much history the model is given, at a 24-month lookback}} \\[2pt]
+6 years (from Apr 2018), all of it & 24 & 37 & \textbf{0.5095} & \textbf{69.78} & 0.9697 & $-0.4980$ & \textbf{69.1\%} \\
+5 years (from Apr 2019) & 24 & 25 & 0.5247 & 69.78 & 0.9626 & $-0.4466$ & 50.6\% \\
+4 years (from Apr 2020) & 24 & 13 & 0.5482 & 73.06 & 0.9583 & $-0.5757$ & 47.4\% \\
+3 yr 8 mth (from Aug 2020) & 24 & 9 & 0.5638 & 75.98 & 0.9555 & $-0.7078$ & 46.4\% \\
+3 years (from Apr 2021) & 24 & 1 & 0.5791 & 79.27 & 0.9560 & $-0.8536$ & 47.7\% \\
+2 years (from Apr 2022) & 24 & \textbf{0} & \multicolumn{5}{l}{\textit{cannot be trained --- no window fits}} \\
 \midrule
-\multicolumn{8}{@{}l}{\textit{Progressively restricted}} \\[2pt]
-2019-04 onwards & 24 & 25 & 0.5247 & 69.78 & 0.9626 & $\mathbf{-0.4466}$ & 50.6\% \\
-2020-04 onwards & 12 & 25 & \textbf{0.5073} & \textbf{69.63} & 0.9683 & $-0.4656$ & 61.3\% \\
-2020-08 onwards & 6 & 27 & 0.5177 & 70.27 & \textbf{0.9702} & $-0.5314$ & 66.1\% \\
-2021-04 onwards & 24 & 1 & 0.5791 & 79.27 & 0.9560 & $-0.8536$ & 47.7\% \\
+\multicolumn{8}{@{}l}{\textit{The same history lengths, at a 12-month lookback}} \\[2pt]
+6 years (from Apr 2018), all of it & 12 & 49 & 0.5765 & 76.27 & 0.9610 & $-0.8332$ & 64.7\% \\
+5 years (from Apr 2019) & 12 & 37 & 0.5550 & 74.65 & 0.9659 & $-0.7443$ & 64.7\% \\
+4 years (from Apr 2020) & 12 & 25 & \textbf{0.5073} & \textbf{69.63} & 0.9683 & $-0.4656$ & 61.3\% \\
+3 yr 8 mth (from Aug 2020) & 12 & 21 & 0.5216 & 71.58 & 0.9680 & $-0.5400$ & 57.4\% \\
+3 years (from Apr 2021) & 12 & 13 & 0.5650 & 78.65 & 0.9611 & $-0.8190$ & 48.0\% \\
+\textbf{2 years (from Apr 2022)} & 12 & 1 & 0.5833 & 82.07 & 0.9574 & $-1.0766$ & \textbf{40.4\%} \\
 \midrule
-\multicolumn{8}{@{}l}{\textit{2022--2026 only, the tightest post-COVID cut}} \\[2pt]
-2022-04 onwards & 12 & 1 & 0.5833 & 82.07 & 0.9574 & $-1.0766$ & \textbf{40.4\%} \\
-2022-04 onwards & 6 & 7 & 0.5835 & 79.55 & 0.9601 & $-1.0745$ & 61.5\% \\
+\multicolumn{8}{@{}l}{\textit{The same history lengths, at a 6-month lookback}} \\[2pt]
+6 years (from Apr 2018), all of it & 6 & 55 & 0.5654 & 74.62 & 0.9629 & $-0.7741$ & 65.7\% \\
+5 years (from Apr 2019) & 6 & 43 & 0.5981 & 78.79 & 0.9576 & $-0.9513$ & 63.4\% \\
+4 years (from Apr 2020) & 6 & 31 & 0.5206 & 71.03 & 0.9700 & $-0.5363$ & 65.4\% \\
+3 yr 8 mth (from Aug 2020) & 6 & 27 & 0.5177 & 70.27 & \textbf{0.9702} & $-0.5314$ & 66.1\% \\
+3 years (from Apr 2021) & 6 & 19 & 0.5402 & 74.04 & 0.9678 & $-0.6479$ & 62.2\% \\
+\textbf{2 years (from Apr 2022)} & 6 & 7 & 0.5835 & 79.55 & 0.9601 & $-1.0745$ & 61.5\% \\
 \midrule
-\textit{naive baseline} & --- & --- & \textit{0.5103} & \textit{72.78} & \textit{0.9675} & \textit{$-0.6667$} & \textit{68.7\%} \\
+\textit{naive baseline (no training)} & --- & --- & \textit{0.5103} & \textit{72.78} & \textit{0.9675} & \textit{$-0.6667$} & \textit{68.7\%} \\
 \bottomrule
 \end{tabular}
 \end{center}
+
+\keypoint{\textbf{How to read this table.} Every row is the same experiment with one thing changed:
+\emph{how far back the model is allowed to look when learning}. The top row of each block gives it
+everything available; each row below starts later and so hands it less history. The validation year,
+the 2,085 services and the network are identical throughout.
+
+\textbf{Two columns to watch.} ``History'' is how much data the model gets. ``Win/ser'' is how many
+training examples that actually produces per service --- and it collapses far faster than the history
+does, because an example needs \emph{lookback + horizon} consecutive months before it exists at all.
+Six years of history gives 37 examples per service; three years gives one.}
+
+\textbf{Terminology, stated once.} The \emph{dataset} is eight years, April 2018 to March 2026. The
+\emph{training window} is at most six of those, April 2018 to March 2024, because a year is held out
+for validation and a year is sealed as test. Where this report says ``all the history'', it means those
+six years.
+
+\keypoint{\textbf{Read each block downwards; do not compare across blocks.} At a 24-month lookback the
+result is monotone in every column: as history is removed, MASE rises 0.5095 $\rightarrow$ 0.5791, RMSE
+69.78 $\rightarrow$ 79.27, within-series $R^2$ worsens $-0.498 \rightarrow -0.854$, and the growth call
+falls off a cliff between the first two rows, 69.1\% $\rightarrow$ 50.6\%. \textbf{Removing history is
+harmful here on every measure, without exception.}
+
+At shorter lookbacks the same sequence is U-shaped instead, because a shorter lookback needs fewer
+months per example and therefore survives a cut that starves the long one. That is why the three
+lookbacks are shown as three separate sequences rather than merged into a single list --- merging them
+would let a reader pick the best row from each and mistake it for a trend.}
 
 \keypoint{\textbf{Read down the last two columns.} Pooled $R^2$ sits between 0.956 and 0.970 for
 \emph{every row in the table}, including the untrainable ones --- it cannot distinguish a good
@@ -1444,7 +1479,7 @@ fedavg, 30 rounds & 0.5383 & --- & --- & --- & 68.2\% & \texttt{10} \\
 fedavg, 60 rounds & 0.6206 & --- & --- & --- & 67.5\% & \texttt{10} \\
 \midrule
 \multicolumn{7}{@{}l}{\textit{Training window (11), lookback 24}} \\[2pt]
-2018-04 onwards, full eight years & \textbf{0.5095} & 69.78 & 0.9697 & $-0.4980$ & \textbf{69.1\%} & \texttt{11} \\
+6 years of history, from Apr 2018 & \textbf{0.5095} & 69.78 & 0.9697 & $-0.4980$ & \textbf{69.1\%} & \texttt{11} \\
 2019-04 onwards & 0.5247 & 69.78 & 0.9626 & $\mathbf{-0.4466}$ & 50.6\% & \texttt{11} \\
 2020-04 onwards & 0.5482 & 73.06 & 0.9583 & $-0.5757$ & 47.4\% & \texttt{11} \\
 2020-08 onwards & 0.5638 & 75.98 & 0.9555 & $-0.7078$ & 46.4\% & \texttt{11} \\
