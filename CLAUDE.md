@@ -3,7 +3,7 @@
 ## Read this file, and keep the worklog — every turn
 
 1. **Read `CLAUDE.md` (this file) at the start of every turn**, before doing anything else. It changes as the project goes; do not work from a remembered version of it.
-2. **Read `WORKLOG.md`** to pick up where the last turn left off.
+2. **Read `WORKLOG.md`** to pick up where the last turn left off. It is **no longer injected** into context (changed 2026-07-27) — read it with the Read tool. It is full of numbers, and having them sitting in context invites quoting one from there instead of from the notebook, which is the failure this project keeps hitting. The worklog records what was *decided*; the notebooks record what is *true*.
 3. **Append to `WORKLOG.md` before ending the turn.** Every turn gets an entry — what was asked, what was done, what was decided and *why*, what was found (including failures, dead ends, and mistakes), and what is still open or running.
 
 The worklog is the project's lab notebook: it is the record that survives when the chat context does not. Write it for someone reconstructing the reasoning months later. Facts and decisions, not narration — no filler, no restating the request. If something failed or was wrong, that goes in too; a worklog that only records successes is worthless.
@@ -45,6 +45,8 @@ These are findings, not preferences. Code that contradicts them is wrong.
 - **Generate tables, do not type them.** Report tables are emitted from the result CSVs by a script and substituted into the LaTeX at markers. A number that was never typed cannot be mistyped.
 - **Audit before publishing.** Extract every decimal from the document and match it against every numeric cell in every result CSV and every number printed in any notebook. Zero untraceable values, or fix it before it ships.
 - **Check the log, then the stored outputs, then write.** A notebook that ran is not a notebook that succeeded; `logs/<name>.log` says whether `nbconvert` wrote the file, and the stored outputs say what it actually produced.
+- **A figure is not a source.** A number read off a chart is a number from memory with extra steps. If a claim needs a value the notebook does not *print*, add the print and re-run the notebook — do not read it from the plot, and do not compute it in the chat and quote the result. (Added 2026-07-27, after "94,000 to 26,000" in the report turned out to be March-to-April 2020 read off a line chart.)
+- **A rate is only meaningful against the base rate of the set it was scored on.** `05`/`06` score 2,085 series and measure a 45.9% growth base rate; `08`/`10`/`11` need a 24-month lookback plus a 12-month horizon, admit 1,978 services, and measure 43.5%. Quoting one family's precision against the other's base rate silently changes what the comparison claims. State the denominator beside every rate.
 - **A metric computed over "whatever was available" is not a metric over everything.** State the denominator, and check that every row you are summarising actually has the column. This exact error has now happened twice here (Entries 24 and 44).
 
 ### Evaluation integrity — build the system, do not chase the number
@@ -60,7 +62,7 @@ These are findings, not preferences. Code that contradicts them is wrong.
 
 ### The data, as measured
 
-150 eligible sites, 34 regions, 19 departments, 96 months. The panel cube is 150 × 19 × 96; the
+150 eligible sites, 36 ICBs, 19 departments, 96 months. The panel cube is 150 × 19 × 96; the
 **evaluation set is 2,085 series across 141 sites** (`05`), because not every eligible site has a
 department usable across the whole validation window. 121 raw columns → **15 canonical** → **36 model inputs**. All counts come from the notebooks, never from prose.
 

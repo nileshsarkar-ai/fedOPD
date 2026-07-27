@@ -5059,3 +5059,93 @@ the published expectation and the measured step are different things) and `8-20`
 Unchanged: predict breach growth rather than demand growth (F-52); repeat across seeds; align the `08`
 single-round protocol with the `10`/`11` plateau protocol; replace the hard-coded `NAIVE = 0.510`.
 Added: `10` should print the plateau statistics it reports, not only write them.
+
+---
+
+# Entry 49 - 2026-07-27
+## Worklog injection switched off. Notebooks audited against the coding rules. A base-rate
+## attribution error found that the number audit could not see.
+
+Asked to update the README with images and push, check the hooks, check every notebook against the
+CLAUDE.md coding rules, stop injecting the worklog, and fact-check the report again.
+
+### 49.1 The worklog was not the cause, and the change is still right
+
+The owner's hypothesis was that injecting `WORKLOG.md` caused the wrong numbers in Entry 48. It did
+not. Those six defects had three causes: a shape quoted from a run that no longer existed, a figure
+read off a line chart, and two statistics on different denominators blended into one sentence. None
+required the worklog to be in context.
+
+What the injection *did* do is keep roughly 11 KB of numbers permanently in context, which makes
+quoting from there instead of from the notebook the path of least resistance. That is a real hazard,
+so the change is correct on its own merits.
+
+`.claude/hooks/inject_context.py` now emits `CLAUDE.md` only (32 KB -> 21 KB), pipe-tested, em-dashes
+intact. `CLAUDE.md` records that the worklog is read on demand and states the distinction: **the
+worklog records what was decided, the notebooks record what is true.**
+
+### 49.2 Notebooks against the coding rules
+
+All eleven clean on every prohibition - no try/except, no logging, no retry wrappers, no
+`if __name__`, no `.py` or `.sh` in `src/`. Asserts where they earn their place (`03` has 15).
+
+An AST scan for assigned-but-never-read names found three things worth acting on:
+
+1. **`08` and `11` accumulated federated weights as
+   `for s, p in zip(acc, get_w(model)): s += a * p`.** It reads as a no-op - rebinding a loop
+   variable. It *works*, because `acc` holds torch tensors and `+=` mutates in place. But the
+   correctness depends on a fact one line away from the reader, and the same line over a list of
+   plain floats would silently accumulate nothing. Rewritten `acc[i] += a * p`.
+2. **`09` carried a dead constant**, `TARGET_PCT = 92.0`, assigned and never read. Deleted.
+3. **`04`'s import comment said "the 126-trust federation cube"**; the cube is 150. Fixed.
+
+`08` and `09` re-run: **results bit-identical**, which is the evidence that the accumulator rewrite
+changed nothing rather than the claim that it could not. `11` re-running at time of writing.
+
+### 49.3 F-58 - the number audit cannot see a misattributed number
+
+The Entry 48 audit passes a value if it appears **anywhere** in the corpus. So a new check was added:
+does each table cell appear in the output of the notebook that row **cites**?
+
+**67 of 88 cited cells are not printed by the notebook they cite.** For 60 the chain still holds -
+they are in that notebook's result CSV, written but never displayed. The remaining 7 are the `10`
+plateau aggregates (verified by recomputation from `training_length.csv`: 0.5095 / 0.0058 / 69.78 /
+-0.4980), a config constant, and this:
+
+**The report read every growth-precision figure against a 45.9% base rate.** That is `05`/`06`'s
+figure over 2,085 series. `08`, `10` and `11` require a 24-month lookback plus a 12-month horizon,
+admit **1,978** services, and measure **43.5%**. The load-bearing claim is "at a 12-month lookback the
+growth call falls to 40.4% - below the 45.9% base rate". The conclusion survives, since 40.4% is below
+43.5% as well, but the reference line was the wrong one. Corrected in six places plus a table header,
+with both base rates stated and the reason they differ.
+
+*Why this matters more than an arithmetic slip:* every number involved was individually correct and
+individually traceable. Only the pairing was wrong. An audit that checks values against a corpus will
+never catch it; one that checks values against **their cited source** does.
+
+### 49.4 Two rules added to CLAUDE.md
+
+- **A figure is not a source.** A number read off a chart is a number from memory with extra steps. If
+  a claim needs a value the notebook does not print, add the print and re-run.
+- **A rate is only meaningful against the base rate of the set it was scored on.** State the
+  denominator beside every rate.
+
+### 49.5 README
+
+Two stale facts: the report described as 20 pages / 13 figures (it is 34 / 18 / 28), and a
+`panel_member` column that does not exist - it is `fl_client`, and it selects 150 sites, not the
+balanced 126. One broken link. Nine result figures added, each captioned with the notebook that
+generates it. Figures re-extracted from the current notebook outputs: **0 changed**, so nothing on
+disk was stale. README numeric audit: **0 untraceable**.
+
+### 49.6 Report
+
+1,773 claims, 2 flagged, both known parser artefacts (`-43,000` printed with a sign, and `8-20` read
+as a negative). **34 pages, 18 figures, 28 tables, 0 overfull boxes.**
+
+### 49.7 Open
+
+Unchanged: predict breach growth rather than demand growth (F-52); repeat across seeds; align the `08`
+single-round protocol with the `10`/`11` plateau protocol; replace the hard-coded `NAIVE = 0.510`;
+make `10` print the plateau statistics it reports. Added: **60 of 88 cited table cells have no printed
+output to check the CSV against** - the notebooks should print what the report quotes from them.

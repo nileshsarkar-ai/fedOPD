@@ -1043,7 +1043,8 @@ score both on the identical validation year.
 \keypoint{\textbf{Training on the full dataset wins on every metric.} MASE 0.5095 against 0.583, RMSE
 69.78 against 79.6--82.1, within-series $R^2$ $-0.498$ against $-1.07$, and the growth call 69.1\%
 against 40.4--61.5\%. The 2022--2026 subset is not merely no better; it is worse everywhere, and at a
-12-month lookback its growth call sits \emph{below} the 45.9\% base rate.
+12-month lookback its growth call sits \emph{below} the 43.5\% base rate that applies to
+this notebook's eligible set.
 
 The reason is in the third column. Six years of history yields \textbf{37 training examples per
 service}; two years yields \textbf{one to seven}.}
@@ -1088,8 +1089,11 @@ Best overall, $L=12$ from 2020-04 & 25 & 0.5073 & 69.63 & 0.9683 & $-0.4656$ & 6
 
 \keypoint{\textbf{The 2022--2026 subset is worse on every measure.} MASE rises from 0.5095 to 0.583,
 RMSE from 69.78 to 79.6--82.1, and within-series $R^2$ \emph{doubles} in badness from $-0.498$ to
-$-1.08$. At a 12-month lookback the growth call falls to \textbf{40.4\%} --- below the 45.9\% base
-rate, meaning it is worse than calling every service ``growing''.
+$-1.08$. At a 12-month lookback the growth call falls to \textbf{40.4\%} --- below the \textbf{43.5\%}
+base rate, meaning it is worse than calling every service ``growing''. \emph{That base rate is not
+the 45.9\% quoted in Section 5.} Requiring a 24-month lookback plus a 12-month horizon leaves
+1{,}978 eligible services rather than 2{,}085, and the smaller set grew slightly less often. A
+growth call may only be read against the base rate of the set it was scored on.
 
 Note that \emph{pooled} $R^2$ barely moves, 0.970 to 0.957, and would have been read as ``almost
 unchanged''. Within-series $R^2$ doubles. This is the clearest single demonstration in the report of
@@ -1101,7 +1105,7 @@ $0.5095 \pm 0.0058$ --- a gap of \textbf{0.0022} against a combined spread of \t
 inside the noise.
 
 Meanwhile precision on the growth call \textbf{collapses from 69.1\% to 47.4\%}, barely above the
-45.9\% base rate. \textbf{The long history is what makes the direction call work}, even though it
+43.5\% base rate for this eligible set. \textbf{The long history is what makes the direction call work}, even though it
 contributes nothing to point accuracy. The two metrics draw on different parts of the window, and only
 one of them survives the cut.}
 
@@ -1253,7 +1257,7 @@ Same model at 60 rounds & overfitted & 0.6206 & \texttt{10} \\
 Full 8 years vs 2022--2026 & MASE & 0.5095 vs 0.5835 & \texttt{11} \\
 Same, RMSE & referrals & 69.78 vs 79.55 & \texttt{11} \\
 Same, within-series $R^2$ & the honest metric & $-0.498$ vs $-1.075$ & \texttt{11} \\
-Same, growth precision & base rate 45.9\% & 69.1\% vs 40.4\% & \texttt{11} \\
+Same, growth precision & base rate 43.5\% & 69.1\% vs 40.4\% & \texttt{11} \\
 Pooled, matched budget & \texttt{central} & 0.603 & \texttt{08} \\
 Per-site, matched budget & \texttt{local} & 0.556 & \texttt{08} \\
 Services with within-series $R^2>0$ & of 2{,}085 & 9.3\% & \texttt{06} \\
@@ -1285,7 +1289,8 @@ unsolved.}
 \subsection{The full window against every restricted one, on all four metrics}
 
 The single table the training-window question reduces to. Lower MASE and RMSE are better; within-series
-$R^2$ is the honest one and is negative everywhere; growth precision is read against a 45.9\% base rate.
+$R^2$ is the honest one and is negative everywhere; growth precision is read against the
+\textbf{43.5\%} base rate of this notebook's 1{,}978 eligible services, not Section 5's 45.9\% over 2{,}085.
 
 \begin{center}
 \footnotesize
@@ -1378,7 +1383,7 @@ FL algorithm (\texttt{08}) & FedProx $\approx$ FedAvg & 0.5075 & \textbf{tie}; F
 Federation vs alone (\texttt{08}) & \texttt{fedavg} vs \texttt{local} & 0.507 vs 0.556 & \textbf{federation wins} \\
 Federation vs pooled (\texttt{08}) & \texttt{fedavg} vs \texttt{central} & 0.507 vs 0.603 & suggestive, one seed \\
 \midrule
-\multicolumn{4}{@{}l}{\textit{Forecasting --- the decision question, base rate 45.9\%}} \\[2pt]
+\multicolumn{4}{@{}l}{\textit{Forecasting --- the decision question. Base rate 45.9\% for \texttt{05}/\texttt{06}, 43.5\% for \texttt{11}}} \\[2pt]
 Growth call, post-training (\texttt{06}) & \texttt{fedavg\_ft} precision & 67.3\% & \textbf{real}; $+21.4$pp, 13\% coverage \\
 Growth call vs alone (\texttt{06}) & \texttt{local} precision & 55.5\% & federation buys $\sim$10pp \\
 Broad detector (\texttt{05}) & \texttt{drift}, direction accuracy & 66.3\% & \textbf{real}; worst on MASE \\
@@ -1520,7 +1525,7 @@ a few thousandths should be read as noise.
 \texttt{06\_federated\_forecast} & L=24, HIDDEN=128, ROUNDS=30, 2, BAND=0.05, FT\_EPOCHS=5, lr=1e-3, dropout=0.1, batch=256, seed=0, loss=L1Loss, optim=Adam \\
 \texttt{07\_agentic\_layer} & HORIZON=6, TARGET\_PCT=92.0 \\
 \texttt{08\_algorithm\_comparison} & L=24, HIDDEN=128, ROUNDS=15, 2, BAND=0.05, lr=1e-3, dropout=0.1, batch=256, seed=0, loss=L1Loss, optim=Adam \\
-\texttt{09\_allocation\_policies} & TARGET\_PCT=92.0 \\
+\texttt{09\_allocation\_policies} &  \\
 \texttt{10\_training\_length} & L=24, HIDDEN=128, BAND=0.05, MAX\_ROUNDS=60, lr=1e-3, dropout=0.1, batch=256, seed=0, loss=L1Loss, optim=Adam \\
 \texttt{11\_postcovid\_training} & HIDDEN=128, ROUNDS=30, 2, BAND=0.05, PLATEAU=(8, 20), lr=1e-3, dropout=0.1, batch=256, seed=0, loss=L1Loss, optim=Adam \\
 \bottomrule
@@ -1560,10 +1565,10 @@ after a run means it failed. ``Errors'' counts stored error outputs, which must 
 \texttt{05\_baselines} & 11 & 11 & 0 & completed & 27 Jul 03:54 \\
 \texttt{06\_federated\_forecast} & 13 & 13 & 0 & completed & 27 Jul 03:59 \\
 \texttt{07\_agentic\_layer} & 11 & 11 & 0 & completed & 27 Jul 03:48 \\
-\texttt{08\_algorithm\_comparison} & 9 & 9 & 0 & completed & 27 Jul 05:52 \\
-\texttt{09\_allocation\_policies} & 7 & 7 & 0 & completed & 27 Jul 04:24 \\
+\texttt{08\_algorithm\_comparison} & 9 & 9 & 0 & completed & 27 Jul 07:23 \\
+\texttt{09\_allocation\_policies} & 7 & 7 & 0 & completed & 27 Jul 07:23 \\
 \texttt{10\_training\_length} & 7 & 7 & 0 & completed & 27 Jul 05:55 \\
-\texttt{11\_postcovid\_training} & 7 & 7 & 0 & completed & 27 Jul 06:20 \\
+\texttt{11\_postcovid\_training} & 7 & 7 & 0 & incomplete & 27 Jul 07:23 \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -1613,7 +1618,8 @@ All 37 configurations run in this project, on every metric computed for them. Va
 throughout; the test year has never been opened. Lower MASE and RMSE are better. Pooled $R^2$ is
 included only for completeness --- it is near-constant across configurations of wildly different
 quality and should not be used to rank them. Within-series $R^2$ is the honest measure and is negative
-everywhere. Growth precision reads against a base rate of 45.9\%.
+everywhere. Growth precision reads against a base rate of 45.9\% for \texttt{05}/\texttt{06}
+and 43.5\% for \texttt{08}/\texttt{10}/\texttt{11}, whose eligibility rule admits fewer services.
 
 Blank cells are metrics that notebook did not compute, not zeros.
 
