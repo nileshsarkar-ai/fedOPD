@@ -5159,3 +5159,65 @@ numerical effect, and that is now measured on all three notebooks rather than ar
 
 Figures re-extracted after all three re-runs: **0 changed**. Report rebuilt: 1,773 claims, 2 flagged
 (both parser artefacts), **34 pages, 18 figures, 28 tables, 0 overfull boxes**.
+
+---
+
+# Entry 50 - 2026-07-27
+## Read the report end to end as a new reader would. Two structural defects, neither numeric.
+
+Asked how the report reads to someone new - whether it starts simply and keeps the detail. Read
+through the built source (the PDF could not be rendered here; `pdftoppm` is not installed).
+
+### 50.1 F-59 - eight of fourteen cross-references pointed at the wrong section
+
+Every "Section N" was typed as a literal number. Sections were added as the work grew and the numbers
+never moved with them. The current numbering is 1 intro, 2 data, 3 processing, 4 removal term,
+5 forecaster, 6 growth metric, 7 decision layer, 8 sweeps, 9 summary, 10 limits, 11 conclusion.
+
+Wrong: "the decision layer (Section 6)" and "the capacity arithmetic in Section 6" both mean 7;
+"Section 7 repeats the comparison with the budgets matched" and "Section 7 tests it" both mean 8;
+"the 45.9% quoted in Section 5" and "not Section 5's 45.9%" both mean 6; "every ordering in Section 7"
+and "the side-by-side comparison in Section 7" both mean 8.
+
+**This is worse than a wrong decimal for the reader the document is written for.** The number audit
+cannot see it - section numbers are not results - and a newcomer following a forward pointer lands in
+the wrong chapter and loses the thread.
+
+Fixed by deleting the numbers rather than correcting them: six `\label`s and fourteen `\ref`s, so the
+numbering is computed at build time and cannot drift again.
+
+### 50.2 The report contradicted itself on training length
+
+Section 8 says: *"Two data points are not a curve, so the whole thing was measured: one continuous run
+to 60 rounds, evaluated on validation after every round."* `training_length.csv` confirms it - rounds
+1 to 60 at three local-epoch settings, 135 rows.
+
+Section 10 then listed as a limitation: *"Training length was sampled at two points, not swept... the
+curve between 15 and 30 rounds has not been measured"*, and the next steps asked to *"sweep training
+length properly"*. Both were written before `10` existed and were never revisited.
+
+Rewritten to the limitation that actually remains: the curve is measured, but at one seed, and the
+plateau of $0.5095 \pm 0.0058$ is wide enough that the optimum near round 13 could move.
+
+*Generalisation:* a limitations section decays silently. It is written early, it is the part nobody
+re-reads, and every experiment that closes a gap leaves a stale entry claiming the gap is open. It
+needs auditing against the results the same way the numbers do.
+
+### 50.3 A brace lost in the patch, caught by the page count
+
+The first patched build produced **6 pages** instead of 34. The replacement for the Section 6 pointer
+dropped the closing `}` of its enclosing `\keypoint{...}`, and TeX swallowed the rest of the document
+into the argument. The compile reported one error and still emitted a PDF.
+
+**A build that produces a PDF is not a build that succeeded.** The page count is the cheap check that
+catches this class, and it is now the thing to look at first after any structural patch.
+
+### 50.4 Rebuilt
+
+1,751 claims, 2 flagged (both parser artefacts), 0 undefined references, **34 pages, 18 figures,
+28 tables, 0 overfull boxes**.
+
+### 50.5 Open
+
+Unchanged from Entry 49, minus the training-length sweep, which was already done and only the write-up
+was stale.

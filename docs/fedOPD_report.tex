@@ -78,6 +78,7 @@ forecaster.
 
 % ============================================================================
 \section{What this is, for someone starting from zero}
+\label{sec:intro}
 
 \subsection{The problem in one paragraph}
 
@@ -362,7 +363,7 @@ decision.}
 \includegraphics[width=\textwidth]{figures/nb02_fig3.png}
 \caption{Public and independent demand over the window. The independent share rises from 6.20\% to
 7.70\% across eight years --- a slow structural shift, not a month-to-month valve. This distinction
-governs the whole design of the decision layer (Section 6).}
+governs the whole design of the decision layer (Section \ref{sec:decision}).}
 \end{figure}
 
 \begin{figure}[H]
@@ -432,6 +433,7 @@ churn heavily. This is why sector membership and reporting completeness are carr
 
 % ============================================================================
 \section{The finding that anchors the decision layer}
+\label{sec:removal}
 
 \subsection{The identity everyone uses, and why it is wrong}
 
@@ -444,7 +446,7 @@ Measured across all 95 available month-transitions, this identity \textbf{over-p
 every single month} --- 95 of 95, never once in the other direction. The mean gap is \textbf{213{,}380
 pathways per month}, which is \textbf{15.02\%} of demand as a mean of monthly ratios and 14.91\% as a
 ratio of means. Measured per service rather than nationally, the median rate is 15.4\% of demand, and
-that per-service figure is what the capacity arithmetic in Section 6 actually uses.
+that per-service figure is what the capacity arithmetic in Section \ref{sec:decision} actually uses.
 
 Roughly one in six referrals leaves the waiting list with no recorded treatment. NHS England publishes
 this quantity, calls it \emph{unreported removals}, and our figures reproduce their published levels on
@@ -510,6 +512,7 @@ system built on it would demand capacity that is not needed, every cycle, foreve
 
 % ============================================================================
 \section{The federated forecaster}
+\label{sec:forecaster}
 
 \subsection{How the federation works}
 
@@ -604,7 +607,7 @@ average. Fine-tuning helped 45\% of sites and hurt 55\%. This is reported as it 
 
 \textbf{Do not read ``pooling hurts''.} \texttt{central} came last, which would be a striking claim.
 At this point it was confounded: \texttt{central} received 1.54m sample-updates against
-\texttt{fedavg}'s \textbf{4.63m}, three times as many. Section 7 repeats the comparison with the
+\texttt{fedavg}'s \textbf{4.63m}, three times as many. Section \ref{sec:sweep} repeats the comparison with the
 budgets matched, and the answer changes character --- but not in the direction this table suggests.
 
 \textbf{There is a concrete, testable reason the network loses.} The validation window sits
@@ -612,7 +615,7 @@ budgets matched, and the answer changes character --- but not in the direction t
 scaled by each series' \emph{training} mean, so it is anchored to a level the data has since left.
 The naive baseline is anchored to the \emph{last observed value} and gets that shift for free.
 Prediction, stated before testing: rescaling to the last observation should close much of the gap.
-Section 7 tests it.
+Section \ref{sec:sweep} tests it.
 
 \begin{figure}[H]
 \centering
@@ -651,6 +654,7 @@ little of each service's month-to-month shape is predicted.}
 
 % ============================================================================
 \section{The result that changes the conclusion}
+\label{sec:growth}
 
 \subsection{We were measuring the wrong thing}
 
@@ -756,6 +760,7 @@ claim about how much a service will grow is currently unsupported by this eviden
 
 % ============================================================================
 \section{The decision layer}
+\label{sec:decision}
 
 \subsection{What each department agent holds}
 
@@ -866,10 +871,11 @@ presented to the board together, not a first choice and a fallback.
 
 % ============================================================================
 \section{Does any of it get better? Eleven configurations and seven policies}
+\label{sec:sweep}
 
 Sections 5 and 6 established one model configuration and one allocation rule. Neither had been
 compared with an alternative. This section varies both, and it closes the training-budget confound
-that Section 5 had to leave open.
+that Section \ref{sec:forecaster} had to leave open.
 
 \keypoint{\textbf{Method note.} One factor at a time from a declared reference configuration ---
 \emph{not} a full grid. A cross-product of every option would be 54 runs, and reporting the best cell
@@ -879,7 +885,7 @@ year is still sealed.}
 
 \subsection{Every method now gets the same training budget}
 
-Section 5's comparison gave FedAvg three times the gradient work of the pooled model. Here every method
+Section \ref{sec:forecaster}'s comparison gave FedAvg three times the gradient work of the pooled model. Here every method
 receives \textbf{30 epochs of work over its own data}: 15 rounds of 2 local epochs for the federated
 runs, 30 epochs for the pooled model, and 30 epochs for each per-site model.
 
@@ -896,7 +902,7 @@ runs, 30 epochs for the pooled model, and 30 epochs for each per-site model.
 \end{tabular}
 \end{center}
 
-\keypoint{\textbf{Finding 5. The null of Section 5 was partly a training-length artefact.} The same
+\keypoint{\textbf{Finding 5. The null of Section \ref{sec:forecaster} was partly a training-length artefact.} The same
 architecture that scored 0.553 at 30 rounds scores \textbf{0.507} at 15 --- it was overtrained. Against
 the naive baseline's 0.510, the federated model is now \emph{level}, not behind.
 
@@ -964,7 +970,7 @@ once the two metrics agree on where to stop.}
 
 \textbf{Pooling still loses, and now the excuse is gone.} With budgets matched, \texttt{central} scores
 \textbf{0.603} against \texttt{fedavg}'s 0.507 and \texttt{local}'s 0.556 --- worse than \emph{both}.
-The budget explanation offered in Section 5 was insufficient. The mechanism is not established; the
+The budget explanation offered in Section \ref{sec:forecaster} was insufficient. The mechanism is not established; the
 plausible one is that repeated averaging across 141 heterogeneous sites regularises, while a single
 pooled model with per-series scaling has the site-level structure scaled out of it. That is a
 hypothesis, and it rests on one seed.
@@ -992,7 +998,7 @@ about future demand and cost accuracy to include.}
 \caption{Every configuration on both metrics. Left: point accuracy against the naive baseline (dashed).
 Right: precision on the growth call against the base rate (dashed). Note that the two panels do not
 agree on an ordering --- \texttt{anchoring: delta} is among the worst on MASE and the best on the
-decision metric, which is the Section 6 result reappearing.}
+decision metric, which is the Section \ref{sec:growth} result reappearing.}
 \end{figure}
 
 \subsection{Full eight-year window against post-COVID subsets}
@@ -1077,7 +1083,7 @@ Best overall, $L=12$ from 2020-04 & 25 & 0.5073 & 69.63 & 0.9683 & $-0.4656$ & 6
 RMSE from 69.78 to 79.6--82.1, and within-series $R^2$ \emph{doubles} in badness from $-0.498$ to
 $-1.08$. At a 12-month lookback the growth call falls to \textbf{40.4\%} --- below the \textbf{43.5\%}
 base rate, meaning it is worse than calling every service ``growing''. \emph{That base rate is not
-the 45.9\% quoted in Section 5.} Requiring a 24-month lookback plus a 12-month horizon leaves
+the 45.9\% quoted in Section \ref{sec:growth}.} Requiring a 24-month lookback plus a 12-month horizon leaves
 1{,}978 eligible services rather than 2{,}085, and the smaller set grew slightly less often. A
 growth call may only be read against the base rate of the set it was scored on.
 
@@ -1185,7 +1191,7 @@ scores \textbf{0.390}, below random. This is the payoff path of the entire syste
 
 The reason is precise: the model predicts \textbf{demand growth}, and what determines who needed
 capacity is \textbf{breach growth}. Those are different quantities, and the 67\%-precision demand call
-from Section 6 does not transfer to the allocation question.
+from Section \ref{sec:growth} does not transfer to the allocation question.
 
 This is a finding about the \emph{architecture}, not the model. The direction call is genuinely useful
 for deciding whether to expand a service over years, which is what the decision rule uses it for. It is
@@ -1272,7 +1278,7 @@ unsolved.}
 
 The single table the training-window question reduces to. Lower MASE and RMSE are better; within-series
 $R^2$ is the honest one and is negative everywhere; growth precision is read against the
-\textbf{43.5\%} base rate of this notebook's 1{,}978 eligible services, not Section 5's 45.9\% over 2{,}085.
+\textbf{43.5\%} base rate of this notebook's 1{,}978 eligible services, not Section \ref{sec:growth}'s 45.9\% over 2{,}085.
 
 \begin{center}
 \footnotesize
@@ -1378,9 +1384,9 @@ MASE should be read as noise rather than as an ordering.
 \item \textbf{Federation versus pooling rests on one seed.} The budgets are now matched, so the
 comparison is finally valid, but a single run is not enough to assert that averaging beats pooling.
 
-\item \textbf{Training length was sampled at two points, not swept.} Finding 5 shows the result is
-sensitive to it. The curve between 15 and 30 rounds has not been measured, and the true optimum may
-sit elsewhere.
+\item \textbf{Training length was swept, but at one seed and one architecture.} The curve to 60
+rounds is measured every round at three local-epoch settings, so the optimum near round 13 is not an
+artefact of two sample points. Whether it sits in the same place for another seed is untested.
 
 \item \textbf{No privacy guarantee.} FedAvg moves weights instead of records, which is a
 data-governance property, not a privacy proof. Weights leak information about the data that produced
@@ -1449,10 +1455,11 @@ In priority order, and the first is now clearly the most valuable.
 \item \textbf{Forecast breach growth, not demand growth}, and re-run the forecast-led policy. Finding 8
 says the two are not interchangeable, and the allocation question is the one the system exists to
 answer. This is the direct consequence of the sharpest result here.
-\item \textbf{Repeat the comparison across seeds.} Every ordering in Section 7 rests on one run, and
+\item \textbf{Repeat the comparison across seeds.} Every ordering in Section \ref{sec:sweep} rests on one run, and
 the margin at the top is three thousandths.
-\item \textbf{Sweep training length properly.} Finding 5 shows the result moves with it; two sample
-points is not a curve.
+\item \textbf{Re-measure the training-length curve on a second seed.} The optimum at round 13 and
+the decline after it are clear at one seed; the plateau is $0.5095 \pm 0.0058$, which is wide enough
+that the exact optimum may move.
 \item Wire the direction call and its measured confidence into the decision layer, replacing the
 placeholder forecast --- but only for the expansion branch, which is the one it is fit for.
 \item Then, and only once, open the test year.
@@ -1492,7 +1499,7 @@ constant where a read one belongs.
 
 \texttt{08} trains for 15 rounds and reports the value at that round, while \texttt{10} and
 \texttt{11} report a plateau mean over rounds 8--20. \textbf{The two protocols are not identical}, so
-the side-by-side comparison in Section 7 mixes a point estimate with a windowed one. Stated here rather
+the side-by-side comparison in Section \ref{sec:sweep} mixes a point estimate with a windowed one. Stated here rather
 than left for a reader to discover.}
 
 \section{Appendix: provenance --- what ran, and when}
