@@ -5149,3 +5149,13 @@ Unchanged: predict breach growth rather than demand growth (F-52); repeat across
 single-round protocol with the `10`/`11` plateau protocol; replace the hard-coded `NAIVE = 0.510`;
 make `10` print the plateau statistics it reports. Added: **60 of 88 cited table cells have no printed
 output to check the CSV against** - the notebooks should print what the report quotes from them.
+
+### 49.8 `11` re-run confirms the accumulator rewrite
+
+`11_postcovid_training.ipynb` finished. Its algorithm sweep is unchanged to every reported digit -
+`fedavg` 0.6097 / 82.2644 / -1.1695 / 58.21%, `fedprox` 0.6256, `local` 0.6091, `central` 0.6254,
+`fedavgm` 1.6328. Same as `08` and `09`: the `acc[i] += a * p` rewrite is a readability change with no
+numerical effect, and that is now measured on all three notebooks rather than argued.
+
+Figures re-extracted after all three re-runs: **0 changed**. Report rebuilt: 1,773 claims, 2 flagged
+(both parser artefacts), **34 pages, 18 figures, 28 tables, 0 overfull boxes**.
