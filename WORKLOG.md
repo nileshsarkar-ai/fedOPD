@@ -4978,3 +4978,84 @@ per-file cross-check results and the string-versus-number caution.
 
 Unchanged: predict breach growth rather than demand growth (F-52); repeat across seeds; align the `08`
 single-round protocol with the `10`/`11` plateau protocol; replace the hard-coded `NAIVE = 0.510`.
+
+---
+
+# Entry 48 - 2026-07-27
+## Independent fact-check of the report against notebooks and logs. Six defects, all fixed.
+
+Asked to check the logs and notebooks directly and fact-check `docs/fedOPD_report.pdf`. This was run
+as a fresh audit rather than a re-run of the existing one, because the existing check was written
+alongside the document it checks and shares its assumptions.
+
+### 48.1 Method
+
+`factcheck.py` builds a truth set from three places read in this turn - every stored output cell of
+every notebook under `src/`, every `logs/*.log`, and every numeric cell plus the row and column count
+of every CSV under `data/canonical/` (8,440,190 numbers). It then extracts every number from the built
+`.tex` and requires each to match some truth number **once both are rounded to the claim's own
+displayed precision**. Rounding to the claim's precision rather than a fixed one is what Entry 47.3
+established: a fixed comparison produces false failures, which is the worse error.
+
+1,754 claims, 14 initially untraceable, of which 7 were parser artefacts (`8--20` read as $-20$).
+
+### 48.2 Six real defects
+
+1. **`rtt_normalised.csv` was reported as 201,888 rows.** The file is **200,160 x 21**. A shape quoted
+   from a run that no longer exists.
+2. **The backlog identity gap was reported as 183,635 pathways per month at 15.4% of demand.** Neither
+   number is in any notebook. `03` measures **213,380 per month**, **15.02%** of demand as a mean of
+   monthly ratios and 14.91% as a ratio of means. The **15.4%** is real but is `07`'s *per-service
+   median* removal rate, a different statistic on a different basis. Two sources had been blended into
+   one sentence. Now states both, labelled.
+3. **"A single month is roughly 200,000 rows."** `02` measures **184,184** for the March 2026 extract.
+4. **"In April-May 2020 independent elective completions fell from 94,000 to 26,000."** The fall is
+   **March (94,356) to April (26,285)**, trough **19,421 in May**. The month labels were wrong.
+5. **"Over-projects by 1.18m pathways, a 16.9% error."** The two halves used different denominators -
+   the difference was taken against actual (7.06m) and the percentage against the corrected projection
+   (7.05m). Against the corrected projection consistently it is **1.19m** (8.24m vs 7.05m), 16.9%.
+6. **`CLAUDE.md` itself carried a stale count**: "2,103 evaluated site x department series". `05`
+   prints **2,085 series across 141 sites**. The report was already correct in all four places it
+   states this; the governing document was not. Corrected there, with the reason the two differ (the
+   panel cube is 150 x 19 x 96; not every eligible site has a department usable across the whole
+   validation window).
+
+### 48.3 Defect 4 had no source at all, so one was made
+
+The 2020 collapse figures were never printed by any notebook - `04` plots the independent share but
+prints only the first-versus-last table. The numbers had been **read off a chart**, which is how both
+the wrong months and the rounded magnitudes got in.
+
+A cell was added to `04_eda` printing independent completions for 2020-01 to 2020-08 with the peak and
+trough months named, and `04` re-run headless. **The first run failed**: `ind.loc['2020-03']` on a
+DatetimeIndex is a partial-string *slice* and returns a Series, so the `,.0f` format raised
+`TypeError`. Fixed by taking the window once and using `idxmax`/`idxmin`.
+
+*Generalisation worth keeping:* a figure is not a source. Anything quoted in prose needs a printed
+number behind it, and if the notebook does not print it, the notebook is what needs changing.
+
+### 48.4 Confirmed correct
+
+Checked against the notebook that computes each, not against the CSV the report reads:
+Finding 1 (**-31.0%** MAE, bias **+565** to **-16**, **+16.9%**); the **0.16%** offer-to-ask ratio
+(657 of 419,220); **80%** of services in breach (1,642 crisis of 2,046); naive baseline **0.510335**;
+the `10` plateau row **0.5095 / 69.7849 / 0.9697 / -0.4980**, recomputed from `training_length.csv`
+rounds 8-20 at two local epochs; **14,091,020**; random-targeting precision **0.439**.
+
+The plateau row is worth noting: `10` does **not** print those values, it only prints per-round MASE.
+They were confirmed by recomputing the plateau mean from the CSV `10` wrote, which is a weaker link
+than a printed number and is the same class of gap as defect 4.
+
+### 48.5 Result
+
+Two flagged claims remain, both parser artefacts: `43,000` (printed by `03` as `-43,000`, and now
+attributed in the report to NHS's press notice with the measured step of **-29,179** alongside, since
+the published expectation and the measured step are different things) and `8-20` in a table label.
+
+**34 pages, 18 figures, 28 tables, 0 overfull boxes.**
+
+### 48.6 Open
+
+Unchanged: predict breach growth rather than demand growth (F-52); repeat across seeds; align the `08`
+single-round protocol with the `10`/`11` plateau protocol; replace the hard-coded `NAIVE = 0.510`.
+Added: `10` should print the plateau statistics it reports, not only write them.

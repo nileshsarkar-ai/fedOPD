@@ -60,7 +60,9 @@ These are findings, not preferences. Code that contradicts them is wrong.
 
 ### The data, as measured
 
-150 eligible sites, 34 regions, 19 departments, 96 months, **2,103 evaluated site × department series**. 121 raw columns → **15 canonical** → **36 model inputs**. All counts come from the notebooks, never from prose.
+150 eligible sites, 34 regions, 19 departments, 96 months. The panel cube is 150 × 19 × 96; the
+**evaluation set is 2,085 series across 141 sites** (`05`), because not every eligible site has a
+department usable across the whole validation window. 121 raw columns → **15 canonical** → **36 model inputs**. All counts come from the notebooks, never from prose.
 
 ## Working mode - Claude can help write the code
 

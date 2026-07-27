@@ -165,7 +165,8 @@ hierarchy.}
 
 \subsection{What one file contains}
 
-A single month is roughly 200{,}000 rows and 121 columns. Each row is one combination of provider,
+A single month is around 184{,}184 rows and 121 columns --- that is the measured shape of the March
+2026 extract. Each row is one combination of provider,
 commissioner, department and pathway type. The columns
 are mostly one thing: \textbf{105 of the 121 are a single waiting-time histogram}, sliced weekly from
 ``0 to 1 weeks'' up to ``104 weeks and over''. They are not 105 decisions.
@@ -228,8 +229,9 @@ contradicted a direct observation.
 \textbf{3. The residual ``Other'' category is recoded.} One combined bucket before the break, five
 themed buckets after. Merged into a single continuous series.
 
-\textbf{4. Community services leave the collection in February 2024}, removing roughly 43{,}000
-pathways. This is a genuine change in what is counted, not an error, and it is recorded rather than
+\textbf{4. Community services leave the collection in February 2024.} NHS's own press notice puts the
+removal at about 43{,}000 pathways; the step measured here in the residual ``Other'' category is
+$-29{,}179$ at the boundary month and $-52{,}849$ from January to March 2024. This is a genuine change in what is counted, not an error, and it is recorded rather than
 smoothed away.
 
 \textbf{Also found, benign:} the period label changes case mid-window (\texttt{RTT-April-2018} versus
@@ -400,7 +402,7 @@ attributable to the reconstruction. The visible movement is the real post-COVID 
 \midrule
 \texttt{rtt\_canonical.parquet} & 322{,}531 rows $\times$ 15 columns --- every provider, all sectors \\
 \texttt{rtt\_panel.parquet} & the rectangular cube, 150 sites $\times$ 19 departments $\times$ 96 months \\
-\texttt{rtt\_normalised.csv} & 201{,}888 rows $\times$ 21 columns --- raw and standardised measures \\
+\texttt{rtt\_normalised.csv} & 200{,}160 rows $\times$ 21 columns --- raw and standardised measures \\
 \texttt{provider\_dim.csv} & one row per site: name, sector, region, flags \\
 \bottomrule
 \end{tabular}
@@ -439,8 +441,10 @@ Projecting a waiting list forward looks trivial:
 \]
 
 Measured across all 95 available month-transitions, this identity \textbf{over-predicts the backlog
-every single month} --- 95 of 95, never once in the other direction. The mean gap is \textbf{183{,}635
-pathways per month}, about \textbf{15.4\%} of demand.
+every single month} --- 95 of 95, never once in the other direction. The mean gap is \textbf{213{,}380
+pathways per month}, which is \textbf{15.02\%} of demand as a mean of monthly ratios and 14.91\% as a
+ratio of means. Measured per service rather than nationally, the median rate is 15.4\% of demand, and
+that per-service figure is what the capacity arithmetic in Section 6 actually uses.
 
 Roughly one in six referrals leaves the waiting list with no recorded treatment. NHS England publishes
 this quantity, calls it \emph{unreported removals}, and our figures reproduce their published levels on
@@ -496,7 +500,8 @@ Naive identity & 990 & $+$565 & 8.24m & 7.08m \\
 
 \keypoint{\textbf{Finding 1.} The correction cuts per-service projection error by \textbf{31\%} and
 removes essentially all bias --- from $+565$ per service to $-16$. Over six months the naive identity
-over-projects the group backlog by \textbf{1.18m pathways}, a 16.9\% error on the exact quantity every
+over-projects the group backlog by \textbf{1.19m pathways} --- 8.24m against the corrected 7.05m, a
+16.9\% error on the exact quantity every
 capacity request is sized from. This is validated on months the correction was not fitted to.}
 
 The bias figure is the persuasive one. A projection wrong by a similar amount in both directions is
@@ -839,8 +844,9 @@ Independent share of \emph{completed} treatments: 7.92\% (March 2020), collapsin
 May 2020, then climbing steadily to a 10.17\% peak in August 2025.
 
 \keypoint{\textbf{At the moment of maximum stress the independent share collapsed rather than surged.}
-In April--May 2020, exactly when the health service contracted the independent sector nationally,
-independent elective completions fell from 94{,}000 to 26{,}000 --- that capacity went to urgent and
+Between March and April 2020, exactly when the health service contracted the independent sector
+nationally, independent elective completions fell from \textbf{94{,}356 to 26{,}285}, reaching a
+trough of 19{,}421 in May --- that capacity went to urgent and
 emergency work, which is not elective activity. The clearest instance of ``the state buys private
 capacity'' leaves the \emph{opposite} signature in this dataset.}
 
