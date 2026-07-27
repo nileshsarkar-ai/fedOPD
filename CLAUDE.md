@@ -37,6 +37,16 @@ These are findings, not preferences. Code that contradicts them is wrong.
 - **Forecast skill at site × department granularity is poor.** Every baseline has a *negative* within-series R², and seasonal-naive is beaten by a trailing mean (F-38, F-39). Any rule keying on a trend-versus-transient distinction must report its classifier's error rate, not assume it. Carry forecast uncertainty into the allocation rather than hiding it behind a point estimate.
 - **The removal term is split, never lumped.** ~15% of referrals leave the list with no recorded completion; NHS's own linkage says 49% of that is treatment that happened and was filed late. That half is capacity, not attrition.
 
+### Never write a number from memory
+
+**Every figure in `README.md`, `docs/*.tex` or any reply comes from a notebook's stored output, a result CSV under `data/canonical/`, or a file in `logs/` — read in this turn, not recalled.** This project has corrected roughly twenty numbers, and almost none were arithmetic errors: they were figures quoted from a previous run, from an earlier draft, or from the conversation.
+
+- **Read before you write.** Open the notebook output or the CSV first. "I remember it was 0.55" is how a stale number enters a document and survives for weeks.
+- **Generate tables, do not type them.** Report tables are emitted from the result CSVs by a script and substituted into the LaTeX at markers. A number that was never typed cannot be mistyped.
+- **Audit before publishing.** Extract every decimal from the document and match it against every numeric cell in every result CSV and every number printed in any notebook. Zero untraceable values, or fix it before it ships.
+- **Check the log, then the stored outputs, then write.** A notebook that ran is not a notebook that succeeded; `logs/<name>.log` says whether `nbconvert` wrote the file, and the stored outputs say what it actually produced.
+- **A metric computed over "whatever was available" is not a metric over everything.** State the denominator, and check that every row you are summarising actually has the column. This exact error has now happened twice here (Entries 24 and 44).
+
 ### Evaluation integrity — build the system, do not chase the number
 
 **This is version one of a process that will keep evolving.** The metrics exist to tell us whether the system works, not to be maximised. A design chosen because it moved RMSE is a design nobody can defend, and it produces exactly the odd, brittle evals that make a reviewer stop reading.

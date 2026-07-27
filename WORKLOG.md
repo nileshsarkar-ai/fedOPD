@@ -4779,3 +4779,80 @@ outputs from the current code. Test year still sealed.
 2. Repeat across seeds.
 3. `08` reports single-round values while `10` and `11` report a plateau over rounds 8-20. The two
    protocols are not identical and the report does not currently flag it in the side-by-side table.
+
+---
+
+# Entry 45 - 2026-07-27
+## The report is now built from a template. Provenance appendix added. The rule is in CLAUDE.md.
+
+### 45.1 CLAUDE.md gains the rule that most of this project's corrections trace back to
+
+New section, **"Never write a number from memory"**: every figure in the README, the report or a reply
+comes from a notebook's stored output, a result CSV, or a file in `logs/`, **read in this turn**. Five
+clauses, each derived from a defect already recorded here:
+
+- read before you write - a remembered number is how a stale figure survives for weeks;
+- generate tables, do not type them - a number never typed cannot be mistyped;
+- audit before publishing - zero untraceable decimals or it does not ship;
+- check the log, then the stored outputs, then write - a notebook that *ran* is not one that
+  *succeeded*, and `nbconvert` leaves the file untouched on failure;
+- a metric computed over "whatever was available" is not a metric over everything (Entries 24, 44).
+
+### 45.2 The report is a template plus a build step
+
+`docs/fedOPD_report.tex` is now the **template** and keeps `%%TABLE:X%%` markers. `gentables.py` reads
+the result CSVs, emits five table bodies, substitutes them and writes a built file, which is what
+compiles. The built file is deleted afterwards so nobody edits it by mistake.
+
+*Why this was needed:* the previous approach substituted in place, which consumed the markers, so the
+second run had nothing to write into and silently substituted nothing. A build step is idempotent; an
+in-place edit is not.
+
+The generator asserts that every marker exists before substituting and that no marker survives after,
+so a table that fails to generate stops the build rather than shipping empty.
+
+### 45.3 Provenance appendix, generated from the logs
+
+New Appendix A, built at generation time from the notebook files and `logs/`:
+
+| Notebook | Cells | With outputs | Errors | nbconvert | Last run |
+|---|---|---|---|---|---|
+| 01_fetch_dataset | 7 | 6 | 0 | completed | 27 Jul 02:57 |
+| 02_inspect_dataset | 38 | 38 | 0 | completed | 27 Jul 03:49 |
+| 03_data_processing | 17 | 17 | 0 | completed | 27 Jul 03:25 |
+| 04_eda | 6 | 6 | 0 | completed | 27 Jul 03:25 |
+| 05_baselines | 11 | 11 | 0 | completed | 27 Jul 03:54 |
+| 06_federated_forecast | 13 | 13 | 0 | completed | 27 Jul 03:59 |
+| 07_agentic_layer | 11 | 11 | 0 | completed | 27 Jul 03:48 |
+| 08_algorithm_comparison | 9 | 9 | 0 | completed | 27 Jul 05:52 |
+| 09_allocation_policies | 7 | 7 | 0 | completed | 27 Jul 04:24 |
+| 10_training_length | 7 | 7 | 0 | completed | 27 Jul 05:55 |
+| 11_postcovid_training | 7 | 7 | 0 | completed | 27 Jul 06:20 |
+
+**0 stored error outputs anywhere.** `01` shows 6 of 7 because its import cell prints nothing, and its
+log is `01_fetch.log` rather than the later naming convention - the generator tries both rather than
+reporting a spurious "no log".
+
+### 45.4 Correction to Entry 34.5
+
+That entry recorded `07_agentic_layer` as **12 code cells, 12 with outputs**. Counted from the file:
+**11 and 11**. The back-test cell is present and is cell 10 of 11, so nothing was lost - the earlier
+figure was simply miscounted and stated without checking.
+
+Small, and exactly the class of error the new CLAUDE.md rule exists to prevent. Recorded rather than
+quietly fixed.
+
+### 45.5 Audit
+
+Run against the template after the rebuild: **253 decimals in the hand-written prose, 0 untraceable**;
+and against the built document earlier, **272 stated, 0 untraceable**. The gap between the two numbers
+is the generated table cells, which by construction cannot be untraceable.
+
+Report: **32 pages, 0 overfull boxes.**
+
+### 45.6 Open
+
+1. **Predict breach growth, not demand growth** (F-52).
+2. Repeat across seeds.
+3. `08` reports single-round values while `10` and `11` report a plateau over rounds 8-20; the
+   side-by-side table still does not flag that the two protocols differ.

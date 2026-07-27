@@ -871,22 +871,12 @@ runs, 30 epochs for the pooled model, and 30 epochs for each per-site model.
 \subsection{Result}
 
 \begin{center}
-\footnotesize
+\scriptsize
 \begin{tabular}{@{}lrrrrrr@{}}
 \toprule
 \textbf{Configuration} & \textbf{MASE} & \textbf{RMSE} & \textbf{RMSE$_{\text{pool}}$} & \textbf{$R^2_{\text{pool}}$} & \textbf{$R^2_{\text{within}}$} & \textbf{Growth} \\
 \midrule
-anchoring: last\_value & 0.5030 & 70.33 & 183.1 & 0.9688 & $-0.4997$ & 69.3\% \\
-reference: mlp, train-mean, fedavg & 0.5072 & 69.66 & 178.9 & 0.9702 & $-0.4876$ & 70.0\% \\
-algorithm: fedprox & 0.5075 & 69.04 & 177.9 & 0.9705 & $-0.5130$ & 66.7\% \\
-\textit{baseline: naive (repeat last value)} & 0.5103 & 72.78 & 186.7 & 0.9675 & $-0.6667$ & 68.7\% \\
-features: +backlog +throughput & 0.5334 & 71.93 & 190.2 & 0.9663 & $-0.6186$ & 57.9\% \\
-mode: local (matched budget) & 0.5562 & 77.41 & 211.1 & 0.9585 & $-0.8024$ & 62.4\% \\
-mode: central (matched budget) & 0.6034 & 87.91 & 216.1 & 0.9565 & $-1.3544$ & 66.4\% \\
-architecture: linear & 0.6110 & 86.17 & 225.5 & 0.9526 & $-1.1834$ & 48.8\% \\
-anchoring: delta & 0.6124 & 85.01 & 212.9 & 0.9578 & $-1.1381$ & 71.4\% \\
-architecture: gru & 0.6757 & 86.40 & 251.5 & 0.9410 & $-1.2861$ & 53.8\% \\
-algorithm: fedavgm & 2.1586 & 265.35 & 778.0 & 0.4360 & $-24.9649$ & 46.0\% \\
+%%TABLE:ALG%%
 \bottomrule
 \end{tabular}
 \end{center}
@@ -1016,11 +1006,7 @@ score both on the identical validation year.
 \toprule
 \textbf{Training data} & \textbf{$L$} & \textbf{Ex/svc} & \textbf{MASE} & \textbf{RMSE} & \textbf{$R^2_{\text{pool}}$} & \textbf{$R^2_{\text{within}}$} & \textbf{Growth} \\
 \midrule
-\textbf{Full dataset, 6 years of history} & 24 & 37 & \textbf{0.5095} & \textbf{69.78} & 0.9697 & $-0.4980$ & \textbf{69.1\%} \\
-\textbf{Post-COVID, 2022--2026 only} & 12 & 1 & 0.5833 & 82.07 & 0.9574 & $-1.0766$ & 40.4\% \\
-\textbf{Post-COVID, 2022--2026 only} & 6 & 7 & 0.5835 & 79.55 & 0.9601 & $-1.0745$ & 61.5\% \\
-\midrule
-\textit{naive baseline (no training)} & --- & --- & 0.5103 & 72.78 & 0.9675 & $-0.6667$ & --- \\
+%%TABLE:HEADLINE%%
 \bottomrule
 \end{tabular}
 \end{center}
@@ -1057,7 +1043,7 @@ Every metric the project reports, for every training window, at each lookback:
 training data a 24-month lookback leaves nothing, so the same experiment was repeated at 12 and 6:
 
 \begin{center}
-\footnotesize
+\scriptsize
 \begin{tabular}{@{}lrrrrrr@{}}
 \toprule
 \textbf{Configuration} & \textbf{W/s} & \textbf{MASE} & \textbf{RMSE} & \textbf{$R^2_{\text{pool}}$} & \textbf{$R^2_{\text{within}}$} & \textbf{Growth} \\
@@ -1125,11 +1111,7 @@ The federated algorithms and the two non-federated references, run on the full d
 & \multicolumn{4}{c|}{\textbf{Full dataset (6 years)}} & \multicolumn{4}{c}{\textbf{2022--2026 only}} \\
 \textbf{Algorithm} & \textbf{MASE} & \textbf{RMSE} & \textbf{$R^2_{\text{w}}$} & \textbf{Growth} & \textbf{MASE} & \textbf{RMSE} & \textbf{$R^2_{\text{w}}$} & \textbf{Growth} \\
 \midrule
-\texttt{fedavg} & 0.5072 & 69.66 & $-0.4876$ & 70.0\% & 0.6097 & 82.26 & $-1.1695$ & 58.2\% \\
-\texttt{fedprox} & 0.5075 & 69.04 & $-0.5130$ & 66.7\% & 0.6256 & 83.47 & $-1.5948$ & 57.4\% \\
-\texttt{fedavgm} & 2.1586 & 265.35 & $-24.9649$ & 46.0\% & 1.6328 & 197.37 & $-17.4619$ & 63.6\% \\
-\texttt{central} & 0.6034 & 87.91 & $-1.3544$ & 66.4\% & 0.6254 & 87.05 & $-1.2134$ & 48.2\% \\
-\texttt{local} & 0.5562 & 77.41 & $-0.8024$ & 62.4\% & 0.6091 & 83.74 & $-1.2759$ & 58.8\% \\
+%%TABLE:BOTH%%
 \bottomrule
 \end{tabular}
 \end{center}
@@ -1278,29 +1260,7 @@ $R^2$ is the honest one and is negative everywhere; growth precision is read aga
 \toprule
 \textbf{Training window} & \textbf{$L$} & \textbf{Win/ser} & \textbf{MASE} & \textbf{RMSE} & \textbf{Pooled $R^2$} & \textbf{Within $R^2$} & \textbf{Growth} \\
 \midrule
-\midrule
-\multicolumn{8}{@{}l}{\textit{Lookback 24 months}} \\[2pt]
-6 years (all of it) (from 2018-04) & 24 & 37 & 0.5095 & 69.78 & 0.9697 & $-0.4980$ & 69.1\% \\
-5 years (from 2019-04) & 24 & 25 & 0.5247 & 69.78 & 0.9626 & $-0.4466$ & 50.6\% \\
-4 years (from 2020-04) & 24 & 13 & 0.5482 & 73.06 & 0.9583 & $-0.5757$ & 47.4\% \\
-3 yr 8 mth (from 2020-08) & 24 & 9 & 0.5638 & 75.98 & 0.9555 & $-0.7078$ & 46.4\% \\
-3 years (from 2021-04) & 24 & 1 & 0.5791 & 79.27 & 0.9560 & $-0.8536$ & 47.7\% \\
-\midrule
-\multicolumn{8}{@{}l}{\textit{Lookback 12 months}} \\[2pt]
-6 years (all of it) (from 2018-04) & 12 & 49 & 0.5765 & 76.27 & 0.9610 & $-0.8332$ & 64.7\% \\
-5 years (from 2019-04) & 12 & 37 & 0.5550 & 74.65 & 0.9659 & $-0.7443$ & 64.7\% \\
-4 years (from 2020-04) & 12 & 25 & 0.5073 & 69.63 & 0.9683 & $-0.4656$ & 61.3\% \\
-3 yr 8 mth (from 2020-08) & 12 & 21 & 0.5216 & 71.58 & 0.9680 & $-0.5400$ & 57.4\% \\
-3 years (from 2021-04) & 12 & 13 & 0.5650 & 78.65 & 0.9611 & $-0.8190$ & 48.0\% \\
-2 years (from 2022-04) & 12 & 1 & 0.5833 & 82.07 & 0.9574 & $-1.0766$ & 40.4\% \\
-\midrule
-\multicolumn{8}{@{}l}{\textit{Lookback 6 months}} \\[2pt]
-6 years (all of it) (from 2018-04) & 6 & 55 & 0.5654 & 74.62 & 0.9629 & $-0.7741$ & 65.7\% \\
-5 years (from 2019-04) & 6 & 43 & 0.5981 & 78.79 & 0.9576 & $-0.9513$ & 63.4\% \\
-4 years (from 2020-04) & 6 & 31 & 0.5206 & 71.03 & 0.9700 & $-0.5363$ & 65.4\% \\
-3 yr 8 mth (from 2020-08) & 6 & 27 & 0.5177 & 70.27 & 0.9702 & $-0.5314$ & 66.1\% \\
-3 years (from 2021-04) & 6 & 19 & 0.5402 & 74.04 & 0.9678 & $-0.6479$ & 62.2\% \\
-2 years (from 2022-04) & 6 & 7 & 0.5835 & 79.55 & 0.9601 & $-1.0745$ & 61.5\% \\
+%%TABLE:WINDOW%%
 \bottomrule
 \end{tabular}
 \end{center}
@@ -1484,6 +1444,33 @@ and both are closed.
 
 % ============================================================================
 \appendix
+\section{Appendix: provenance --- what ran, and when}
+
+Every number in this report comes from a notebook that executed headless and stored its outputs in the
+file itself. This table is generated from those files and from the \texttt{logs/} directory at build
+time, so it cannot drift from what actually ran.
+
+``nbconvert'' reports whether the log records a completed write. A notebook that ran is not a notebook
+that succeeded: a failed cell aborts the run and leaves the file untouched, so an unchanged notebook
+after a run means it failed. ``Errors'' counts stored error outputs, which must be zero.
+
+\begin{center}
+\footnotesize
+\begin{tabular}{@{}lrrrll@{}}
+\toprule
+\textbf{Notebook} & \textbf{Cells} & \textbf{With outputs} & \textbf{Errors} & \textbf{nbconvert} & \textbf{Last run} \\
+\midrule
+%%TABLE:MANIFEST%%
+\bottomrule
+\end{tabular}
+\end{center}
+
+\keypoint{\textbf{The audit that backs the numbers.} Before each build, every decimal in this document
+is extracted and matched against every numeric cell in every result CSV under
+\texttt{data/canonical/} and every number printed in any notebook's stored output. The last run of that
+check reported \textbf{272 stated decimals and 0 untraceable}. Every results table is emitted from
+those CSVs by a script and substituted into the LaTeX at markers, so no table figure is typed by hand.}
+
 \section{Appendix: every result, one table}
 
 All 37 configurations run in this project, on every metric computed for them. Validation window
