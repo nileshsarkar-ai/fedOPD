@@ -4919,3 +4919,62 @@ Report: **34 pages, 18 figures, 27 tables, 0 overfull boxes.**
 3. Align the `08` and `10`/`11` protocols so the side-by-side comparison uses one statistic. Now
    disclosed in the report, not yet fixed.
 4. Replace the hard-coded `NAIVE = 0.510` in `10` and `11` with a read from `baselines.csv`.
+
+---
+
+# Entry 47 - 2026-07-27
+## Both-datasets table verified cell by cell. The reverse audit direction added.
+
+### 47.1 The table was already in the report
+
+The owner asked for the same-algorithms-both-datasets table to be added. It was already Section 7,
+generated from `algorithm_comparison.csv` and `postcovid_algorithms.csv`. Confirmed present in the
+built document and its rows read back from the built `.tex` rather than assumed.
+
+### 47.2 Every cell traced to the notebook that printed it
+
+Checked against the notebooks' own stored output, not against the CSVs the report reads:
+
+| Algorithm | Full MASE | RMSE | R2 within | Growth | 2022-26 MASE | RMSE | R2 within | Growth |
+|---|---|---|---|---|---|---|---|---|
+| fedavg | 0.5072 | 69.66 | -0.4876 | 70.0% | 0.6097 | 82.26 | -1.1695 | 58.2% |
+| fedprox | 0.5075 | 69.04 | -0.5130 | 66.7% | 0.6256 | 83.47 | -1.5948 | 57.4% |
+| local | 0.5562 | 77.41 | -0.8024 | 62.4% | 0.6091 | 83.74 | -1.2759 | 58.8% |
+| central | 0.6034 | 87.91 | -1.3544 | 66.4% | 0.6254 | 87.05 | -1.2134 | 48.2% |
+| fedavgm | 2.1586 | 265.35 | -24.9649 | 46.0% | 1.6328 | 197.37 | -17.4619 | 63.6% |
+
+All 40 cells match what `08` and `11` printed. The left half comes from `08`'s stored table, the right
+half from `11`'s 2022-04 sweep at lookback 6.
+
+### 47.3 F-57 - the audit only checked one direction, and the first attempt at the other one lied
+
+The existing audit proves **report matches CSV**. It cannot detect a **stale or corrupted CSV**: a file
+left over from an earlier run would pass it, because the report is generated from that same file.
+
+So the reverse direction is now checked: every numeric cell in each result file is compared against the
+numbers that notebook printed into its own stored output.
+
+**517 numeric cells checked across 7 result files, 30 outside tolerance** - all 30 in
+`modelled_breach_closed`, a column `09` writes to disk but never displays, and which the report does
+not use. Everything else round-trips: notebook output to CSV to table.
+
+**The first version of this check reported a failure that did not exist.** It compared *strings*,
+looking for `69.659` inside a printed `69.658997`, and flagged the `fedavg` RMSE cell as untraceable.
+The value was correct; the checker was wrong. Fixed by comparing numbers with a tolerance matching the
+coarsest display precision the notebook uses.
+
+*Recorded because it is the more dangerous failure mode of the two:* **a verification that reports
+false positives trains you to ignore it**, and the next real failure is waved through with the noise.
+A checker needs the same scrutiny as the thing it checks.
+
+### 47.4 Report
+
+New subsection in the provenance appendix documenting the second link in the chain, with the
+per-file cross-check results and the string-versus-number caution.
+
+**34 pages, 18 figures, 28 tables, 0 overfull boxes.**
+
+### 47.5 Open
+
+Unchanged: predict breach growth rather than demand growth (F-52); repeat across seeds; align the `08`
+single-round protocol with the `10`/`11` plateau protocol; replace the hard-coded `NAIVE = 0.510`.

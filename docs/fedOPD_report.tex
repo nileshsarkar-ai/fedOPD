@@ -1511,6 +1511,39 @@ is extracted and matched against every numeric cell in every result CSV under
 check reported \textbf{272 stated decimals and 0 untraceable}. Every results table is emitted from
 those CSVs by a script and substituted into the LaTeX at markers, so no table figure is typed by hand.}
 
+\subsection*{The second link in the chain}
+
+The audit above proves the report matches the CSVs. It does not, on its own, prove the CSVs match what
+the notebooks actually computed --- a corrupted or stale CSV would pass it. So the reverse direction is
+checked as well: every numeric cell in each result file is compared \emph{numerically} against the
+numbers that notebook printed into its own stored output, at display tolerance.
+
+\begin{center}
+\footnotesize
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Result file} & \textbf{Cross-check against the notebook that wrote it} \\
+\midrule
+\texttt{baselines.csv} & every value printed by \texttt{05} \\
+\texttt{fl\_results.csv} & every value printed by \texttt{06} \\
+\texttt{direction\_calls.csv} & every value printed by \texttt{06} \\
+\texttt{algorithm\_comparison.csv} & every value printed by \texttt{08} \\
+\texttt{allocation\_policies.csv} & every value printed by \texttt{09}, except \texttt{modelled\_breach\_closed} \\
+\texttt{postcovid\_training.csv} & every value printed by \texttt{11} \\
+\texttt{postcovid\_algorithms.csv} & every value printed by \texttt{11} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{517 numeric cells checked, 30 outside tolerance} --- all 30 in
+\texttt{modelled\_breach\_closed}, a column written to disk but never displayed, and not used anywhere
+in this report. Everything else round-trips: notebook output $\rightarrow$ CSV $\rightarrow$ table.
+
+\keypoint{\textbf{A caution about how this check was first written.} The initial version compared
+\emph{strings}: it looked for ``69.659'' inside a printed ``69.658997'' and reported a mismatch that did
+not exist. Comparing numbers rather than their spellings removed it. A verification that reports false
+failures is worse than none, because the next real failure gets waved through.}
+
 \section{Appendix: every result, one table}
 
 All 37 configurations run in this project, on every metric computed for them. Validation window
