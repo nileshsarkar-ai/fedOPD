@@ -4856,3 +4856,66 @@ Report: **32 pages, 0 overfull boxes.**
 2. Repeat across seeds.
 3. `08` reports single-round values while `10` and `11` report a plateau over rounds 8-20; the
    side-by-side table still does not flag that the two protocols differ.
+
+---
+
+# Entry 46 - 2026-07-27
+## Every table generated, every figure included, hyperparameters read from source. 34 pages.
+
+The owner asked for all numbers from all runs, missing ones stated as missing, graphs included,
+hyperparameters documented, and nothing from memory. Everything below was read from the notebooks,
+their stored outputs, the result CSVs or `logs/` in this turn.
+
+### 46.1 The last hand-typed table is gone
+
+`gentables.py` now emits **seven** tables, all from the result CSVs or the notebook source:
+the algorithm comparison, the training-window sweep, the two-condition headline, the same algorithms on
+both datasets, the **hyperparameter table**, the **run manifest**, and the **full appendix**.
+
+The appendix was the last one still typed by hand. It now marks a genuinely absent metric as
+`n/c` - *not computed by that notebook* - which appears **28 times** and is deliberately distinct from
+a dash or a zero. Nothing is silently blank.
+
+### 46.2 Hyperparameters, extracted from the source rather than described
+
+Read by regex out of the notebook code at build time. Common to every model: two hidden layers of 128,
+Adam at 1e-3, batch 256, dropout 0.1, L1 loss, **seed 0 throughout**.
+
+Two things the extraction surfaced that had not been noticed:
+
+1. **`10` and `11` hard-code `NAIVE = 0.510`** as a plot reference line while the measured baseline
+   from `05` is **0.5103**. It affects a dashed line, not any reported figure, but it is a typed
+   constant where a read one belongs.
+2. **`08` reports the value at round 15; `10` and `11` report a plateau mean over rounds 8-20.** The
+   two protocols are not identical, so the side-by-side table mixes a point estimate with a windowed
+   one. This had been on the open list since Entry 44 and is now **stated in the report itself**
+   rather than left for a reader to find.
+
+### 46.3 Figures reconciled
+
+Counted rather than assumed: the notebooks currently produce **18** figures; the report used **17**.
+The missing one was `nb05_fig1` - baseline error by horizon, the MASE distribution, and one real
+service with the split marked. Added, so **all 18 are in**.
+
+Every figure was also **re-extracted from the current notebook outputs**, so none can be a leftover
+image from an earlier run. The check reported 0 figures referenced but absent from disk.
+
+### 46.4 Audit
+
+- Hand-written prose in the template: **158 decimals, 0 untraceable.**
+- Built document earlier in the session: **272 stated, 0 untraceable.**
+
+The difference between the two counts is the generated table cells, which by construction cannot be
+untraceable. The audit matches every decimal against every numeric cell in every result CSV and every
+number printed in any notebook's stored output.
+
+Report: **34 pages, 18 figures, 27 tables, 0 overfull boxes.**
+
+### 46.5 Open
+
+1. **Predict breach growth, not demand growth** (F-52) - the only outstanding experiment that could
+   change the conclusion.
+2. Repeat across seeds. Everything rests on seed 0.
+3. Align the `08` and `10`/`11` protocols so the side-by-side comparison uses one statistic. Now
+   disclosed in the report, not yet fixed.
+4. Replace the hard-coded `NAIVE = 0.510` in `10` and `11` with a read from `baselines.csv`.

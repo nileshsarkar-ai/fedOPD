@@ -611,6 +611,15 @@ Section 7 tests it.
 
 \begin{figure}[H]
 \centering
+\includegraphics[width=\textwidth]{figures/nb05_fig1.png}
+\caption{Baseline behaviour over the horizon. Left: mean absolute error against months ahead --- note
+it does not degrade smoothly, which is itself informative about how little structure there is to
+exploit. Centre: the distribution of MASE across services on a log scale, with the seasonal-naive line
+at zero. Right: one real service with the train/score boundary marked.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
 \includegraphics[width=\textwidth]{figures/nb05_fig2.png}
 \caption{Baseline diagnostics. Left: predicted against actual on log axes, spanning four orders of
 magnitude. Centre-left: residuals scaled by each series' own mean, centred near zero --- the baselines
@@ -1444,6 +1453,37 @@ and both are closed.
 
 % ============================================================================
 \appendix
+\section{Appendix: hyperparameters}
+
+Read out of the notebook source at build time, not transcribed. Anything absent from a row is a
+setting that notebook does not define --- it is not a default that has been omitted for brevity.
+
+Common to every model: a two-hidden-layer network of 128 units, Adam at $10^{-3}$, batch 256, dropout
+0.1 on the first hidden layer, L1 loss to match the MAE-based metrics, and seed 0.
+\textbf{One seed throughout} --- no result in this report is averaged over repeats, and differences of
+a few thousandths should be read as noise.
+
+\begin{center}
+\scriptsize
+\begin{tabular}{@{}lp{11.2cm}@{}}
+\toprule
+\textbf{Notebook} & \textbf{Settings defined in the notebook} \\
+\midrule
+%%TABLE:HYPER%%
+\bottomrule
+\end{tabular}
+\end{center}
+
+\keypoint{\textbf{Two things worth flagging in that table.} \texttt{10} and \texttt{11} hard-code
+\texttt{NAIVE = 0.510} as a plot reference line, while the measured baseline from \texttt{05} is
+\textbf{0.5103} --- a cosmetic mismatch in a dashed line, not in any reported figure, but it is a typed
+constant where a read one belongs.
+
+\texttt{08} trains for 15 rounds and reports the value at that round, while \texttt{10} and
+\texttt{11} report a plateau mean over rounds 8--20. \textbf{The two protocols are not identical}, so
+the side-by-side comparison in Section 7 mixes a point estimate with a windowed one. Stated here rather
+than left for a reader to discover.}
+
 \section{Appendix: provenance --- what ran, and when}
 
 Every number in this report comes from a notebook that executed headless and stored its outputs in the
@@ -1485,73 +1525,12 @@ Blank cells are metrics that notebook did not compute, not zeros.
 \scriptsize
 \begin{longtable}{@{}p{6.0cm}rrrrrl@{}}
 \toprule
-\textbf{Configuration} & \textbf{MASE} & \textbf{RMSE} & \textbf{$R^2_{\text{pool}}$} & \textbf{$R^2_{\text{within}}$} & \textbf{Growth} & \textbf{Src} \\
+\textbf{Configuration} & \textbf{MASE} & \textbf{RMSE} & \textbf{RMSE$_{\text{pool}}$} & \textbf{$R^2_{\text{pool}}$} & \textbf{$R^2_{\text{within}}$} & \textbf{Src} \\
 \endfirsthead
 \toprule
-\textbf{Configuration} & \textbf{MASE} & \textbf{RMSE} & \textbf{$R^2_{\text{pool}}$} & \textbf{$R^2_{\text{within}}$} & \textbf{Growth} & \textbf{Src} \\
+\textbf{Configuration} & \textbf{MASE} & \textbf{RMSE} & \textbf{RMSE$_{\text{pool}}$} & \textbf{$R^2_{\text{pool}}$} & \textbf{$R^2_{\text{within}}$} & \textbf{Src} \\
 \endhead
-\midrule
-\multicolumn{7}{@{}l}{\textit{Baselines (05)}} \\[2pt]
-naive & 0.5103 & 72.78 & 0.9675 & $-0.6667$ & --- & \texttt{05} \\
-seasonal\_naive & 0.6166 & 87.27 & 0.9489 & $-1.4877$ & --- & \texttt{05} \\
-mean12 & 0.5121 & 72.17 & 0.9655 & $-0.4917$ & --- & \texttt{05} \\
-drift & 0.6406 & 88.34 & 0.9360 & $-1.4505$ & --- & \texttt{05} \\
-\midrule
-\multicolumn{7}{@{}l}{\textit{Federated, unmatched training budget (06)}} \\[2pt]
-central & 0.6655 & 96.09 & 0.9437 & $-1.8579$ & 67.4\% & \texttt{06} \\
-local & 0.5558 & 77.10 & 0.9542 & $-0.7857$ & 55.5\% & \texttt{06} \\
-fedavg\_n & 0.5527 & 74.72 & 0.9645 & $-0.7812$ & 65.0\% & \texttt{06} \\
-fedavg\_uniform & 0.5645 & 77.09 & 0.9631 & $-0.8879$ & 67.1\% & \texttt{06} \\
-fedavg\_ft (post-training) & 0.5680 & 79.60 & 0.9593 & $-0.9356$ & 67.3\% & \texttt{06} \\
-\midrule
-\multicolumn{7}{@{}l}{\textit{Matched training budget (08)}} \\[2pt]
-baseline: naive & 0.5103 & 72.78 & --- & $-0.6667$ & 68.7\% & \texttt{08} \\
-reference: mlp, train-mean, fedavg & 0.5072 & 69.66 & --- & $\mathbf{-0.4876}$ & 70.0\% & \texttt{08} \\
-anchoring: last\_value & \textbf{0.5030} & 70.33 & --- & $-0.4997$ & 69.3\% & \texttt{08} \\
-anchoring: delta & 0.6124 & 85.01 & --- & $-1.1381$ & \textbf{71.4\%} & \texttt{08} \\
-architecture: linear & 0.6110 & 86.17 & --- & $-1.1834$ & 48.8\% & \texttt{08} \\
-architecture: gru & 0.6757 & 86.40 & --- & $-1.2861$ & 53.8\% & \texttt{08} \\
-algorithm: fedprox & 0.5075 & \textbf{69.04} & --- & $-0.5130$ & 66.7\% & \texttt{08} \\
-algorithm: fedavgm & 2.1586 & 265.35 & --- & $-24.9649$ & 46.0\% & \texttt{08} \\
-features: +backlog +throughput & 0.5334 & 71.93 & --- & $-0.6186$ & 57.9\% & \texttt{08} \\
-mode: central (matched) & 0.6034 & 87.91 & --- & $-1.3544$ & 66.4\% & \texttt{08} \\
-mode: local (matched) & 0.5562 & 77.41 & --- & $-0.8024$ & 62.4\% & \texttt{08} \\
-\midrule
-\multicolumn{7}{@{}l}{\textit{Training length (10), plateau over rounds 8--20}} \\[2pt]
-fedavg, 13 rounds (minimum) & 0.5019 & --- & --- & --- & 70.3\% & \texttt{10} \\
-fedavg, plateau estimate & 0.5095 & --- & --- & --- & --- & \texttt{10} \\
-fedavg, 30 rounds & 0.5383 & --- & --- & --- & 68.2\% & \texttt{10} \\
-fedavg, 60 rounds & 0.6206 & --- & --- & --- & 67.5\% & \texttt{10} \\
-\midrule
-\multicolumn{7}{@{}l}{\textit{Training window (11), lookback 24}} \\[2pt]
-6 years of history, from Apr 2018 & \textbf{0.5095} & 69.78 & 0.9697 & $-0.4980$ & \textbf{69.1\%} & \texttt{11} \\
-2019-04 onwards & 0.5247 & 69.78 & 0.9626 & $\mathbf{-0.4466}$ & 50.6\% & \texttt{11} \\
-2020-04 onwards & 0.5482 & 73.06 & 0.9583 & $-0.5757$ & 47.4\% & \texttt{11} \\
-2020-08 onwards & 0.5638 & 75.98 & 0.9555 & $-0.7078$ & 46.4\% & \texttt{11} \\
-2021-04 onwards & 0.5791 & 79.27 & 0.9560 & $-0.8536$ & 47.7\% & \texttt{11} \\
-\midrule
-\multicolumn{7}{@{}l}{\textit{Training window (11), lookback 12}} \\[2pt]
-2018-04 onwards & 0.5765 & 76.27 & 0.9610 & $-0.8332$ & 64.7\% & \texttt{11} \\
-2019-04 onwards & 0.5550 & 74.65 & 0.9659 & $-0.7443$ & 64.7\% & \texttt{11} \\
-2020-04 onwards & \textbf{0.5073} & \textbf{69.63} & 0.9683 & $-0.4656$ & 61.3\% & \texttt{11} \\
-2020-08 onwards & 0.5216 & 71.58 & 0.9680 & $-0.5400$ & 57.4\% & \texttt{11} \\
-2021-04 onwards & 0.5650 & 78.65 & 0.9611 & $-0.8190$ & 48.0\% & \texttt{11} \\
-\textbf{2022-04 onwards} & 0.5833 & 82.07 & 0.9574 & $-1.0766$ & \textbf{40.4\%} & \texttt{11} \\
-\midrule
-\multicolumn{7}{@{}l}{\textit{Training window (11), lookback 6}} \\[2pt]
-2018-04 onwards & 0.5654 & 74.62 & 0.9629 & $-0.7741$ & 65.7\% & \texttt{11} \\
-2019-04 onwards & 0.5981 & 78.79 & 0.9576 & $-0.9513$ & 63.4\% & \texttt{11} \\
-2020-04 onwards & 0.5206 & 71.03 & 0.9700 & $-0.5363$ & 65.4\% & \texttt{11} \\
-2020-08 onwards & 0.5177 & 70.27 & \textbf{0.9702} & $-0.5314$ & 66.1\% & \texttt{11} \\
-2021-04 onwards & 0.5402 & 74.04 & 0.9678 & $-0.6479$ & 62.2\% & \texttt{11} \\
-\textbf{2022-04 onwards} & 0.5835 & 79.55 & 0.9601 & $-1.0745$ & 61.5\% & \texttt{11} \\
-\midrule
-\multicolumn{7}{@{}l}{\textit{2022--2026 only, every algorithm (11), lookback 6}} \\[2pt]
-fedavg & 0.6097 & --- & --- & --- & 58.2\% & \texttt{11} \\
-local & 0.6091 & --- & --- & --- & 58.8\% & \texttt{11} \\
-central & 0.6254 & --- & --- & --- & 48.2\% & \texttt{11} \\
-fedprox & 0.6256 & --- & --- & --- & 57.4\% & \texttt{11} \\
-fedavgm & 1.6328 & --- & --- & --- & 63.6\% & \texttt{11} \\
+%%TABLE:APPENDIX%%
 \bottomrule
 \end{longtable}
 \end{center}
