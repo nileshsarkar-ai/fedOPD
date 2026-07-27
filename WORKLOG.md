@@ -4595,3 +4595,87 @@ context cost.
    now the only one left that could change the system's conclusion.
 2. Repeat across seeds. Every ordering in 08, 10 and 11 rests on one.
 3. Test year still sealed.
+
+---
+
+# Entry 43 - 2026-07-27
+## RMSE and both R-squareds added to the training-window sweep. F-55: pooled R-squared cannot rank anything.
+
+### 43.1 What was missing
+
+`11_postcovid_training.ipynb` reported MASE and growth precision only. The owner asked for RMSE and
+R-squared on both the full eight-year window and the post-COVID subsets, so the notebook now computes
+**RMSE per series, pooled RMSE, pooled R-squared and within-series R-squared** every round, carried
+into the plateau summary and onto a fourth figure panel. Re-run end to end.
+
+*Terminology, corrected by the owner:* "pre-COVID" in their usage means **the entire eight years**, not
+the months before March 2020. The comparison is therefore full-window against restricted-window, which
+is what `11` already tested; no new experiment was needed, only the missing metrics.
+
+### 43.2 The full picture
+
+| Training window | L | W/s | MASE | RMSE | Pooled R2 | Within R2 | Growth |
+|---|---|---|---|---|---|---|---|
+| **2018-04, full eight years** | 24 | 37 | **0.5095** | 69.78 | 0.9697 | -0.4980 | **69.1%** |
+| 2019-04 onwards | 24 | 25 | 0.5247 | 69.78 | 0.9626 | **-0.4466** | 50.6% |
+| 2020-04 onwards | 12 | 25 | **0.5073** | **69.63** | 0.9683 | -0.4656 | 61.3% |
+| 2020-08 onwards | 6 | 27 | 0.5177 | 70.27 | **0.9702** | -0.5314 | 66.1% |
+| 2021-04 onwards | 24 | 1 | 0.5791 | 79.27 | 0.9560 | -0.8536 | 47.7% |
+| **2022-04 onwards** | 12 | 1 | 0.5833 | 82.07 | 0.9574 | -1.0766 | **40.4%** |
+| **2022-04 onwards** | 6 | 7 | 0.5835 | 79.55 | 0.9601 | -1.0745 | 61.5% |
+| *naive baseline* | - | - | *0.5103* | *72.78* | *0.9675* | *-0.6667* | *68.7%* |
+
+**The 2022-2026 subset loses on every metric**: MASE 0.5095 to 0.583, RMSE 69.78 to 79.6-82.1,
+within-series R-squared doubling in badness from -0.498 to -1.08. At a 12-month lookback the growth
+call reaches **40.4%, below the 45.9% base rate** - worse than calling every service "growing".
+
+### 43.3 F-55 - pooled R-squared cannot rank these configurations
+
+Across **all 37 configurations** in the project, pooled R-squared spans **0.936 to 0.970**. Across the
+same rows MASE spans **0.503 to 2.159**, a factor of four in error, and within-series R-squared spans
+**-0.45 to -24.96**.
+
+The 2022-2026 row makes it concrete: pooled R-squared moves 0.9697 to 0.9601, which reads as "almost
+unchanged", while within-series R-squared doubles in badness and the growth call falls below its own
+base rate. **A report quoting pooled R-squared alone would conclude the 2022-2026 subset works nearly
+as well as the full window.** It does not.
+
+This is now the clearest evidence for a rule the project adopted early on suspicion: report the pair,
+and rank on the within-series figure. Recorded as F-55 because it upgrades that rule from a caution to
+a measurement.
+
+*Also worth noting:* every within-series R-squared in the project is negative. **No configuration
+anywhere beats a flat line drawn at each service's own mean over the scored window.** 37 rows, no
+exceptions.
+
+### 43.4 Report and README
+
+`docs/fedOPD_report.pdf` rebuilt: **31 pages, 17 figures, 0 overfull boxes**. Added:
+
+- a full-window versus restricted-window subsection carrying all four metrics, plus a dedicated
+  2022-2026 table at the two lookbacks where it is trainable at all;
+- the four-panel figure from `11`, now including within-series R-squared;
+- **Appendix A: every result, one table** - all 37 configurations across notebooks 05, 06, 08, 10 and
+  11 on every metric computed for them, grouped by experiment, with blanks where a notebook did not
+  compute a metric rather than zeros;
+- four more rows on the one-page summary table covering the full-versus-2022 comparison.
+
+README carries the same training-window table and the pooled-R-squared warning.
+
+### 43.5 Two process notes
+
+**The patch to `11` failed on its first pattern and applied nothing.** The anchor line
+`train_all = wide.columns < SPLIT` did not exist in the shipped notebook. Because the script validates
+every pattern before applying any, the notebook was left untouched rather than half-edited - the rule
+adopted in Entry 33.6 working as intended. Anchor corrected to `n_series = len(future)` and re-applied.
+
+**Backslash collapse in shell heredocs bit twice more** while generating LaTeX. Both times the file
+tools were used instead and the problem disappeared. The rule from Entry 38.6 stands and should simply
+be followed rather than rediscovered.
+
+### 43.6 Open
+
+1. **Predict breach growth, not demand growth** (F-52). Still the only outstanding experiment that
+   could change the system's conclusion.
+2. Repeat across seeds - every ordering rests on one.
+3. Test year still sealed.

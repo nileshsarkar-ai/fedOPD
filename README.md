@@ -164,6 +164,33 @@ everything.
 | 10 | fedavg, plateau over rounds 8–20 | **0.5095 ± 0.0058** | — | — | — |
 | 11 | best post-COVID cut (L=12, from 2020-04) | 0.5073 ± 0.0068 | — | — | — |
 
+### Full eight years against the post-COVID subsets
+
+Same validation window, same 2,085 series, same architecture. Only the training window changes.
+`L` is the lookback in months; `W/s` is training windows per series.
+
+| Training window | L | W/s | MASE | RMSE | Pooled R² | Within R² | Growth |
+|---|---|---|---|---|---|---|---|
+| **2018-04, full 8 years** | 24 | 37 | **0.5095** | **69.78** | 0.9697 | −0.4980 | **69.1%** |
+| 2018-04, full 8 years | 12 | 49 | 0.5765 | 76.27 | 0.9610 | −0.8332 | 64.7% |
+| 2018-04, full 8 years | 6 | 55 | 0.5654 | 74.62 | 0.9629 | −0.7741 | 65.7% |
+| 2019-04 onwards | 24 | 25 | 0.5247 | 69.78 | 0.9626 | **−0.4466** | 50.6% |
+| 2020-04 onwards | 12 | 25 | **0.5073** | **69.63** | 0.9683 | −0.4656 | 61.3% |
+| 2020-08 onwards | 6 | 27 | 0.5177 | 70.27 | **0.9702** | −0.5314 | 66.1% |
+| 2021-04 onwards | 24 | 1 | 0.5791 | 79.27 | 0.9560 | −0.8536 | 47.7% |
+| **2022-04 onwards** | 12 | 1 | 0.5833 | 82.07 | 0.9574 | −1.0766 | **40.4%** |
+| **2022-04 onwards** | 6 | 7 | 0.5835 | 79.55 | 0.9601 | −1.0745 | 61.5% |
+| *naive baseline* | — | — | *0.5103* | *72.78* | *0.9675* | *−0.6667* | *68.7%* |
+
+**The 2022–2026 subset is worse on every measure.** MASE 0.5095 → 0.583, RMSE 69.78 → 79.6–82.1,
+within-series R² doubles in badness from −0.498 to −1.08, and at a 12-month lookback the growth call
+falls to **40.4% — below the 45.9% base rate**, i.e. worse than calling every service "growing".
+
+**And note what pooled R² does.** It sits between 0.956 and 0.970 for *every row above*, including the
+untrainable ones. It cannot tell a good configuration from a useless one. Within-series R² ranges
+−0.45 to −1.08 and orders them correctly. Quoting the first number alone would conclude the 2022–2026
+subset works almost as well as the full window. It does not.
+
 **How to read it.** The 08 rows are the fair comparison — every method there gets the same training
 budget, which 06 did not. The three best configurations sit within 0.005 of each other and within
 0.008 of the naive baseline, on one seed. **That is a tie, not a win.** Notebook 10 makes it explicit:

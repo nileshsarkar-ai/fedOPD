@@ -990,6 +990,99 @@ agree on an ordering --- \texttt{anchoring: delta} is among the worst on MASE an
 decision metric, which is the Section 6 result reappearing.}
 \end{figure}
 
+\subsection{Full eight-year window against post-COVID subsets}
+
+The forecaster has always been trained across the largest structural break in the collection:
+referrals fell 55.8\% between the pre-COVID average and the April--June 2020 trough, and the recovery
+took years. The natural question is whether those months help or mislead.
+
+Measured before cutting anything: the correlation between a service's pre-COVID trend direction and its
+2022-onward direction is \textbf{$+0.043$}, with only \textbf{51.0\%} of services trending the same way
+in both eras. The early months genuinely do not describe the present.
+
+\keypoint{\textbf{The trade, and it is severe.} A training sample needs \emph{lookback + horizon}
+consecutive months before one window exists, so at a 24-month lookback the window count is
+\emph{training months} $-$ 35. Cutting the early months removes the shock \textbf{and} most of the
+training data in the same move. At a 2022 cutoff there is no usable data left at all.}
+
+Every metric the project reports, for every training window, at a 24-month lookback:
+
+\begin{center}
+\footnotesize
+\begin{tabular}{@{}lrrrrrrr@{}}
+\toprule
+\textbf{Training window} & \textbf{Mth} & \textbf{W/s} & \textbf{MASE} & \textbf{RMSE} & \textbf{$R^2_{\text{pool}}$} & \textbf{$R^2_{\text{within}}$} & \textbf{Growth} \\
+\midrule
+\textbf{2018-04, full eight years} & 72 & 37 & \textbf{0.5095} & \textbf{69.78} & 0.9697 & $-0.4980$ & \textbf{69.1\%} \\
+2019-04, drop first year & 60 & 25 & 0.5247 & 69.78 & 0.9626 & $-0.4466$ & 50.6\% \\
+2020-04, from the collapse & 48 & 13 & 0.5482 & 73.06 & 0.9583 & $-0.5757$ & 47.4\% \\
+2020-08, after the trough & 44 & 9 & 0.5638 & 75.98 & 0.9555 & $-0.7078$ & 46.4\% \\
+2021-04, after schema break & 36 & 1 & 0.5791 & 79.27 & 0.9560 & $-0.8536$ & 47.7\% \\
+2022-04 onwards & 24 & \textbf{0} & \multicolumn{5}{l}{\textit{no window fits --- untrainable here}} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{The 2022--2026 window, run at the lookbacks where it is trainable at all.} At 24 months of
+training data a 24-month lookback leaves nothing, so the same experiment was repeated at 12 and 6:
+
+\begin{center}
+\footnotesize
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+\textbf{Configuration} & \textbf{W/s} & \textbf{MASE} & \textbf{RMSE} & \textbf{$R^2_{\text{pool}}$} & \textbf{$R^2_{\text{within}}$} & \textbf{Growth} \\
+\midrule
+Full eight years, $L=24$ & 37 & \textbf{0.5095} & \textbf{69.78} & 0.9697 & $\mathbf{-0.4980}$ & \textbf{69.1\%} \\
+Best overall, $L=12$ from 2020-04 & 25 & 0.5073 & 69.63 & 0.9683 & $-0.4656$ & 61.3\% \\
+\midrule
+\textbf{2022--2026}, $L=12$ & 1 & 0.5833 & 82.07 & 0.9574 & $-1.0766$ & \textbf{40.4\%} \\
+\textbf{2022--2026}, $L=6$ & 7 & 0.5835 & 79.55 & 0.9601 & $-1.0745$ & 61.5\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\keypoint{\textbf{The 2022--2026 subset is worse on every measure.} MASE rises from 0.5095 to 0.583,
+RMSE from 69.78 to 79.6--82.1, and within-series $R^2$ \emph{doubles} in badness from $-0.498$ to
+$-1.08$. At a 12-month lookback the growth call falls to \textbf{40.4\%} --- below the 45.9\% base
+rate, meaning it is worse than calling every service ``growing''.
+
+Note that \emph{pooled} $R^2$ barely moves, 0.970 to 0.957, and would have been read as ``almost
+unchanged''. Within-series $R^2$ doubles. This is the clearest single demonstration in the report of
+why the pair is reported rather than the flattering one.}
+
+\keypoint{\textbf{Finding 10. Restricting to post-COVID data does not help, and it wrecks the growth
+call.} The best configuration anywhere in the sweep is $0.5073 \pm 0.0068$, against the full window's
+$0.5095 \pm 0.0058$ --- a gap of \textbf{0.0022} against a combined spread of \textbf{0.0089}, which is
+inside the noise.
+
+Meanwhile precision on the growth call \textbf{collapses from 69.1\% to 47.4\%}, barely above the
+45.9\% base rate. \textbf{The long history is what makes the direction call work}, even though it
+contributes nothing to point accuracy. The two metrics draw on different parts of the window, and only
+one of them survives the cut.}
+
+\textbf{An interaction that makes ``cut or don't cut'' the wrong question.} The best cutoff depends on
+the lookback: at 24 months cutting is monotonically harmful ($0.5095 \rightarrow 0.5791$); at 12 months
+the optimum is 2020-04 ($0.5073$, worse on either side); at 6 months it is 2020-08 ($0.5177$). Shorter
+lookbacks recover the windows that cutting destroys, which is why they tolerate a cut that ruins the
+long-lookback model. Any future experiment moving one knob must move the other with it.
+
+\textbf{Every algorithm re-run on 2022-onward data.} At the shortest usable lookback this leaves seven
+windows per series: FedAvg 0.6097, local 0.6091, central 0.6254, FedProx 0.6256, FedAvgM 1.6328 ---
+all far worse than the naive 0.510. The plateau standard deviations run from 0.09 to 0.25, an order of
+magnitude above the 0.0058 seen on the full window. \textbf{At that data volume the run-to-run
+variation swamps every difference between methods}, so no algorithm claim is supportable there at all.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/nb11_fig1.png}
+\caption{Four views of the same sweep. Panel 1: validation MASE against training months retained, at
+three lookbacks, naive baseline dashed --- the 24-month curve rises steadily as data is cut while the
+shorter lookbacks dip and recover. Panel 2: the same against windows per series, which is the
+mechanism. Panel 3: the growth call, which falls away for every lookback as the early months go.
+Panel 4: within-series $R^2$, worsening monotonically at the long lookback, with zero marked --- no
+configuration anywhere gets above it.}
+\end{figure}
+
 \subsection{Allocation policies, scored against hindsight}
 
 Seven policies for spending a fixed capacity budget, compared at five budget levels. Each policy sees
@@ -1083,6 +1176,10 @@ Best of all configurations & last-value anchoring & \textbf{0.503} & \texttt{08}
 Optimal round count & validation minimum & 13 rounds & \texttt{10} \\
 \textbf{Plateau estimate, rounds 8--20} & \textbf{mean $\pm$ sd} & $\mathbf{0.5095 \pm 0.0058}$ & \texttt{10} \\
 Same model at 60 rounds & overfitted & 0.6206 & \texttt{10} \\
+Full 8 years vs 2022--2026 & MASE & 0.5095 vs 0.5835 & \texttt{11} \\
+Same, RMSE & referrals & 69.78 vs 79.55 & \texttt{11} \\
+Same, within-series $R^2$ & the honest metric & $-0.498$ vs $-1.075$ & \texttt{11} \\
+Same, growth precision & base rate 45.9\% & 69.1\% vs 40.4\% & \texttt{11} \\
 Pooled, matched budget & \texttt{central} & 0.603 & \texttt{08} \\
 Per-site, matched budget & \texttt{local} & 0.556 & \texttt{08} \\
 Services with within-series $R^2>0$ & of 2{,}085 & 9.3\% & \texttt{06} \\
@@ -1110,6 +1207,90 @@ point-accuracy block is a draw against a trivial baseline. The allocation block 
 nothing computable on the decision date aims capacity better than chance. A system built on this
 evidence should lead with the projection correction and be explicit that the targeting problem is
 unsolved.}
+
+\subsection{The full window against every restricted one, on all four metrics}
+
+The single table the training-window question reduces to. Lower MASE and RMSE are better; within-series
+$R^2$ is the honest one and is negative everywhere; growth precision is read against a 45.9\% base rate.
+
+\begin{center}
+\footnotesize
+\begin{tabular}{@{}llrrrrrr@{}}
+\toprule
+\textbf{Training window} & \textbf{$L$} & \textbf{Win/ser} & \textbf{MASE} & \textbf{RMSE} & \textbf{Pooled $R^2$} & \textbf{Within $R^2$} & \textbf{Growth} \\
+\midrule
+\multicolumn{8}{@{}l}{\textit{The full eight years}} \\[2pt]
+2018-04 to 2024-03 & 24 & 37 & \textbf{0.5095} & 69.78 & 0.9697 & $-0.4980$ & \textbf{69.1\%} \\
+2018-04 to 2024-03 & 12 & 49 & 0.5765 & 76.27 & 0.9610 & $-0.8332$ & 64.7\% \\
+2018-04 to 2024-03 & 6 & 55 & 0.5654 & 74.62 & 0.9629 & $-0.7741$ & 65.7\% \\
+\midrule
+\multicolumn{8}{@{}l}{\textit{Progressively restricted}} \\[2pt]
+2019-04 onwards & 24 & 25 & 0.5247 & 69.78 & 0.9626 & $\mathbf{-0.4466}$ & 50.6\% \\
+2020-04 onwards & 12 & 25 & \textbf{0.5073} & \textbf{69.63} & 0.9683 & $-0.4656$ & 61.3\% \\
+2020-08 onwards & 6 & 27 & 0.5177 & 70.27 & \textbf{0.9702} & $-0.5314$ & 66.1\% \\
+2021-04 onwards & 24 & 1 & 0.5791 & 79.27 & 0.9560 & $-0.8536$ & 47.7\% \\
+\midrule
+\multicolumn{8}{@{}l}{\textit{2022--2026 only, the tightest post-COVID cut}} \\[2pt]
+2022-04 onwards & 12 & 1 & 0.5833 & 82.07 & 0.9574 & $-1.0766$ & \textbf{40.4\%} \\
+2022-04 onwards & 6 & 7 & 0.5835 & 79.55 & 0.9601 & $-1.0745$ & 61.5\% \\
+\midrule
+\textit{naive baseline} & --- & --- & \textit{0.5103} & \textit{72.78} & \textit{0.9675} & \textit{$-0.6667$} & \textit{68.7\%} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\keypoint{\textbf{Read down the last two columns.} Pooled $R^2$ sits between 0.956 and 0.970 for
+\emph{every row in the table}, including the untrainable ones --- it cannot distinguish a good
+configuration from a useless one. Within-series $R^2$ ranges from $-0.45$ to $-1.08$ and orders them
+correctly. Any report quoting the first number alone would conclude that the 2022--2026 subset works
+almost as well as the full window. It does not.}
+
+\subsection{Every experiment, with a verdict}
+
+The same evidence arranged by \emph{what was tried}, with an explicit judgement in the last column.
+``Tie'' means the difference is smaller than the measured spread and should not be reported as a win.
+
+\begin{center}
+\footnotesize
+\begin{tabular}{@{}p{3.9cm}p{4.3cm}rp{4.1cm}@{}}
+\toprule
+\textbf{Experiment} & \textbf{Best result} & \textbf{Value} & \textbf{Verdict} \\
+\midrule
+\multicolumn{4}{@{}l}{\textit{Forecasting --- point accuracy, validation median MASE, bar is 0.5103}} \\[2pt]
+Baselines (\texttt{05}) & naive, repeat last value & 0.5103 & the bar; nothing has cleared it \\
+Federated, unmatched budget (\texttt{06}) & \texttt{fedavg} at 30 rounds & 0.5527 & \textbf{worse} --- but overtrained \\
+Matched budget (\texttt{08}) & last-value anchoring & 0.5030 & \textbf{tie}; 0.007 on one seed \\
+Training length (\texttt{10}) & plateau, rounds 8--20 & $0.5095 \pm 0.0058$ & \textbf{tie}, now measured over 13 round counts \\
+Longer training (\texttt{10}) & 60 rounds & 0.6206 & \textbf{worse}; overfits after round 13 \\
+Full 8 years vs post-COVID (\texttt{11}) & L=12 from 2020-04 & $0.5073 \pm 0.0068$ & \textbf{tie}; gap 0.0022, spread 0.0089 \\
+2022 onwards (\texttt{11}) & \texttt{local}, 7 windows/series & 0.6091 & \textbf{unusable}; sd up to 0.25 \\
+Architecture (\texttt{08}) & MLP over linear and GRU & 0.5072 & not a capacity problem \\
+Extra features (\texttt{08}) & + backlog + throughput & 0.5334 & \textbf{harmful}; settled, do not retry \\
+FL algorithm (\texttt{08}) & FedProx $\approx$ FedAvg & 0.5075 & \textbf{tie}; FedAvgM diverges \\
+Federation vs alone (\texttt{08}) & \texttt{fedavg} vs \texttt{local} & 0.507 vs 0.556 & \textbf{federation wins} \\
+Federation vs pooled (\texttt{08}) & \texttt{fedavg} vs \texttt{central} & 0.507 vs 0.603 & suggestive, one seed \\
+\midrule
+\multicolumn{4}{@{}l}{\textit{Forecasting --- the decision question, base rate 45.9\%}} \\[2pt]
+Growth call, post-training (\texttt{06}) & \texttt{fedavg\_ft} precision & 67.3\% & \textbf{real}; $+21.4$pp, 13\% coverage \\
+Growth call vs alone (\texttt{06}) & \texttt{local} precision & 55.5\% & federation buys $\sim$10pp \\
+Broad detector (\texttt{05}) & \texttt{drift}, direction accuracy & 66.3\% & \textbf{real}; worst on MASE \\
+Growth call after cutting (\texttt{11}) & from 2020-04 & 47.4\% & \textbf{destroyed} by the cut \\
+\midrule
+\multicolumn{4}{@{}l}{\textit{Projection and allocation}} \\[2pt]
+Removal term (\texttt{07}) & corrected vs naive identity & 682 vs 990 & \textbf{the result}; $-31\%$, bias gone \\
+Internal slack (\texttt{07}) & offer against ask & 0.16\% & \textbf{no slack exists to move} \\
+Allocation policies (\texttt{09}) & \texttt{equal} vs random 0.439 & 0.444 & \textbf{tie with random} \\
+Forecast-led policy (\texttt{09}) & predicted growth as the signal & 0.390 & \textbf{worse than random} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\keypoint{\textbf{What this column says, read top to bottom.} One row is a result: the removal-term
+correction. Two rows are real but modest: the growth call, and federation beating per-site training.
+Everything in the point-accuracy block is a tie or a loss --- eleven configurations, four training
+lengths, six training windows and three architectures have not moved it. And the last row is the one
+that matters most for the design: \textbf{the forecast, used as the allocation signal, performs worse
+than allocating at random.}}
 
 % ============================================================================
 \section{What this project does not show}
@@ -1207,6 +1388,100 @@ placeholder forecast --- but only for the expansion branch, which is the one it 
 \textbf{Two things are already settled and need no further work.} Adding backlog and throughput as
 forecaster inputs makes it worse (Finding 6), and server momentum diverges. Both were plausible ideas
 and both are closed.
+
+% ============================================================================
+\appendix
+\section{Appendix: every result, one table}
+
+All 37 configurations run in this project, on every metric computed for them. Validation window
+throughout; the test year has never been opened. Lower MASE and RMSE are better. Pooled $R^2$ is
+included only for completeness --- it is near-constant across configurations of wildly different
+quality and should not be used to rank them. Within-series $R^2$ is the honest measure and is negative
+everywhere. Growth precision reads against a base rate of 45.9\%.
+
+Blank cells are metrics that notebook did not compute, not zeros.
+
+\begin{center}
+\scriptsize
+\begin{longtable}{@{}p{6.0cm}rrrrrl@{}}
+\toprule
+\textbf{Configuration} & \textbf{MASE} & \textbf{RMSE} & \textbf{$R^2_{\text{pool}}$} & \textbf{$R^2_{\text{within}}$} & \textbf{Growth} & \textbf{Src} \\
+\endfirsthead
+\toprule
+\textbf{Configuration} & \textbf{MASE} & \textbf{RMSE} & \textbf{$R^2_{\text{pool}}$} & \textbf{$R^2_{\text{within}}$} & \textbf{Growth} & \textbf{Src} \\
+\endhead
+\midrule
+\multicolumn{7}{@{}l}{\textit{Baselines (05)}} \\[2pt]
+naive & 0.5103 & 72.78 & 0.9675 & $-0.6667$ & --- & \texttt{05} \\
+seasonal\_naive & 0.6166 & 87.27 & 0.9489 & $-1.4877$ & --- & \texttt{05} \\
+mean12 & 0.5121 & 72.17 & 0.9655 & $-0.4917$ & --- & \texttt{05} \\
+drift & 0.6406 & 88.34 & 0.9360 & $-1.4505$ & --- & \texttt{05} \\
+\midrule
+\multicolumn{7}{@{}l}{\textit{Federated, unmatched training budget (06)}} \\[2pt]
+central & 0.6655 & 96.09 & 0.9437 & $-1.8579$ & 67.4\% & \texttt{06} \\
+local & 0.5558 & 77.10 & 0.9542 & $-0.7857$ & 55.5\% & \texttt{06} \\
+fedavg\_n & 0.5527 & 74.72 & 0.9645 & $-0.7812$ & 65.0\% & \texttt{06} \\
+fedavg\_uniform & 0.5645 & 77.09 & 0.9631 & $-0.8879$ & 67.1\% & \texttt{06} \\
+fedavg\_ft (post-training) & 0.5680 & 79.60 & 0.9593 & $-0.9356$ & 67.3\% & \texttt{06} \\
+\midrule
+\multicolumn{7}{@{}l}{\textit{Matched training budget (08)}} \\[2pt]
+baseline: naive & 0.5103 & 72.78 & --- & $-0.6667$ & 68.7\% & \texttt{08} \\
+reference: mlp, train-mean, fedavg & 0.5072 & 69.66 & --- & $\mathbf{-0.4876}$ & 70.0\% & \texttt{08} \\
+anchoring: last\_value & \textbf{0.5030} & 70.33 & --- & $-0.4997$ & 69.3\% & \texttt{08} \\
+anchoring: delta & 0.6124 & 85.01 & --- & $-1.1381$ & \textbf{71.4\%} & \texttt{08} \\
+architecture: linear & 0.6110 & 86.17 & --- & $-1.1834$ & 48.8\% & \texttt{08} \\
+architecture: gru & 0.6757 & 86.40 & --- & $-1.2861$ & 53.8\% & \texttt{08} \\
+algorithm: fedprox & 0.5075 & \textbf{69.04} & --- & $-0.5130$ & 66.7\% & \texttt{08} \\
+algorithm: fedavgm & 2.1586 & 265.35 & --- & $-24.9649$ & 46.0\% & \texttt{08} \\
+features: + backlog + throughput & 0.5334 & 71.93 & --- & $-0.6186$ & 57.9\% & \texttt{08} \\
+mode: central (matched) & 0.6034 & 87.91 & --- & $-1.3544$ & 66.4\% & \texttt{08} \\
+mode: local (matched) & 0.5562 & 77.41 & --- & $-0.8024$ & 62.4\% & \texttt{08} \\
+\midrule
+\multicolumn{7}{@{}l}{\textit{Training length (10), plateau over rounds 8--20}} \\[2pt]
+fedavg, 13 rounds (minimum) & 0.5019 & --- & --- & --- & 70.3\% & \texttt{10} \\
+fedavg, plateau estimate & 0.5095 & --- & --- & --- & --- & \texttt{10} \\
+fedavg, 30 rounds & 0.5383 & --- & --- & --- & 68.2\% & \texttt{10} \\
+fedavg, 60 rounds & 0.6206 & --- & --- & --- & 67.5\% & \texttt{10} \\
+\midrule
+\multicolumn{7}{@{}l}{\textit{Training window (11), lookback 24}} \\[2pt]
+2018-04 onwards, full eight years & \textbf{0.5095} & 69.78 & 0.9697 & $-0.4980$ & \textbf{69.1\%} & \texttt{11} \\
+2019-04 onwards & 0.5247 & 69.78 & 0.9626 & $\mathbf{-0.4466}$ & 50.6\% & \texttt{11} \\
+2020-04 onwards & 0.5482 & 73.06 & 0.9583 & $-0.5757$ & 47.4\% & \texttt{11} \\
+2020-08 onwards & 0.5638 & 75.98 & 0.9555 & $-0.7078$ & 46.4\% & \texttt{11} \\
+2021-04 onwards & 0.5791 & 79.27 & 0.9560 & $-0.8536$ & 47.7\% & \texttt{11} \\
+\midrule
+\multicolumn{7}{@{}l}{\textit{Training window (11), lookback 12}} \\[2pt]
+2018-04 onwards & 0.5765 & 76.27 & 0.9610 & $-0.8332$ & 64.7\% & \texttt{11} \\
+2019-04 onwards & 0.5550 & 74.65 & 0.9659 & $-0.7443$ & 64.7\% & \texttt{11} \\
+2020-04 onwards & \textbf{0.5073} & \textbf{69.63} & 0.9683 & $-0.4656$ & 61.3\% & \texttt{11} \\
+2020-08 onwards & 0.5216 & 71.58 & 0.9680 & $-0.5400$ & 57.4\% & \texttt{11} \\
+2021-04 onwards & 0.5650 & 78.65 & 0.9611 & $-0.8190$ & 48.0\% & \texttt{11} \\
+\textbf{2022-04 onwards} & 0.5833 & 82.07 & 0.9574 & $-1.0766$ & \textbf{40.4\%} & \texttt{11} \\
+\midrule
+\multicolumn{7}{@{}l}{\textit{Training window (11), lookback 6}} \\[2pt]
+2018-04 onwards & 0.5654 & 74.62 & 0.9629 & $-0.7741$ & 65.7\% & \texttt{11} \\
+2019-04 onwards & 0.5981 & 78.79 & 0.9576 & $-0.9513$ & 63.4\% & \texttt{11} \\
+2020-04 onwards & 0.5206 & 71.03 & 0.9700 & $-0.5363$ & 65.4\% & \texttt{11} \\
+2020-08 onwards & 0.5177 & 70.27 & \textbf{0.9702} & $-0.5314$ & 66.1\% & \texttt{11} \\
+2021-04 onwards & 0.5402 & 74.04 & 0.9678 & $-0.6479$ & 62.2\% & \texttt{11} \\
+\textbf{2022-04 onwards} & 0.5835 & 79.55 & 0.9601 & $-1.0745$ & 61.5\% & \texttt{11} \\
+\midrule
+\multicolumn{7}{@{}l}{\textit{2022--2026 only, every algorithm (11), lookback 6}} \\[2pt]
+fedavg & 0.6097 & --- & --- & --- & 58.2\% & \texttt{11} \\
+local & 0.6091 & --- & --- & --- & 58.8\% & \texttt{11} \\
+central & 0.6254 & --- & --- & --- & 48.2\% & \texttt{11} \\
+fedprox & 0.6256 & --- & --- & --- & 57.4\% & \texttt{11} \\
+fedavgm & 1.6328 & --- & --- & --- & 63.6\% & \texttt{11} \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\keypoint{\textbf{Three columns, three different stories.} \textbf{MASE} spans 0.503 to 2.159 and does
+the work of ranking. \textbf{Pooled $R^2$} spans 0.936 to 0.970 across configurations that differ by a
+factor of four in error --- it is nearly useless here and is printed to make that visible.
+\textbf{Within-series $R^2$} spans $-0.45$ to $-24.96$, orders the configurations correctly, and is
+negative in every single row: \emph{no configuration in this project beats a flat line drawn at each
+service's own mean}.}
 
 \vspace{1em}
 \hrule
