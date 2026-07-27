@@ -4679,3 +4679,103 @@ be followed rather than rediscovered.
    could change the system's conclusion.
 2. Repeat across seeds - every ordering rests on one.
 3. Test year still sealed.
+
+---
+
+# Entry 44 - 2026-07-27
+## Audit of every number in the report. F-56: three notebooks were not computing metrics the report showed as blank.
+
+The owner pushed back that the PDF had errors and that results must come from the notebooks rather
+than from memory. Both parts were acted on, and they turned out to be different problems.
+
+### 44.1 The numbers were not wrong. The audit says so, and it is now a repeatable check.
+
+Every decimal in the report was extracted by regex and matched against **every numeric cell in every
+result CSV and every number printed in any notebook's stored output**.
+
+**272 decimals stated, 0 untraceable.** Nothing in the report is invented, and nothing survives from an
+earlier run. The check takes seconds and should be run before every rebuild.
+
+*What was actually wrong was presentation, not arithmetic:* blank metric cells, a row-group label
+(``progressively restricted'') that mixed three lookbacks under one heading, and a six-versus-eight
+year mislabel. All three are fixed, and the first is fixed properly - by computing the missing numbers
+rather than by removing the column.
+
+### 44.2 F-56 - the blanks were real gaps in the notebooks
+
+The report showed dashes because three notebooks never computed those metrics:
+
+| Notebook | Was missing |
+|---|---|
+| `08_algorithm_comparison` | pooled RMSE, pooled R2 |
+| `10_training_length` | RMSE, pooled R2, within-series R2 |
+| `11` algorithm sweep | RMSE, both R2 |
+
+All three patched to compute the identical metric set and re-run. **08's MASE values reproduce to four
+decimal places** (0.5103, 0.5072, 0.5030, ...), which confirms the runs are deterministic under the
+fixed seed and that adding metrics did not disturb the training path.
+
+### 44.3 A correction this forced, and it matters
+
+Entry 43 recorded F-55 as "pooled R-squared spans 0.936 to 0.970 across all 37 configurations". **That
+was computed from incomplete data** - `fedavgm` had no pooled R-squared at the time because `08` was
+not computing one.
+
+Measured now: pooled R-squared spans **0.436 to 0.9705**. The diverged `fedavgm` scores 0.436.
+
+So the corrected claim is narrower and more useful: **pooled R-squared separates catastrophic failure
+from everything else, and separates nothing else from anything else.** Across the 27 configurations
+that converged it spans 0.941 to 0.970 - a range of 0.029 covering models whose MASE differs by a
+factor of four. The report now says exactly that.
+
+*This is the second time a metric claim has been made on partial data in this project.* The pattern is
+the same as Entry 24: a number computed over whatever happened to be available, stated as if it covered
+everything.
+
+### 44.4 Tables are now generated, not typed
+
+Every results table in the report is emitted directly from the result CSVs by one script, substituted
+into the LaTeX at marker comments. **No number in any table is typed by hand.** That removes
+transcription as a failure mode entirely, which is where most of this project's corrections have come
+from.
+
+Four tables are generated: the algorithm comparison, the training-window sweep, the two-condition
+headline, and a new side-by-side of the same algorithms on both datasets.
+
+### 44.5 The comparison the owner asked for
+
+Same algorithms, both datasets, in one table:
+
+| Algorithm | Full dataset MASE | RMSE | R2 within | Growth | 2022-2026 MASE | RMSE | R2 within | Growth |
+|---|---|---|---|---|---|---|---|---|
+| fedavg | 0.5072 | 69.66 | -0.4876 | 70.0% | 0.6097 | 82.26 | -1.1695 | 58.2% |
+| fedprox | 0.5075 | 69.04 | -0.5130 | 66.7% | 0.6256 | 83.47 | -1.5948 | 57.4% |
+| central | 0.6034 | 87.91 | -1.3544 | 66.4% | 0.6254 | 87.05 | -1.2134 | 48.2% |
+| local | 0.5562 | 77.41 | -0.8024 | 62.4% | 0.6091 | 83.74 | -1.2759 | 58.8% |
+| fedavgm | 2.1586 | 265.35 | -24.9649 | 46.0% | 1.6328 | 197.37 | -17.4619 | 63.6% |
+
+**Every algorithm is worse on the restricted dataset, and the ordering does not survive.** On the full
+dataset `fedavg` and `fedprox` are tied at the front and `central` is clearly last. On 2022-2026 all
+four usable methods collapse into 0.609-0.626, inside their own run-to-run spread, so **the restricted
+data cannot distinguish between federated algorithms at all**. Only the `fedavgm` divergence replicates.
+
+### 44.6 A defect caught by the re-run
+
+`11`'s `local` branch computes its metrics inline rather than through `score_model`, so after the patch
+it still emitted 3 values into a 6-column frame and the notebook died with
+`ValueError: 6 columns passed, passed data had 3 columns`. Patched and re-run clean. The lesson is
+narrow but real: **when a function is duplicated inline somewhere, patching the function is not
+patching the behaviour** - grep for the duplicate.
+
+### 44.7 Status
+
+Report: **32 pages, 0 overfull boxes, 0 untraceable numbers.** All eleven notebooks carry stored
+outputs from the current code. Test year still sealed.
+
+### 44.8 Open
+
+1. **Predict breach growth, not demand growth** (F-52) - unchanged, still the only outstanding
+   experiment that could change the conclusion.
+2. Repeat across seeds.
+3. `08` reports single-round values while `10` and `11` report a plateau over rounds 8-20. The two
+   protocols are not identical and the report does not currently flag it in the side-by-side table.
