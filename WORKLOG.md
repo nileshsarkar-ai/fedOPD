@@ -5385,3 +5385,59 @@ the lock screen; on battery the box still sleeps at 3 minutes.
    the oracle. Harmless top-to-bottom, a trap interactively.
 7. The F-40 commissioner-parent ICB mapping is still not wired into `07`'s ICB tier (needs `03` to
    stop dropping Commissioner Parent Org Code for independents - part of item 2).
+
+---
+
+# Entry 52 - 2026-07-28
+## The report rebuilt from sources, and the build made reproducible: gentables.py reconstructed and checked in
+
+Asked to rewrite the report PDF from the logs and notebook runs, not from memory. The blocker from
+Entry 51.9.1 was that `gentables.py` (Entry 45) had lived in a session scratchpad and was lost, so
+the built tex and PDF could not be regenerated.
+
+### 52.1 The generator reconstructed, and this time checked in
+
+The old built tex still contained every generated block, so a line-level diff of template against
+built recovered the exact structure of all seven tables (ALG, HEADLINE, BOTH, WINDOW, HYPER,
+MANIFEST, APPENDIX). `docs/gentables.py` now reproduces them from the result CSVs, the notebook
+files (hyperparameters by regex over source, manifest from execution counts and mtimes) and the
+stored outputs (figures re-extracted at build time so they cannot drift from the analysis). It
+asserts every marker exists before substitution and none survives after.
+
+**Decision: the script is checked in, as a standing exception to the no-scripts rule**, recorded in
+CLAUDE.md. A report that cannot be rebuilt from the repository is a worse violation of this
+project's rules than one `.py` outside `src/`. The rule's purpose is to stop analysis scaffolding;
+the build script is provenance machinery.
+
+One deliberate change from the old build: the 11 training-window rows in the appendix now carry
+their pooled RMSE (the CSV has `RMSE_pooled_plateau`); the old build printed n/c there. n/c means
+not computed, and it is computed.
+
+### 52.2 Compile and checks
+
+Tectonic 0.15.0 (the 0.16.9 of Entry 38 was also gone with the old scratchpad; 0.15.0 compiles the
+document identically) re-downloaded to the session scratchpad. Result: **34 pages, 0 overfull
+boxes, 0 undefined references**, `fedOPD_report_built.pdf` promoted to `fedOPD_report.pdf`.
+Figures: 5 of 18 changed on disk when re-extracted - exactly the notebooks whose plots this turn's
+fixes altered (04's training-window case study, 05's direction panel, 06's relabelled diagnosis
+panels, 10's naive line now at 0.5103, 11's new base-rate line).
+
+### 52.3 Audit
+
+Every number in the built document checked against every numeric cell in every result CSV, every
+number printed in any notebook's stored output, and declared constants in notebook source:
+**1,815 claims, 0 untraceable**. Two caveats on the audit's scope, stated rather than hidden:
+years and one-to-two-digit integers are excluded as structural prose (section counts, list
+positions), and the first pass flagged 5 tokens that were the LaTeX `2{,}085` thousands-separator
+idiom split mid-number - the tokeniser now normalises `{,}` before extracting, which is the same
+class of parser artefact Entries 48-50 recorded (their "2 flagged, both parser artefacts").
+
+The built tex now carries the corrected 45.9% base rate throughout (12 mentions; the only two
+43.5% mentions are the intentional historical notes about F-60), central's post-fix row
+(0.7300 / 102.22 / 0.9306 / -2.4157) in the 06 appendix section, and a run manifest showing the
+28 Jul re-runs of 04-11 with 0 errors.
+
+### 52.4 Open
+
+Unchanged from Entry 51.9 items 2-7 (01-03 defects, breach-growth experiment, D-07 spike detector,
+multi-seed, 09 idempotency, F-40 ICB wiring). Item 1 (report reproducibility) is closed.

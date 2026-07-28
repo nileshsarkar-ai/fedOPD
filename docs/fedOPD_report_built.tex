@@ -594,7 +594,7 @@ mean of last 12 & 0.512 & 72.2 & 0.966 & $-0.492$ \\
 \texttt{fedavg\_ft} & 0.568 & 79.6 & 0.959 & $-0.936$ \\
 same month last year & 0.617 & 87.3 & 0.949 & $-1.488$ \\
 linear drift & 0.641 & 88.3 & 0.936 & $-1.451$ \\
-\texttt{central} & 0.665 & 96.1 & 0.944 & $-1.858$ \\
+\texttt{central} & 0.730 & 102.2 & 0.931 & $-2.416$ \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -697,8 +697,8 @@ flat, 45.9\% up.
 \toprule
 \textbf{Model} & \textbf{3-class acc.} & \textbf{Precision on ``up''} & \textbf{Lift} & \textbf{Coverage} \\
 \midrule
-\texttt{central} & 36.1\% & 67.4\% & $+21.5$pp & 13.3\% \\
 \textbf{\texttt{fedavg\_ft}} & 35.8\% & \textbf{67.3\%} & $\mathbf{+21.4}$\textbf{pp} & 13.1\% \\
+\texttt{central} & 33.6\% & 66.4\% & $+20.5$pp & 11.7\% \\
 \texttt{fedavg} & 38.0\% & 65.0\% & $+19.1$pp & 16.0\% \\
 \texttt{local} & 38.6\% & 55.5\% & $+9.6$pp & 23.8\% \\
 \bottomrule
@@ -718,9 +718,9 @@ capacity, a 260-service shortlist right two times in three is worth more than a 
 \keypoint{\textbf{This is where federation earns its keep.} \texttt{local} --- each site alone ---
 reaches only 55.5\% precision at nearly double the coverage. Sharing weights lifts the growth call by
 roughly \textbf{ten points of precision} over going it alone, and it appears on the \emph{decision}
-metric rather than on forecast error. Caveat: \texttt{central} matches the federated model here, and
-the training-budget confound is unresolved, so this shows both beating \texttt{local} --- not
-federation matching pooling.}
+metric rather than on forecast error. Caveat: \texttt{central} sits within a point of the federated
+model here (66.4\% against 67.3\%), so this shows both beating \texttt{local} --- not federation
+matching pooling.}
 
 \begin{figure}[H]
 \centering
@@ -1037,7 +1037,7 @@ score both on the identical validation year.
 \toprule
 \textbf{Training data} & \textbf{$L$} & \textbf{Ex/svc} & \textbf{MASE} & \textbf{RMSE} & \textbf{$R^2_{\text{pool}}$} & \textbf{$R^2_{\text{within}}$} & \textbf{Growth} \\
 \midrule
-\textbf{Full dataset, 6 years of history} & 24 & 37 & \textbf{0.5095} & \textbf{69.78} & 0.9697 & $-0.4980$ & \textbf{69.1\%} \\
+\textbf{Full dataset, 6 years of history} & 24 & 37 & \textbf{0.5095} & \textbf{69.78} & 0.9697 & $-0.4980$ & \textbf{69.1}\% \\
 \textbf{Post-COVID, 2022--2026 only} & 12 & 1 & 0.5833 & 82.07 & 0.9574 & $-1.0766$ & 40.4\% \\
 \textbf{Post-COVID, 2022--2026 only} & 6 & 7 & 0.5835 & 79.55 & 0.9601 & $-1.0745$ & 61.5\% \\
 \midrule
@@ -1049,8 +1049,8 @@ score both on the identical validation year.
 \keypoint{\textbf{Training on the full dataset wins on every metric.} MASE 0.5095 against 0.583, RMSE
 69.78 against 79.6--82.1, within-series $R^2$ $-0.498$ against $-1.07$, and the growth call 69.1\%
 against 40.4--61.5\%. The 2022--2026 subset is not merely no better; it is worse everywhere, and at a
-12-month lookback its growth call sits \emph{below} the 43.5\% base rate that applies to
-this notebook's eligible set.
+12-month lookback its growth call sits \emph{below} the 45.9\% base rate of the 1{,}978 scored
+services.
 
 The reason is in the third column. Six years of history yields \textbf{37 training examples per
 service}; two years yields \textbf{one to seven}.}
@@ -1095,11 +1095,13 @@ Best overall, $L=12$ from 2020-04 & 25 & 0.5073 & 69.63 & 0.9683 & $-0.4656$ & 6
 
 \keypoint{\textbf{The 2022--2026 subset is worse on every measure.} MASE rises from 0.5095 to 0.583,
 RMSE from 69.78 to 79.6--82.1, and within-series $R^2$ \emph{doubles} in badness from $-0.498$ to
-$-1.08$. At a 12-month lookback the growth call falls to \textbf{40.4\%} --- below the \textbf{43.5\%}
-base rate, meaning it is worse than calling every service ``growing''. \emph{That base rate is not
-the 45.9\% quoted in Section \ref{sec:growth}.} Requiring a 24-month lookback plus a 12-month horizon leaves
-1{,}978 eligible services rather than 2{,}085, and the smaller set grew slightly less often. A
-growth call may only be read against the base rate of the set it was scored on.
+$-1.08$. At a 12-month lookback the growth call falls to \textbf{40.4\%} --- below the \textbf{45.9\%}
+base rate, meaning it is worse than calling every service ``growing''. That base rate is the same one
+Section \ref{sec:growth} uses, measured on the same 1{,}978 scored services: every notebook's direction
+metrics share one eligibility rule (a non-zero 12-month reference level) and therefore one base rate.
+An earlier version of this report read these figures against 43.5\%, which turned out to be a masking
+defect in the scoring code --- the mean ran over all 2{,}085 series with the 107 ineligible ones
+counted as ``not growing'' --- not a different population (F-60).
 
 Note that \emph{pooled} $R^2$ barely moves, 0.970 to 0.957, and would have been read as ``almost
 unchanged''. Within-series $R^2$ doubles. This is the clearest single demonstration in the report of
@@ -1111,7 +1113,7 @@ $0.5095 \pm 0.0058$ --- a gap of \textbf{0.0022} against a combined spread of \t
 inside the noise.
 
 Meanwhile precision on the growth call \textbf{collapses from 69.1\% to 47.4\%}, barely above the
-43.5\% base rate for this eligible set. \textbf{The long history is what makes the direction call work}, even though it
+45.9\% base rate. \textbf{The long history is what makes the direction call work}, even though it
 contributes nothing to point accuracy. The two metrics draw on different parts of the window, and only
 one of them survives the cut.}
 
@@ -1263,7 +1265,7 @@ Same model at 60 rounds & overfitted & 0.6206 & \texttt{10} \\
 Full 8 years vs 2022--2026 & MASE & 0.5095 vs 0.5835 & \texttt{11} \\
 Same, RMSE & referrals & 69.78 vs 79.55 & \texttt{11} \\
 Same, within-series $R^2$ & the honest metric & $-0.498$ vs $-1.075$ & \texttt{11} \\
-Same, growth precision & base rate 43.5\% & 69.1\% vs 40.4\% & \texttt{11} \\
+Same, growth precision & base rate 45.9\% & 69.1\% vs 40.4\% & \texttt{11} \\
 Pooled, matched budget & \texttt{central} & 0.603 & \texttt{08} \\
 Per-site, matched budget & \texttt{local} & 0.556 & \texttt{08} \\
 Services with within-series $R^2>0$ & of 2{,}085 & 9.3\% & \texttt{06} \\
@@ -1296,7 +1298,8 @@ unsolved.}
 
 The single table the training-window question reduces to. Lower MASE and RMSE are better; within-series
 $R^2$ is the honest one and is negative everywhere; growth precision is read against the
-\textbf{43.5\%} base rate of this notebook's 1{,}978 eligible services, not Section \ref{sec:growth}'s 45.9\% over 2{,}085.
+\textbf{45.9\%} base rate of the 1{,}978 scored services --- the same base rate, on the same set,
+as Section \ref{sec:growth}.
 
 \begin{center}
 \footnotesize
@@ -1389,7 +1392,7 @@ FL algorithm (\texttt{08}) & FedProx $\approx$ FedAvg & 0.5075 & \textbf{tie}; F
 Federation vs alone (\texttt{08}) & \texttt{fedavg} vs \texttt{local} & 0.507 vs 0.556 & \textbf{federation wins} \\
 Federation vs pooled (\texttt{08}) & \texttt{fedavg} vs \texttt{central} & 0.507 vs 0.603 & suggestive, one seed \\
 \midrule
-\multicolumn{4}{@{}l}{\textit{Forecasting --- the decision question. Base rate 45.9\% for \texttt{05}/\texttt{06}, 43.5\% for \texttt{11}}} \\[2pt]
+\multicolumn{4}{@{}l}{\textit{Forecasting --- the decision question. Base rate 45.9\% of the 1{,}978 scored services, all notebooks}} \\[2pt]
 Growth call, post-training (\texttt{06}) & \texttt{fedavg\_ft} precision & 67.3\% & \textbf{real}; $+21.4$pp, 13\% coverage \\
 Growth call vs alone (\texttt{06}) & \texttt{local} precision & 55.5\% & federation buys $\sim$10pp \\
 Broad detector (\texttt{05}) & \texttt{drift}, direction accuracy & 66.3\% & \textbf{real}; worst on MASE \\
@@ -1529,12 +1532,12 @@ a few thousandths should be read as noise.
 \midrule
 \texttt{03\_data\_processing} & MIN\_MONTHS=48 \\
 \texttt{05\_baselines} & H=12, SEASON=12, MIN\_TRAIN=36, GROWTH\_THRESH=0.05 \\
-\texttt{06\_federated\_forecast} & L=24, HIDDEN=128, ROUNDS=30, 2, BAND=0.05, FT\_EPOCHS=5, lr=1e-3, dropout=0.1, batch=256, seed=0, loss=L1Loss, optim=Adam \\
+\texttt{06\_federated\_forecast} & L=24, HIDDEN=128, ROUNDS=30, 2, FT\_EPOCHS=5, BAND=0.05, lr=1e-3, dropout=0.1, batch=256, seed=0, loss=L1Loss, optim=Adam \\
 \texttt{07\_agentic\_layer} & HORIZON=6, TARGET\_PCT=92.0 \\
-\texttt{08\_algorithm\_comparison} & L=24, HIDDEN=128, ROUNDS=15, 2, BAND=0.05, lr=1e-3, dropout=0.1, batch=256, seed=0, loss=L1Loss, optim=Adam \\
+\texttt{08\_algorithm\_comparison} & L=24, ROUNDS=15, 2, BAND=0.05, HIDDEN=128, lr=1e-3, dropout=0.1, batch=256, seed=0, loss=L1Loss, optim=Adam \\
 \texttt{09\_allocation\_policies} &  \\
-\texttt{10\_training\_length} & L=24, HIDDEN=128, BAND=0.05, MAX\_ROUNDS=60, lr=1e-3, dropout=0.1, batch=256, seed=0, loss=L1Loss, optim=Adam \\
-\texttt{11\_postcovid\_training} & HIDDEN=128, ROUNDS=30, 2, BAND=0.05, PLATEAU=(8, 20), lr=1e-3, dropout=0.1, batch=256, seed=0, loss=L1Loss, optim=Adam \\
+\texttt{10\_training\_length} & L=24, MAX\_ROUNDS=60, BAND=0.05, HIDDEN=128, lr=1e-3, dropout=0.1, batch=256, seed=0, loss=L1Loss, optim=Adam \\
+\texttt{11\_postcovid\_training} & BAND=0.05, HIDDEN=128, ROUNDS=30, 2, PLATEAU=(8, 20), lr=1e-3, dropout=0.1, batch=256, seed=0, loss=L1Loss, optim=Adam \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -1568,14 +1571,14 @@ after a run means it failed. ``Errors'' counts stored error outputs, which must 
 \texttt{01\_fetch\_dataset} & 7 & 6 & 0 & completed & 27 Jul 02:57 \\
 \texttt{02\_inspect\_dataset} & 38 & 38 & 0 & completed & 27 Jul 03:49 \\
 \texttt{03\_data\_processing} & 17 & 17 & 0 & completed & 27 Jul 03:25 \\
-\texttt{04\_eda} & 7 & 7 & 0 & completed & 27 Jul 07:14 \\
-\texttt{05\_baselines} & 11 & 11 & 0 & completed & 27 Jul 03:54 \\
-\texttt{06\_federated\_forecast} & 13 & 13 & 0 & completed & 27 Jul 03:59 \\
-\texttt{07\_agentic\_layer} & 11 & 11 & 0 & completed & 27 Jul 03:48 \\
-\texttt{08\_algorithm\_comparison} & 9 & 9 & 0 & completed & 27 Jul 07:23 \\
-\texttt{09\_allocation\_policies} & 7 & 7 & 0 & completed & 27 Jul 07:23 \\
-\texttt{10\_training\_length} & 7 & 7 & 0 & completed & 27 Jul 05:55 \\
-\texttt{11\_postcovid\_training} & 7 & 7 & 0 & completed & 27 Jul 07:32 \\
+\texttt{04\_eda} & 7 & 7 & 0 & completed & 28 Jul 22:03 \\
+\texttt{05\_baselines} & 11 & 11 & 0 & completed & 28 Jul 22:01 \\
+\texttt{06\_federated\_forecast} & 13 & 13 & 0 & completed & 28 Jul 22:23 \\
+\texttt{07\_agentic\_layer} & 11 & 11 & 0 & completed & 28 Jul 22:23 \\
+\texttt{08\_algorithm\_comparison} & 9 & 9 & 0 & completed & 28 Jul 22:09 \\
+\texttt{09\_allocation\_policies} & 7 & 7 & 0 & completed & 28 Jul 22:24 \\
+\texttt{10\_training\_length} & 7 & 7 & 0 & completed & 28 Jul 22:12 \\
+\texttt{11\_postcovid\_training} & 7 & 7 & 0 & completed & 28 Jul 22:21 \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -1625,8 +1628,9 @@ All 37 configurations run in this project, on every metric computed for them. Va
 throughout; the test year has never been opened. Lower MASE and RMSE are better. Pooled $R^2$ is
 included only for completeness --- it is near-constant across configurations of wildly different
 quality and should not be used to rank them. Within-series $R^2$ is the honest measure and is negative
-everywhere. Growth precision reads against a base rate of 45.9\% for \texttt{05}/\texttt{06}
-and 43.5\% for \texttt{08}/\texttt{10}/\texttt{11}, whose eligibility rule admits fewer services.
+everywhere. Growth precision reads against a base rate of 45.9\% of the 1{,}978 scored services in
+every notebook; the 43.5\% that \texttt{08}/\texttt{10} previously printed was a masking defect in
+their scoring code (F-60, corrected 2026-07-28), not a different eligibility rule.
 
 Blank cells are metrics that notebook did not compute, not zeros.
 
@@ -1647,7 +1651,7 @@ mean12 & 0.5121 & 72.17 & 192.3 & 0.9655 & $-0.4917$ & \texttt{05} \\
 drift & 0.6406 & 88.34 & 262.0 & 0.9360 & $-1.4505$ & \texttt{05} \\
 \midrule
 \multicolumn{7}{@{}l}{\textit{Federated, unmatched training budget (06)}} \\[2pt]
-central & 0.6655 & 96.09 & 245.7 & 0.9437 & $-1.8579$ & \texttt{06} \\
+central & 0.7300 & 102.22 & 272.9 & 0.9306 & $-2.4157$ & \texttt{06} \\
 local & 0.5558 & 77.10 & 221.7 & 0.9542 & $-0.7857$ & \texttt{06} \\
 fedavg\_n & 0.5527 & 74.72 & 195.2 & 0.9645 & $-0.7812$ & \texttt{06} \\
 fedavg\_uniform & 0.5645 & 77.09 & 199.1 & 0.9631 & $-0.8879$ & \texttt{06} \\
@@ -1672,23 +1676,23 @@ fedavg, best single round & 0.5019 & \textit{n/c} & \textit{n/c} & \textit{n/c} 
 fedavg, 60 rounds & 0.6206 & 83.86 & \textit{n/c} & 0.9536 & $-1.1887$ & \texttt{10} \\
 \midrule
 \multicolumn{7}{@{}l}{\textit{Training window (11)}} \\[2pt]
-2018-04 onwards, L=24 & 0.5095 & 69.78 & \textit{n/c} & 0.9697 & $-0.4980$ & \texttt{11} \\
-2019-04 onwards, L=24 & 0.5247 & 69.78 & \textit{n/c} & 0.9626 & $-0.4466$ & \texttt{11} \\
-2020-04 onwards, L=24 & 0.5482 & 73.06 & \textit{n/c} & 0.9583 & $-0.5757$ & \texttt{11} \\
-2020-08 onwards, L=24 & 0.5638 & 75.98 & \textit{n/c} & 0.9555 & $-0.7078$ & \texttt{11} \\
-2021-04 onwards, L=24 & 0.5791 & 79.27 & \textit{n/c} & 0.9560 & $-0.8536$ & \texttt{11} \\
-2018-04 onwards, L=12 & 0.5765 & 76.27 & \textit{n/c} & 0.9610 & $-0.8332$ & \texttt{11} \\
-2019-04 onwards, L=12 & 0.5550 & 74.65 & \textit{n/c} & 0.9659 & $-0.7443$ & \texttt{11} \\
-2020-04 onwards, L=12 & 0.5073 & 69.63 & \textit{n/c} & 0.9683 & $-0.4656$ & \texttt{11} \\
-2020-08 onwards, L=12 & 0.5216 & 71.58 & \textit{n/c} & 0.9680 & $-0.5400$ & \texttt{11} \\
-2021-04 onwards, L=12 & 0.5650 & 78.65 & \textit{n/c} & 0.9611 & $-0.8190$ & \texttt{11} \\
-2022-04 onwards, L=12 & 0.5833 & 82.07 & \textit{n/c} & 0.9574 & $-1.0766$ & \texttt{11} \\
-2018-04 onwards, L=6 & 0.5654 & 74.62 & \textit{n/c} & 0.9629 & $-0.7741$ & \texttt{11} \\
-2019-04 onwards, L=6 & 0.5981 & 78.79 & \textit{n/c} & 0.9576 & $-0.9513$ & \texttt{11} \\
-2020-04 onwards, L=6 & 0.5206 & 71.03 & \textit{n/c} & 0.9700 & $-0.5363$ & \texttt{11} \\
-2020-08 onwards, L=6 & 0.5177 & 70.27 & \textit{n/c} & 0.9702 & $-0.5314$ & \texttt{11} \\
-2021-04 onwards, L=6 & 0.5402 & 74.04 & \textit{n/c} & 0.9678 & $-0.6479$ & \texttt{11} \\
-2022-04 onwards, L=6 & 0.5835 & 79.55 & \textit{n/c} & 0.9601 & $-1.0745$ & \texttt{11} \\
+2018-04 onwards, L=24 & 0.5095 & 69.78 & 180.2 & 0.9697 & $-0.4980$ & \texttt{11} \\
+2019-04 onwards, L=24 & 0.5247 & 69.78 & 200.3 & 0.9626 & $-0.4466$ & \texttt{11} \\
+2020-04 onwards, L=24 & 0.5482 & 73.06 & 211.4 & 0.9583 & $-0.5757$ & \texttt{11} \\
+2020-08 onwards, L=24 & 0.5638 & 75.98 & 218.1 & 0.9555 & $-0.7078$ & \texttt{11} \\
+2021-04 onwards, L=24 & 0.5791 & 79.27 & 217.2 & 0.9560 & $-0.8536$ & \texttt{11} \\
+2018-04 onwards, L=12 & 0.5765 & 76.27 & 204.5 & 0.9610 & $-0.8332$ & \texttt{11} \\
+2019-04 onwards, L=12 & 0.5550 & 74.65 & 191.2 & 0.9659 & $-0.7443$ & \texttt{11} \\
+2020-04 onwards, L=12 & 0.5073 & 69.63 & 184.2 & 0.9683 & $-0.4656$ & \texttt{11} \\
+2020-08 onwards, L=12 & 0.5216 & 71.58 & 185.1 & 0.9680 & $-0.5400$ & \texttt{11} \\
+2021-04 onwards, L=12 & 0.5650 & 78.65 & 202.9 & 0.9611 & $-0.8190$ & \texttt{11} \\
+2022-04 onwards, L=12 & 0.5833 & 82.07 & 211.7 & 0.9574 & $-1.0766$ & \texttt{11} \\
+2018-04 onwards, L=6 & 0.5654 & 74.62 & 199.5 & 0.9629 & $-0.7741$ & \texttt{11} \\
+2019-04 onwards, L=6 & 0.5981 & 78.79 & 213.2 & 0.9576 & $-0.9513$ & \texttt{11} \\
+2020-04 onwards, L=6 & 0.5206 & 71.03 & 179.4 & 0.9700 & $-0.5363$ & \texttt{11} \\
+2020-08 onwards, L=6 & 0.5177 & 70.27 & 178.7 & 0.9702 & $-0.5314$ & \texttt{11} \\
+2021-04 onwards, L=6 & 0.5402 & 74.04 & 185.9 & 0.9678 & $-0.6479$ & \texttt{11} \\
+2022-04 onwards, L=6 & 0.5835 & 79.55 & 201.7 & 0.9601 & $-1.0745$ & \texttt{11} \\
 \midrule
 \multicolumn{7}{@{}l}{\textit{2022--2026 only, every algorithm (11)}} \\[2pt]
 fedavg & 0.6097 & 82.26 & \textit{n/c} & 0.9591 & $-1.1695$ & \texttt{11} \\
