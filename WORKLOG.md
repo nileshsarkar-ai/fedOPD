@@ -5441,3 +5441,112 @@ The built tex now carries the corrected 45.9% base rate throughout (12 mentions;
 
 Unchanged from Entry 51.9 items 2-7 (01-03 defects, breach-growth experiment, D-07 spike detector,
 multi-seed, 09 idempotency, F-40 ICB wiring). Item 1 (report reproducibility) is closed.
+
+---
+
+# Entry 53 - 2026-07-28
+## The strengthening campaign: five new notebooks, two real gains, three hard truths
+
+Asked to strengthen the federated and agentic layers "in a research way, not gamify things". Five
+notebooks written (`12`-`16`), each with its success criterion and constants declared in the header
+markdown before any run, all validation-only with the sealed test year asserted untouched, all run
+headless and verified from stored outputs. Every rate below is printed in its notebook beside the
+base rate and denominator of the set it was scored on.
+
+### 53.1 F-63 - predicting breach growth makes allocation beat random, and the variable, not the
+### model, carries most of the gain
+
+`12_breach_target` re-trains the exact `08` reference configuration with one change: the target is
+`waiting_gt18` instead of `demand`. The pre-declared criterion - a forecast-led allocation must
+beat uniform-random budget precision at every budget level - is **met**: 0.472 at all five levels,
+against random 0.439, ask-weighted random 0.399, and the demand-led signal's 0.390. This is the
+first policy in the project to beat random targeting, and it closes F-52's diagnosis in the
+affirmative: the demand call did not transfer because it was the wrong variable.
+
+The control tells the sharper story: raw breach momentum (last gt18 month against its 6-month
+mean, no learning) scores 0.462. So of the +0.082 gain over the demand-led signal, roughly +0.072
+comes from switching variable and +0.010 from the trained model. On pure forecasting the model is
+*worse* than naive persistence on gt18 (direction precision 58.6% vs 69.0% against a 42.3% base
+rate of 1,949 - the queue series is far more autocorrelated than the demand series). The honest
+design implication: the allocation signal should be breach momentum plus whatever a model can add,
+not a model in place of it.
+
+### 53.2 F-64 - the 80%-precision operating point does not exist
+
+`14_calibration` searched the calibration year (model trained to 2023-03, scored 2023-04 to
+2024-03, base rate 40.7% of 1,984) for the smallest predicted-growth threshold delivering 80%
+precision with at least 50 calls. **No such threshold exists.** The declared fallback fired: the
+notebook reports the full precision-coverage curve instead, and the transferred standard band
+reproduces the known 67.3% at 13.1% coverage on validation. A board can be given ~67% at ~13%
+coverage, or less precision at more coverage; it cannot currently be given 80% at any usable
+coverage, and pretending otherwise via a tuned threshold is exactly what the pre-declaration
+prevented.
+
+### 53.3 F-65 - at spike time, temporary versus sustained is a coin flip
+
+The declared rule (spike = month at 1.2x the trailing year's mean; temporary = back under 1.1x
+within 3 months) was measured over the training window: 22,680 spike service-months, **49.0%
+reverted, 51.0% persisted**. D-07's "treat a spike as temporary, absorb internally" is therefore
+right about half the time, and the rule's defensibility rests entirely on the asymmetric cost of
+its error (a persisting spike re-enters the next cycle as sustained growth, so the cost is delay,
+not permanent misallocation) - not on any ability to tell the two apart at spike time. CLAUDE.md's
+requirement to report the classifier's error rate rather than assume it is now satisfied, and the
+number is 51%.
+
+### 53.4 F-66 - federation is robust to participation and privacy noise; the practical barriers
+### are cheap
+
+`15_federation_stress`, on the `08` reference at seed 0: participation 100/50/20% gives MASE
+0.507/0.512/0.490 and up-precision 70.0/69.5/70.0% (base 45.9% of 1,978). Clipping every client
+update to the median round-1 norm costs nothing (0.508, 70.2%), and server-side Gaussian noise at
+0.5x and 1.0x the clip bound costs at most half a precision point (69.3%, 70.1%) while shrinking
+coverage (389 -> 294 calls). Sampling a fifth of clients per round is, if anything, slightly
+better than full participation - consistent with averaging noise acting as regularisation. Stated
+in the notebook and repeated here: sigma is a noise multiplier, not a privacy budget; no
+(epsilon, delta) is claimed without an accountant.
+
+### 53.5 F-67 - the comparative claims are regime-dependent: every one of them fails at the
+### recovery-era origin
+
+`13_robustness`: 5 seeds x 3 origins x {fedavg, central, local}, 45 training runs. At the two
+recent origins the project's claims hold with room to spare - at 2024-04, fedavg 0.5204 (sd
+0.0102) vs local 0.5515 and central 0.6241, precision 67.6% vs base 45.9%; at 2023-04, fedavg
+0.5008 vs local 0.5943 and central 0.6673, precision 54.3% vs base 40.7%. At the 2022-04 origin -
+training data ending inside the COVID recovery, scored on the surge year in which 51.2% of
+services grew - **all four pre-declared claims fail**: fedavg loses to local on MASE (0.7898 vs
+0.7633), loses its precision edge (50.2% vs base 51.2%, i.e. below chance), and central beats
+fedavg (0.7574). The sign-stability verdicts therefore read "flips sign" for every claim, and the
+honest statement for the report is: federation's advantage is a property of the stable regime,
+measured at two origins, and it does not extend into the recovery period. One seed and one origin
+would never have shown this.
+
+### 53.6 F-68 - the demand-led shortlist is not vindicated by what breaches then did
+
+`16_regret` scores the board question directly: of the services the model shortlists, how many saw
+their over-18-week queue grow >5% in the following year, against severity-first, biggest-first and
+random boards at matched shortlist size. The model board **never beats the random board** (55.1%
+vs 77.1% at 2022-04; 59.6% vs 64.3% at 2023-04; 42.2% vs 42.3% at 2024-04). Two useful surprises:
+biggest-first is the best board in the recovery era (83.5% at 2022-04 - the big queues were the
+growing ones) and severity-first collapses below random at 2024-04 (30.4% vs 42.3% - the
+most-breached services were precisely the ones that stopped growing). This is F-52's variable gap
+measured at the decision level with the demand call; `16` is the standing harness, and re-scoring
+it with `12`'s breach-momentum-plus-model signal is the obvious next step.
+
+### 53.7 Notes
+
+- `15`'s first draft had a genuine bug caught before running: a `clip=-1` sentinel would have
+  scaled every update by a negative bound. Rewritten as a boolean with the probe setting the bound.
+- `12` was extended after its first run with the momentum control, precisely because its first
+  result looked too good to attribute to the model without a no-learning baseline. The control
+  survived the re-run and changed the attribution (53.1).
+- Chain runtime about 100 minutes total on the 4060, `13` dominating.
+
+### 53.8 Open
+
+1. Wire `12`'s breach signal (momentum + model) into `07`'s release and `16`'s harness in place of
+   the demand call, and re-state D-08 accordingly (direction of the *queue*, not of demand).
+2. Report and README do not yet mention `12`-`16`; the report needs a new results section and the
+   regime-dependence caveat added to its federation claims. gentables covers only the old tables.
+3. The regret harness should also price the asymmetric costs (missed grower vs wasted expansion)
+   rather than counting vindications alone.
+4. Prior open items from Entry 51.9 (01-03 defects, F-40 ICB wiring, 09 idempotency) unchanged.
