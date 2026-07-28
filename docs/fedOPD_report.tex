@@ -1340,14 +1340,25 @@ their over-18-week queue grow more than 5\% in the following year.
 \end{center}
 
 \keypoint{\textbf{Finding 13. Boards should be handed the queue's own trajectory, not the demand
-call.} The demand-led shortlist never beats the random board on queue vindication (42.2\% against
-42.3\% at 2024-04). The queue-momentum board is vindicated at \textbf{96.6 / 89.9 / 82.7\%}
-against bases of 77.1 / 64.3 / 42.3\%, and \texttt{12}'s trained queue model reaches 69.3\%
-at the one origin where it exists. Severity-first collapses \emph{below} random at 2024-04
-(30.4\%): the most-breached services were precisely the ones that stopped growing. Caveat, stated
-in the notebook: queues are integrators, so momentum-selection and mean-over-mean vindication
-share a mechanical component --- the margin reads as ``queues persist'' at least as much as
-``the future was foreseen''.}
+call --- and the raw trajectory beats the trained model.} The demand-led shortlist never beats the
+random board on queue vindication (42.2\% against 42.3\% at 2024-04). The queue-momentum board is
+vindicated at \textbf{96.6 / 89.9 / 82.7\%} against bases of 77.1 / 64.3 / 42.3\%. The trained
+queue model, tested at matched shortlist size at all three origins, reaches only 69.0 / 81.1 /
+69.3\% --- below momentum everywhere, and below the base rate at 2022-04. For the shortlist task
+the model does not earn its place over the free signal; its only measured earning is the $+0.010$
+in budget-weighted allocation. Severity-first collapses \emph{below} random at 2024-04 (30.4\%):
+the most-breached services were precisely the ones that stopped growing. Caveat, stated in the
+notebook: queues are integrators, so momentum-selection and mean-over-mean vindication share a
+mechanical component --- the margin reads as ``queues persist'' at least as much as ``the future
+was foreseen''.}
+
+The remaining board decision is \emph{how many} services to review, and at matched size every
+miss-to-waste cost ratio ranks boards identically, so the ratio's real job is choosing the size.
+Swept at declared ratios on the momentum ranking: at 1:1 the cost-optimal shortlist covers about
+40\% of scorable services at the 2024-04 origin (776 of 1{,}949, catching 565 of 824 growers); at
+3:1 it widens to 1{,}062; at 10:1 --- a board that fears missed growers ten times more than wasted
+reviews --- it is cheapest to review essentially the whole panel. The shortlist size is a priced
+policy choice, not a modelling constant.
 
 \begin{figure}[H]
 \centering

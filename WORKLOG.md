@@ -5615,3 +5615,46 @@ Build: **39 pages** (34 + the new section), 0 unresolved references in the rende
 2. A queue model trained at the 2022/2023 origins would let `16` test the model board everywhere,
    not just 2024-04.
 3. Prior items: 01-03 defects, F-40 ICB wiring, 09 idempotency (Entries 51.9, 53.8).
+
+---
+
+# Entry 55 - 2026-07-28
+## The queue model tested everywhere, and the shortlist size priced. The model loses to momentum.
+
+Entry 54's open items 1 and 2, closed inside `16`.
+
+### 55.1 F-70 - at matched shortlist size, the trained queue model loses to raw momentum at every
+### origin
+
+`16` now trains the `12` configuration (FedAvg on gt18, 15 rounds x 2, seed 0) at the 2022-04 and
+2023-04 origins as well. At matched N per origin, vindication rates:
+
+| origin | N | queue model | queue momentum | base |
+|---|---|---|---|---|
+| 2022-04 | 116 | 69.0 | 96.6 | 77.1 |
+| 2023-04 | 534 | 81.1 | 90.4 | 64.3 |
+| 2024-04 | 355 | 69.3 | 82.5 | 42.3 |
+
+The model is below momentum everywhere and below the base rate at 2022-04. Combined with F-63
+(+0.010 over momentum in budget-weighted allocation) the honest position is now sharp: **the
+queue variable is the discovery; the trained model earns at most a marginal place in allocation
+weighting and no place on the shortlist.** The board pack should lead with momentum.
+
+### 55.2 The cost ratio's real job is choosing the shortlist size
+
+At matched N every miss-to-waste cost ratio ranks boards identically (misses = G - TP, waste =
+N - TP, so cost is monotone in TP) - noticed before running, so the cost analysis was designed as
+an N-sweep instead of a fake ratio comparison. At declared ratios on the momentum ranking at
+2024-04: 1:1 -> N=776 (39.8% coverage, 565 of 824 growers caught); 3:1 -> N=1,062; 10:1 -> review
+essentially the whole panel. Written to `regret_costs.csv` and `regret_queue_model.csv`; the
+report's Finding 13 updated with both results, README finding 9 likewise.
+
+Build: 39 pages, 0 unresolved references, audit 2,198 claims / 0 untraceable.
+
+### 55.3 Open
+
+1. 01-03 data-plane defects (Entry 51.9.2) - now the largest remaining block.
+2. F-40 ICB wiring for purchased capacity; 09 idempotency.
+3. The momentum-caveat decomposition (how much of the vindication margin is integrator arithmetic
+   versus genuine persistence) would make F-69/F-70 publishable as more than an observation:
+   score vindication on the *next* year's flow into breach rather than the mean stock.

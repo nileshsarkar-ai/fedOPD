@@ -332,7 +332,9 @@ also no 80%-precision operating point at any usable coverage; the curve tops out
 **9. Boards should be handed the queue's own trajectory** (`16`). The demand-led shortlist never
 beats a random board on queue vindication; the queue-momentum board is vindicated at 82.7–96.6%
 against bases of 42.3–77.1% (part of that margin is queue persistence itself, stated in the
-notebook), and severity-first collapses below random at 2024-04. `07`'s release now carries both
+notebook), the trained queue model sits **below** momentum at all three origins (69.0–81.1%), and
+severity-first collapses below random at 2024-04. The cost-optimal shortlist size is swept at
+declared miss-to-waste ratios: a policy choice, priced. `07`'s release now carries both
 calls: demand direction (which levers exist) and queue growth (where budget goes).
 
 **One thing that must not be read from these numbers.** Growth *magnitude* is not predicted; only
