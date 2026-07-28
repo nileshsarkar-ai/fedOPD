@@ -91,27 +91,36 @@ T_WINDOW = "\n".join(rows)
 
 # ------------------------------- TABLE:HYPER - constants read out of the notebook source itself
 WHITELIST = ["MIN_MONTHS", "H", "SEASON", "MIN_TRAIN", "GROWTH_THRESH", "L", "HIDDEN", "ROUNDS",
-             "BAND", "FT_EPOCHS", "MAX_ROUNDS", "PLATEAU", "HORIZON", "TARGET_PCT"]
+             "LOCAL_EPOCHS", "BAND", "FT_EPOCHS", "MAX_ROUNDS", "PLATEAU", "HORIZON", "TARGET_PCT",
+             "TARGET_PRECISION", "MIN_CALLS", "SPIKE_X", "REVERT_X", "K"]
 def hyper_of(nb_path):
     code = "\n".join("".join(c["source"]) for c in json.load(open(nb_path, encoding="utf-8"))["cells"]
                      if c["cell_type"] == "code")
     found = []
     for line in code.splitlines():
-        m = re.match(r"^([A-Z_]+(?:, [A-Z_]+)?) = ([0-9e.\-]+(?:, [0-9e.\-]+)?|\([0-9, ]+\))(?:\s*#.*)?$",
+        m = re.match(r"^([A-Z_]+(?:, [A-Z_]+)*) = ([0-9e.\-]+(?:, [0-9e.\-]+)*|\([0-9, ]+\))(?:\s*#.*)?$",
                      line.strip())
-        if m and m.group(1).split(",")[0].strip() in WHITELIST:
-            found.append(f"{m.group(1).split(',')[0].strip()}={m.group(2)}")
+        if not m:
+            continue
+        names = [n.strip() for n in m.group(1).split(",")]
+        vals = [m.group(2)] if m.group(2).startswith("(") else [v.strip() for v in m.group(2).split(",")]
+        if len(names) == len(vals):                     # a tuple assignment pairs off name by name
+            found += [f"{n}={v}" for n, v in zip(names, vals) if n in WHITELIST]
+        elif names[0] in WHITELIST:
+            found.append(f"{names[0]}={m.group(2)}")
     if "import torch" in code:                          # the shared training recipe, read from source
-        lr = re.search(r"lr=([0-9e.\-]+)\)?:", code) or re.search(r"lr=([0-9e.\-]+)", code)
-        drop = re.search(r"Dropout\(([0-9.]+)\)", code)
-        batch = re.search(r"range\(0, len\(\w+\), (\d+)\)", code)
-        seed = re.search(r"manual_seed\((\d+)\)", code)
-        found += [f"lr={lr.group(1)}", f"dropout={drop.group(1)}", f"batch={batch.group(1)}",
-                  f"seed={seed.group(1)}", "loss=L1Loss", "optim=Adam"]
+        for label, pat in [("lr", r"lr=([0-9e.\-]+)\)?:"), ("dropout", r"Dropout\(([0-9.]+)\)"),
+                           ("batch", r"range\(0, len\(\w+\), (\d+)\)"),
+                           ("seed", r"manual_seed\((\d+)\)")]:   # 13 seeds per run, so no literal here
+            m = re.search(pat, code)
+            if m:
+                found.append(f"{label}={m.group(1)}")
+        found += ["loss=L1Loss", "optim=Adam"]
     return ", ".join(found)
 HYPER_NBS = ["03_data_processing", "05_baselines", "06_federated_forecast", "07_agentic_layer",
              "08_algorithm_comparison", "09_allocation_policies", "10_training_length",
-             "11_postcovid_training"]
+             "11_postcovid_training", "12_breach_target", "13_robustness", "14_calibration",
+             "15_federation_stress", "16_regret"]
 T_HYPER = "\n".join(rf"\texttt{{{esc(n)}}} & {esc(hyper_of(SRC / (n + '.ipynb')))} \\" for n in HYPER_NBS)
 
 # --------------------------------------- TABLE:MANIFEST - run evidence from the notebook files
@@ -163,6 +172,50 @@ for r in pa.itertuples():
                 f"{r.R2_pooled_plateau:.4f} & {r2(r.R2_within_plateau)} & \\texttt{{11}} \\\\")
 T_APPENDIX = "\n".join(rows)
 
+# --------------------------------------------- TABLE:BREACH - 12's allocation head-to-head
+bt = pd.read_csv(CANON / "breach_target.csv", index_col=0)
+rows = []
+for r in bt.itertuples():
+    rows.append(f"{r.Index:.0f}\\% & {r.proportional:.3f} & {r.forecast_led_demand:.3f} & "
+                f"{r.forecast_led_breach:.3f} & {r.momentum_led_breach:.3f} \\\\")
+T_BREACH = "\n".join(rows)
+
+# --------------------------------------------- TABLE:ROBUST - 13's seed-and-origin spreads
+rb = pd.read_csv(CANON / "robustness.csv")
+rows = []
+for origin, g in rb.groupby("origin"):
+    rows.append(r"\midrule")
+    base = g.base_rate.iloc[0]
+    rows.append(r"\multicolumn{5}{@{}l}{\textit{origin " + origin +
+                f" --- base rate {base:.1f}\\% of {g.n_eligible.iloc[0]:,} services}}}} \\\\[2pt]")
+    for arm in ["fedavg", "local", "central"]:
+        a = g[g.arm == arm]
+        rows.append(f"\\texttt{{{arm}}} & {a.MASE_median.mean():.4f} & {a.MASE_median.std():.4f} & "
+                    f"{a.precision_up.mean():.1f}\\% & {a.precision_up.std():.1f} \\\\")
+T_ROBUST = "\n".join(rows)
+
+# --------------------------------------------- TABLE:STRESS - 15's participation and noise arms
+st = pd.read_csv(CANON / "federation_stress.csv", index_col=0)
+T_STRESS = "\n".join(
+    f"{esc(r.Index)} & {r.MASE_median:.4f} & {r.precision_up_pct:.1f}\\% & {int(r.n_said_up)} \\\\"
+    for r in st.itertuples())
+
+# --------------------------------------------- TABLE:REGRET - 16's boards, vindication rates
+rg = pd.read_csv(CANON / "regret.csv")
+rows = []
+for origin, g in rg.groupby("origin"):
+    rows.append(f"{origin} & {g.N.mean():.0f} & {g.model_board.mean():.1f} ({g.model_board.std():.1f}) & "
+                f"{g.momentum_board.mean():.1f} & {g.severity_board.mean():.1f} & "
+                f"{g['size_board'].mean():.1f} & {g.base_rate.iloc[0]:.1f} \\\\")
+T_REGRET = "\n".join(rows)
+
+# 12's forecasting methods join the appendix (MASE only; other columns not computed there)
+bf = pd.read_csv(CANON / "breach_forecast.csv", index_col=0)
+T_APPENDIX += "\n" + "\n".join(
+    [r"\midrule", r"\multicolumn{7}{@{}l}{\textit{Breach-target forecasting (12)}} \\[2pt]"] +
+    [f"{esc(r.Index)} on gt18 & {r.MASE_median:.4f} & {NC} & {NC} & {NC} & {NC} & \\texttt{{12}} \\\\"
+     for r in bf.itertuples()])
+
 # ---------------------------------------------------------------- figures, from stored outputs
 changed = 0
 for p in sorted(SRC.glob("*.ipynb")):
@@ -182,7 +235,8 @@ print(f"figures re-extracted from stored outputs, {changed} changed on disk")
 
 # ------------------------------------------------------------------------- substitute and write
 TABLES = {"ALG": T_ALG, "HEADLINE": T_HEADLINE, "BOTH": T_BOTH, "WINDOW": T_WINDOW,
-          "HYPER": T_HYPER, "MANIFEST": T_MANIFEST, "APPENDIX": T_APPENDIX}
+          "HYPER": T_HYPER, "MANIFEST": T_MANIFEST, "APPENDIX": T_APPENDIX,
+          "BREACH": T_BREACH, "ROBUST": T_ROBUST, "STRESS": T_STRESS, "REGRET": T_REGRET}
 tex = (DOCS / "fedOPD_report.tex").read_text(encoding="utf-8")
 for name, body in TABLES.items():
     marker = f"%%TABLE:{name}%%"

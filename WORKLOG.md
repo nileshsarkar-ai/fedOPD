@@ -5550,3 +5550,68 @@ it with `12`'s breach-momentum-plus-model signal is the obvious next step.
 3. The regret harness should also price the asymmetric costs (missed grower vs wasted expansion)
    rather than counting vindications alone.
 4. Prior open items from Entry 51.9 (01-03 defects, F-40 ICB wiring, 09 idempotency) unchanged.
+
+---
+
+# Entry 54 - 2026-07-28
+## The queue signal wired through the release and the regret harness; the report grows a strengthening section
+
+Continuation of Entry 53's open items 1 and 2.
+
+### 54.1 The wiring
+
+`12` now exports `breach_calls.csv` - per-service queue growth predictions and momenta at both the
+6-month (07's ask horizon) and 12-month (16's vindication horizon) alignments. `07`'s release
+merges it: every proposed service now carries **two calls with two jobs** - the demand direction
+call (which levers exist: 200 sustained-growth candidates, 89 expand-or-buy, 111 public-only,
+unchanged) and the queue growth signal (where budget goes: 1,052 asking services with a growing
+queue; the signal measured at 0.472 budget precision vs 0.439 random in `12`). D-08 restated in
+`07`'s section 8: demand and the queue answer different questions, so two calls cross the boundary,
+each with its measured reliability.
+
+### 54.2 F-69 - the queue-momentum board is the board-grade signal, with a caveat that must travel
+### with it
+
+`16` re-run with two new boards. The **queue-momentum board** (top N by pre-origin gt18 momentum,
+no learning, matched N) is vindicated at **96.6 / 89.9 / 82.7%** across the three origins, against
+bases of 77.1 / 64.3 / 42.3% - lifts of +19 to +40 points where the demand-led board never beats
+random. `12`'s trained queue model reaches 69.3% at the one origin where it exists (N=355, base
+42.3%) - strong, but *below* raw momentum at the same origin, consistent with F-63's attribution:
+the variable and its persistence carry the signal, the model adds little.
+
+*The caveat, stated in the notebook and here:* queues are integrators. A service whose gt18 count
+has just risen keeps part of that rise in next year's mean arithmetically, so momentum selection
+and mean-over-mean vindication share a mechanical component. The base-rate comparison survives
+(every board faces the same outcome definition), but the margin reads as "queues persist" at least
+as much as "the future was foreseen". Also caught on this pass: the per-origin verdict line printed
+`r.size` - pandas' Series element count (8), not the `size` column - fixed to `r['size']` and
+re-run; the summary table was never wrong, only the sentence under it.
+
+### 54.3 The report and README
+
+New report section "Strengthening the claims" (`\label{sec:strength}`) between the sweeps and the
+one-page summary: four generated tables (BREACH, ROBUST, STRESS, REGRET markers in the template,
+emitters in gentables.py), three figures (nb12, nb14, nb16), and Findings 11-13. The limitations
+section rewritten where `13`/`15` superseded it: "one split, one seed" is now the regime-dependence
+boundary; the privacy item now cites the measured clip-and-noise cost while still claiming no
+epsilon. The one-page table gains five verdict rows and the federation-vs-pooling verdict now reads
+"holds at 2 origins, fails in recovery". README findings 5-9 added, and its stale "central coming
+last is a budget artefact... federation-versus-pooling has not been tested" paragraph deleted -
+08 and 13 tested it.
+
+gentables gained the four emitters plus wider hyperparameter parsing (arbitrary CAPS-tuple
+assignments; per-run seeding in 13 means its row carries no literal seed). Two build defects of my
+own caught on the way: the shell heredoc mangled escape sequences in the first emitter patch
+(rewritten via direct file edit), and `hyper_of` assumed a literal `manual_seed(digit)` exists in
+every torch notebook.
+
+Build: **39 pages** (34 + the new section), 0 unresolved references in the rendered PDF, audit
+**2,170 claims, 0 untraceable**.
+
+### 54.4 Open
+
+1. The regret harness still counts vindications only; pricing the asymmetric costs (missed grower
+   vs wasted expansion) is the remaining decision-layer experiment (53.8.3).
+2. A queue model trained at the 2022/2023 origins would let `16` test the model board everywhere,
+   not just 2024-04.
+3. Prior items: 01-03 defects, F-40 ICB wiring, 09 idempotency (Entries 51.9, 53.8).

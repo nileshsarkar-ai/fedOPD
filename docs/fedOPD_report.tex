@@ -1210,6 +1210,161 @@ which is exactly the artefact that made budget precision the metric of record.}
 \end{figure}
 
 % ============================================================================
+\section{Strengthening the claims: seeds, origins, stress, and the queue variable}
+\label{sec:strength}
+
+Everything before this section rests on one seed and one forecast origin, and its allocation
+signal predicts the wrong variable (Finding 7). Five further notebooks (\texttt{12}--\texttt{16})
+attack exactly those weaknesses, each with its success criterion declared in the notebook header
+before the run. Two produced genuine gains; three produced hard truths. All five are
+validation-only; the test year remains sealed.
+
+\subsection{Predicting the queue instead of demand makes allocation work}
+
+\texttt{12} re-trains the \texttt{08} reference configuration with a single change: the target is
+\texttt{waiting\_gt18} --- the over-18-week queue --- instead of demand. The pre-declared criterion
+was that a forecast-led allocation must beat uniform-random budget precision at \emph{every}
+budget level. It is met:
+
+\begin{center}
+\begin{tabular}{@{}rrrrr@{}}
+\toprule
+\textbf{Budget} & \textbf{Proportional} & \textbf{Demand-led} & \textbf{Queue-led (model)} & \textbf{Queue momentum} \\
+\midrule
+%%TABLE:BREACH%%
+\bottomrule
+\end{tabular}
+\end{center}
+
+\keypoint{\textbf{Finding 11. The first policy to beat random targeting --- and the variable, not
+the model, carries most of the gain.} Queue-led allocation scores \textbf{0.472} at every budget
+level against random's 0.439 and the demand-led signal's 0.390. But the no-learning control ---
+raw queue momentum, the last month against its 6-month mean --- scores 0.462. Of the $+0.082$ gain
+over the demand signal, roughly $+0.072$ comes from switching variable and $+0.010$ from the
+trained model. On pure direction precision the model is \emph{worse} than repeating the queue's
+last value (58.6\% against 69.0\%, base 42.3\% of 1{,}949): the queue series is far more
+autocorrelated than the demand series. The defensible allocation signal is momentum plus whatever
+a model adds on top, never a model instead of it.}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{figures/nb12_fig1.png}
+\caption{Queue-led allocation against the baselines (\texttt{12}). Left: budget precision by
+policy across budget levels, with both random baselines. Right: predicted against realised
+per-service queue growth.}
+\end{figure}
+
+\subsection{The claims survive two origins and fail in the recovery era}
+
+\texttt{13} re-runs the three claim-bearing arms across \textbf{5 seeds and 3 forecast origins}
+--- 45 training runs. The origins 2022-04 and 2023-04 are rolling origins wholly inside the
+training window; 2024-04 is the standard validation origin.
+
+\begin{center}
+\footnotesize
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Arm} & \textbf{MASE mean} & \textbf{MASE sd} & \textbf{Up-precision mean} & \textbf{sd} \\
+%%TABLE:ROBUST%%
+\bottomrule
+\end{tabular}
+\end{center}
+
+\keypoint{\textbf{Finding 12. Federation's advantage is a property of the stable regime.} At the
+two recent origins every claim holds with room to spare: at 2024-04, \texttt{fedavg} 0.5204
+(sd 0.0102) beats \texttt{local} 0.5515 and \texttt{central} 0.6241, with up-precision 67.6\%
+against a 45.9\% base; at 2023-04 the pattern repeats (0.5008 against 0.5943 and 0.6673, 54.3\%
+against 40.7\%). At the 2022-04 origin --- trained through the COVID recovery, scored on the surge
+year in which 51.2\% of services grew --- \emph{every} claim fails: \texttt{fedavg} loses to
+\texttt{local} on MASE, its precision drops below the base rate, and \texttt{central} wins. One
+seed and one origin would never have shown this, and the federation claims elsewhere in this
+report should be read with this boundary attached.}
+
+\subsection{Participation and privacy noise are cheap; a high-precision operating point is not
+available}
+
+\texttt{15} relaxes the two generous assumptions of the federation sections: full participation
+and updates in the clear.
+
+\begin{center}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Arm} & \textbf{MASE} & \textbf{Up-precision} & \textbf{n called up} \\
+\midrule
+%%TABLE:STRESS%%
+\bottomrule
+\end{tabular}
+\end{center}
+
+Sampling a fifth of the trusts per round, clipping every update to the median round-1 norm, and
+adding server-side Gaussian noise at up to the clipping bound costs at most half a point of
+precision (the noise multipliers are reported as such; a formal $(\varepsilon,\delta)$ guarantee
+needs an accountant and is not claimed). The practical barriers to deploying this federation are
+cheap.
+
+\texttt{14} then asked whether the up call can be offered at a board-grade operating point: the
+smallest threshold reaching 80\% precision with at least 50 calls, chosen on a calibration year
+that ends before validation (a model trained to 2023-03, scored on 2023-04 to 2024-03). \textbf{No
+such threshold exists.} The deliverable is the precision--coverage curve, which tops out around
+67\% at 13\% coverage on validation; the declared fallback fired and is reported instead of a
+tuned threshold. The same notebook measures the temporary-spike rule D-07 needs: of 22{,}680
+spike service-months in the training window (a month at 1.2$\times$ the trailing year's mean),
+\textbf{49.0\% revert within 3 months and 51.0\% persist}. Treating a spike as temporary is a coin
+flip; the rule survives only because its error is cheap --- a persisting spike re-enters the next
+cycle as sustained growth, so the cost is delay, not misallocation.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{figures/nb14_fig1.png}
+\caption{Reliability of the growth score across the calibration and validation years, and the
+precision--coverage curve (\texttt{14}). The 80\% operating point does not exist at any usable
+coverage.}
+\end{figure}
+
+\subsection{The board's regret: which shortlist did the following year vindicate?}
+
+\texttt{16} evaluates the decision layer as decision support: across the three origins, boards
+shortlist services (matched shortlist size per origin and seed) and are scored on how many saw
+their over-18-week queue grow more than 5\% in the following year.
+
+\begin{center}
+\footnotesize
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+\textbf{Origin} & \textbf{N} & \textbf{Demand board (sd)} & \textbf{Queue momentum} &
+\textbf{Severity} & \textbf{Biggest} & \textbf{Random} \\
+\midrule
+%%TABLE:REGRET%%
+\bottomrule
+\end{tabular}
+\end{center}
+
+\keypoint{\textbf{Finding 13. Boards should be handed the queue's own trajectory, not the demand
+call.} The demand-led shortlist never beats the random board on queue vindication (42.2\% against
+42.3\% at 2024-04). The queue-momentum board is vindicated at \textbf{96.6 / 89.9 / 82.7\%}
+against bases of 77.1 / 64.3 / 42.3\%, and \texttt{12}'s trained queue model reaches 69.3\%
+at the one origin where it exists. Severity-first collapses \emph{below} random at 2024-04
+(30.4\%): the most-breached services were precisely the ones that stopped growing. Caveat, stated
+in the notebook: queues are integrators, so momentum-selection and mean-over-mean vindication
+share a mechanical component --- the margin reads as ``queues persist'' at least as much as
+``the future was foreseen''.}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{figures/nb16_fig1.png}
+\caption{Vindication rates by board and origin (\texttt{16}).}
+\end{figure}
+
+\subsection{What the release now carries}
+
+Following these results, \texttt{07}'s released proposal carries \textbf{two calls with two
+different jobs}: the demand direction call with its measured precision, which decides which levers
+exist (sustained growth opens expand-or-buy, gated per specialty on the measured independent
+share), and the queue growth signal --- momentum plus the \texttt{12} model --- which is the only
+signal measured to aim a fixed budget better than spreading it blindly. D-08 is restated
+accordingly: what crosses the plane boundary is still a call with a measured reliability; there
+are now two of them because demand and the queue answer different questions.
+
 \section{Everything on one page}
 
 Every headline number in this report, with the notebook that produced it. All figures are validation-year
@@ -1350,7 +1505,11 @@ Architecture (\texttt{08}) & MLP over linear and GRU & 0.5072 & not a capacity p
 Extra features (\texttt{08}) & + backlog + throughput & 0.5334 & \textbf{harmful}; settled, do not retry \\
 FL algorithm (\texttt{08}) & FedProx $\approx$ FedAvg & 0.5075 & \textbf{tie}; FedAvgM diverges \\
 Federation vs alone (\texttt{08}) & \texttt{fedavg} vs \texttt{local} & 0.507 vs 0.556 & \textbf{federation wins} \\
-Federation vs pooled (\texttt{08}) & \texttt{fedavg} vs \texttt{central} & 0.507 vs 0.603 & suggestive, one seed \\
+Federation vs pooled (\texttt{08}) & \texttt{fedavg} vs \texttt{central} & 0.507 vs 0.603 & \textbf{holds at 2 origins, fails in recovery} \\
+Queue-led allocation (\texttt{12}) & vs random 0.439 & 0.472 & \textbf{first policy to beat random} \\
+Queue momentum board (\texttt{16}) & vindication vs base & 82.7--96.6\% & \textbf{the board-grade signal} \\
+Spike rule (\texttt{14}) & temporary vs sustained & 49\%/51\% & \textbf{coin flip}; error is cheap delay \\
+Stress (\texttt{15}) & 20\% participation, clip+noise & $\le$0.5pp & federation is robust \\
 \midrule
 \multicolumn{4}{@{}l}{\textit{Forecasting --- the decision question. Base rate 45.9\% of the 1{,}978 scored services, all notebooks}} \\[2pt]
 Growth call, post-training (\texttt{06}) & \texttt{fedavg\_ft} precision & 67.3\% & \textbf{real}; $+21.4$pp, 13\% coverage \\
@@ -1380,20 +1539,22 @@ than allocating at random.}}
 Stated explicitly, because a report that lists only its strengths cannot be audited.
 
 \begin{itemize}[leftmargin=1.3em]
-\item \textbf{One split, one seed.} Every number is a single held-out year with a fixed seed. The
-ranking's stability across origins has not been established, and differences of a few thousandths in
-MASE should be read as noise rather than as an ordering.
-
-\item \textbf{Federation versus pooling rests on one seed.} The budgets are now matched, so the
-comparison is finally valid, but a single run is not enough to assert that averaging beats pooling.
+\item \textbf{The claims are regime-dependent, and sections before \ref{sec:strength} do not carry
+the boundary.} Section \ref{sec:strength} measured 5 seeds $\times$ 3 origins: federation beats
+going alone and beats pooling at the 2023 and 2024 origins, and every one of those claims fails at
+the 2022 recovery-era origin. Differences of a few thousandths in MASE remain noise. The main-text
+sections state the stable-regime numbers; this boundary applies to all of them.
 
 \item \textbf{Training length was swept, but at one seed and one architecture.} The curve to 60
 rounds is measured every round at three local-epoch settings, so the optimum near round 13 is not an
-artefact of two sample points. Whether it sits in the same place for another seed is untested.
+artefact of two sample points. Whether it sits in the same place for another seed is untested (the
+\ref{sec:strength} seed sweep varies seeds at fixed round count, not the curve itself).
 
 \item \textbf{No privacy guarantee.} FedAvg moves weights instead of records, which is a
 data-governance property, not a privacy proof. Weights leak information about the data that produced
-them. Differential privacy and secure aggregation are separate work, not implemented.
+them. Section \ref{sec:strength} measures the utility cost of clipping and noise (at most half a
+precision point at the tested multipliers) but claims no $(\varepsilon,\delta)$; a privacy
+accountant and secure aggregation remain separate work.
 
 \item \textbf{The allocation is never validated.} The back-test scores the \emph{projection}. Whether
 the escalation would have improved anything is a counterfactual --- the capacity moves it proposes

@@ -313,9 +313,30 @@ crisis and 51 have slack. Total ask **419,220** treatments/month against a total
 0.16%. The first two escalation tiers have almost nothing to settle, which inverts the intuition the
 tiered design was built on.
 
-**Two things that must not be read from these numbers.** `central` coming last is a training-budget
-artefact — it receives 1.54m sample-updates against FedAvg's 4.63m — so federation-versus-pooling has
-**not** been tested. And growth *magnitude* is not predicted; only direction, and only modestly.
+**5. Predicting the queue instead of demand makes allocation work — and the variable, not the
+model, carries the gain** (`12`). Queue-led allocation scores **0.472** budget precision at every
+budget level against random's 0.439 and the demand signal's 0.390; the no-learning momentum control
+scores 0.462, so the trained model adds only +0.010 on top of switching variable.
+
+**6. The federation claims hold at two origins and fail in the recovery era** (`13`, 45 runs:
+5 seeds × 3 origins). At 2023-04 and 2024-04, `fedavg` beats `local` and `central` clearly; at
+2022-04 — scored on the surge year in which 51.2% of services grew — every claim flips, and the
+up call drops below its base rate. Federation's advantage is a property of the stable regime.
+
+**7. The practical barriers are cheap** (`15`). 20% participation per round, update clipping and
+server-side noise at up to the clip bound cost at most half a precision point. And **8.** at spike
+time, temporary-versus-sustained is a **coin flip** (`14`: 49.0% of 22,680 spikes revert within 3
+months) — D-07's absorption rule survives on the cheapness of its error, not on accuracy. There is
+also no 80%-precision operating point at any usable coverage; the curve tops out near 67% at 13%.
+
+**9. Boards should be handed the queue's own trajectory** (`16`). The demand-led shortlist never
+beats a random board on queue vindication; the queue-momentum board is vindicated at 82.7–96.6%
+against bases of 42.3–77.1% (part of that margin is queue persistence itself, stated in the
+notebook), and severity-first collapses below random at 2024-04. `07`'s release now carries both
+calls: demand direction (which levers exist) and queue growth (where budget goes).
+
+**One thing that must not be read from these numbers.** Growth *magnitude* is not predicted; only
+direction, and only modestly.
 
 What NHS England says about the collection, read from their own documents with every claim cited, is
 in [`docs/RTT_SOURCE_DOSSIER.md`](docs/RTT_SOURCE_DOSSIER.md). The reasoning behind every decision, including
