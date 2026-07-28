@@ -5221,3 +5221,167 @@ catches this class, and it is now the thing to look at first after any structura
 
 Unchanged from Entry 49, minus the training-length sweep, which was already done and only the write-up
 was stale.
+
+---
+
+# Entry 51 - 2026-07-28
+## Full-pipeline review by six parallel readers; the F-58 "correction" turns out to have been the bug; every notebook fixed and re-run
+
+Asked to go over the whole completed system - is the federation built properly, does the agentic
+layer allocate properly, do the results hold up - then to fix what was found and re-run everything,
+with the notebooks as the source of truth. Six parallel reviewers read all eleven notebooks end to
+end, including stored outputs. Roughly forty defects surfaced; the ones that change numbers or claims
+were fixed this turn, all eight affected notebooks re-executed headless on this machine, and the
+outputs verified. Where nothing was intentionally changed, every re-run reproduced the previous
+numbers digit for digit, which is the evidence the fixes changed only what they claim to change.
+
+### 51.1 F-60 - the 43.5% base rate was a masking bug, and F-58 installed it in the report
+
+`08` and `10` computed `truth_up = truth_growth > BAND; base_rate = np.nanmean(truth_up)`. But
+`NaN > BAND` evaluates to False, not NaN, so `truth_up` carried no NaNs and `nanmean` degenerated to
+a mean over all 2,085 series with the 107 ineligible ones silently counted as "not up":
+908/2085 = 43.5%. The true rate on the 1,978 scored services is 908/1978 = 45.9% - the same
+population and the same base rate as `05`/`06`. The "24-month lookback admits fewer services"
+explanation recorded as F-58 in Entry 49 was wrong: all five notebooks share one eligibility rule
+(non-zero 12-month reference level), and the report's F-58 "correction" replaced a right number with
+the buggy one in seven places.
+
+Consequences now corrected: `08` and `10` mask by finiteness and print `45.9% of 1,978`; `11`, which
+never printed a base rate at all despite every headline being a precision claim, now computes and
+prints it and draws it on its precision panel; the CLAUDE.md base-rate rule and the seven report
+locations are rewritten. Re-runs confirm the fix touches only the base-rate line - every model
+metric in `08`/`10`/`11` reproduced exactly (reference 0.5072, plateau 0.5095 sd 0.0058, RMSE 69.78,
+within-R2 -0.4980, post-COVID best 0.5073 sd 0.0068). Reading against the correct line, `08`'s
+fedavgm at 46.0% precision while calling up on 1,970 of 1,978 is chance from a degenerate
+classifier, and `11`'s L=24 cutoff precisions (47.4/46.4/47.7%) sit 1-2 points above base, not 3-4.
+The F-54 headline (40.4% is below base) survives either way.
+
+*Why three audits missed it:* the audits checked that quoted values appear in sources, and 43.5% did
+appear - the printed line itself was self-contradictory ("43.5% of 1,978 services" where the 43.5 was
+divided by 2,085). A check that a printed rate's numerator and denominator agree is not something a
+corpus-matching audit can do.
+
+### 51.2 F-61 - 06's summary cell quoted two models in one line
+
+`BEST = table.MASE_median.idxmin()` resolved to "naive" (the table includes baselines), then
+`.get(BEST, preds["fedavg_n"])` silently fell back to fedavg_n's prediction array. Result: the
+printed line mixed fedavg_n's "59.5% improved" and "9.3% above zero" with the naive row's RMSE
+186.7 / R2 0.968 / -0.667, and all six diagnosis panels were titled "naive" while plotting fedavg_n.
+Fixed by restricting BEST to the model arms (`results`, not `table`) and removing the fallback. The
+re-run prints one consistent model (fedavg_n: RMSE 195.2, R2_pooled 0.964, R2_within -0.781).
+
+### 51.3 F-62 - equalising central's optimiser state makes central worse, not better
+
+`06` trained `central` in a Python loop of `epochs=1` calls, and `train_local` builds its Adam
+inside, so central's optimiser moments were reset 20 times while `local` trained in one continuous
+call. The review predicted the reset handicapped the ceiling arm. The re-run refutes that direction:
+with one continuous call central moves 0.665 -> 0.730 median MASE (within-R2 -1.858 -> -2.416,
+up-precision 67.4 -> 66.4 at 232 called). The resets were acting as a brake on overfitting the pooled
+data, not as a handicap. The fix stands - arms must train identically for the comparison to mean
+anything - and it strengthens F-48: pooling now loses to federation by more, in both the unmatched
+(`06`) and matched (`08`, central 0.603 vs fedavg 0.507) settings. README and report central rows
+updated from the fresh CSVs; every other `06` arm reproduced exactly (fedavg_n 0.553, uniform 0.565,
+ft 0.568, local 0.556), so `07`/`09`, which consume fedavg_ft, are unaffected by this change.
+
+### 51.4 D-08 wired, D-07 gated - the plane boundary now carries what CLAUDE.md says it carries
+
+`07` previously never read anything from `06`; the "swap in the federated forecast" was a comment.
+Now: the monthly backlog roll keeps seasonal-naive (F-44/F-47 measured that a neural point forecast
+buys nothing), and what crosses is what 06 measurably wins at - the direction call. Each released
+service carries `direction` (fedavg_ft: down 944 / flat 743 / up 252 / no_call 107) and
+`call_precision_pct`, the per-class precision measured in `06` on held-out months. 200 services have
+an up call at 67.3% measured precision plus a positive ask; these are the sustained-growth lever set.
+
+The buy gate is now measured in the notebook rather than asserted in prose: independent completions
+as % of public demand per department over the 12 months to 2024-03 ranges from 26.4% (C_130) and
+26.1% (C_110) down to 0.4% (C_300, C_340), under 5% in 12 of 19 departments. Of the 200
+sustained-growth candidates, 89 sit in departments where the buy market exists (board gets the
+expand-or-buy choice) and 111 get public expansion only. Entry 29.5's 25.6%/0.3%/11-of-19 was an
+ad-hoc full-window shell measurement no notebook reproduced; CLAUDE.md now carries the
+notebook-sourced figures. Section 8 is retitled as the human gate and the release prints itself as a
+proposal for planner review. The back-test's fragile positional indexing (`bt.index` into a
+positionally-aligned array) is replaced by a keyed merge plus an assert that all 2,046 services are
+present at the end month; F-42 reproduces exactly (682/-16 vs 990/+565, -31.0%).
+
+What D-07 still lacks: a temporary-spike detector. The up call is a measured sustained-growth proxy;
+nothing classifies a rise as transient, so tiers 1-2 run for everyone. Recorded as open, not claimed.
+
+### 51.5 09 - the honest baselines, and the verdict that never printed
+
+Three defects fixed. (1) The prose said six policies; there are seven, and `forecast_led` was missing
+from the header table. (2) A comment claimed 06's predictions were "exactly the horizon being planned
+over - no alignment fudge is needed"; false twice over - 06's call is 12-month demand growth, the
+oracle is 6-month breach growth, and that variable gap is most of what F-52 measures. Now stated,
+plus the disclosure that fedavg_ft's validation window contains the oracle window (an overlap that
+can only flatter forecast_led, which still loses). (3) The summary crowned `equal` at the 10% budget
+only, against an unweighted random baseline, while the "NO POLICY BEATS RANDOM" paragraph sat in a
+branch that could never print. The cell now judges across all five budget levels against both random
+baselines - 0.439 uniform-over-services and 0.399 in-proportion-to-ask - and prints the honest
+verdict: proportional (07's rule) equals the ask-weighted baseline by construction, equal converges
+on the uniform baseline once its cap binds (and drops below it at the 50% budget), and no policy
+clears random at every level. All policy numbers reproduced; `budget_spent_pct` added to the CSV
+because `equal` stops spending once budget/n exceeds most asks.
+
+### 51.6 05 and 04 - artefact scores, stale prose, and the sealed year in the EDA
+
+`05`: the direction-call table reported corr NaN but direction_acc 0.40%/23.56% for seasonal_naive
+and mean12 - float-noise sign flips, since both methods' forecast mean IS the reference level and
+their implied growth is identically zero. Those cells now print NaN with the reason. Stale prose
+fixed (a two-generation-old 1,870-series/0.650/0.576/0.591 paragraph, "last 12 months held out",
+"126 cube"); denominators printed (MASE over 2,070 of 2,085; direction over 1,978; 141 of 150 trusts
+represented); naive-vs-mean12 flagged as a 0.002 tie. `rtt_normalised.csv` now labels
+train/validation/test (150,120/25,020/25,020 rows) instead of lumping 24 months as "test".
+
+`04`: the lag analysis, the share trend and the identity case study were reading the full window,
+including the sealed test year (the case study was entirely inside it). All three now stop at the
+2024-04 split; the national marks in section 1 keep the full arc, labelled as published context.
+Conclusions unchanged: lag means 0.088/-0.012/0.011/-0.006 (still no fast response; positives
+12/7/10/8 of 18, so the old "roughly half positive" prose was wrong and is fixed), share-trend
+endpoints are now 3-month means (C_170's lone-zero artefact gone), case study now 2023-08 to
+2024-03 with a 90% over-prediction. The pre-registered-and-falsified seasonal_naive story survives.
+
+### 51.7 10 and 11 - the report's numbers are now printed by the notebooks that are cited
+
+`10` now prints RMSE and both R-squareds beside MASE and the rounds-8-20 plateau statistics
+(0.5095 sd 0.0058, RMSE 69.78, R2_pooled 0.9697, R2_within -0.4980) that were previously only in the
+CSV - closing the "cited but never displayed" hole from Entry 49.3 for the seven worst cells. The
+"same range of total work" prose was false (E=2 spans 120 epochs, E=1/E=4 span 60) and is fixed; the
+"held-out slice" comment on fit_loss was false (it is training data) and is fixed; NAIVE = 0.510
+hard-coded in `10` and `11` is replaced by a read from `baselines.csv` (0.5103), closing open item
+49.7. `11`'s header said 24 rounds where the code runs 30, and its geometry table omitted the
+2022-04 row the finding leans on; both fixed.
+
+### 51.8 Environment, and a machine fact worth recording
+
+CLAUDE.md's environment section described the previous owner's Linux/A100/MIG box; nothing runs
+there. Rewritten for this machine: Windows 11, system Python 3.12.10, torch 2.11.0+cu128 on an RTX
+4060 Laptop (8 GB), notebooks on the python3 kernel, PYTHONIOENCODING=utf-8 required for non-ASCII
+prints (cp1252 console). Re-runs on this box reproduce trained results digit for digit at seed 0, so
+"unchanged after re-run" is a meaningful check here. Sleep-on-AC set to never
+(powercfg /change standby-timeout-ac 0; revert with the same command and 5) so detached runs survive
+the lock screen; on battery the box still sleeps at 3 minutes.
+
+### 51.9 Open
+
+1. **The report build is not reproducible from the repo.** gentables.py (Entry 45) is not checked
+   in anywhere; `fedOPD_report_built.tex` and the PDF cannot be regenerated and are now stale
+   (template prose is fixed, but the built file still carries the old base rates and central row,
+   and the new notebook prints are not in any table). Reconstruct the generator, check it in
+   (which means deciding where a build script is allowed to live under the no-scripts rule), and
+   rebuild.
+2. `01`-`03` findings from this review, none yet fixed: `02`'s integrity gate passes vacuously once
+   the archives are deleted (A1/A2 self-skip, "PASS=True ... 0 tested"); `03` still prints and writes
+   "126 federation clients" into `column_contract.csv` and five other stale prose sites; the sector
+   cache maps unknown new providers to "independent" silently; 14 of 196 allocatable providers have
+   no ICB (36 of 42 ICBs resolved) and are unreachable by the ICB tier; RHQ fell out of `fl_client`
+   on a single missing final month with no per-trust print; KH03 holds a duplicate quarter. Fixing
+   these means re-running `02`/`03` (8.2 GB pass) and then everything downstream.
+3. F-52's experiment - predict breach growth rather than demand growth - remains the highest-value
+   next step, now sharpened: the oracle-variable mismatch is stated in `09` itself.
+4. D-07's temporary-spike detector does not exist; the up call covers only the sustained side.
+5. Multi-seed repeats (everything rests on seed 0), and the `08` point-estimate vs `10`/`11`
+   plateau protocol alignment.
+6. `09`'s `need` frame is rebound across three cells; re-running a middle cell alone can misalign
+   the oracle. Harmless top-to-bottom, a trap interactively.
+7. The F-40 commissioner-parent ICB mapping is still not wired into `07`'s ICB tier (needs `03` to
+   stop dropping Commissioner Parent Org Code for independents - part of item 2).

@@ -209,7 +209,7 @@ everything.
 | 06 | fedavg *(unmatched budget, 30 rounds)* | 0.5527 | 74.72 | 0.9645 | −0.7812 |
 | 06 | fedavg_ft — post-training | 0.5680 | 79.60 | 0.9593 | −0.9356 |
 | 06 | local *(unmatched)* | 0.5558 | 77.10 | 0.9542 | −0.7857 |
-| 06 | central *(unmatched)* | 0.6655 | 96.09 | 0.9437 | −1.8579 |
+| 06 | central *(unmatched)* | 0.7300 | 102.22 | 0.9306 | −2.4157 |
 | **08** | **last-value anchoring** — best overall | **0.5030** | 70.33 | — | −0.4997 |
 | 08 | fedprox — **best RMSE** | 0.5075 | **69.04** | — | −0.5130 |
 | 08 | mlp / fedavg reference — **best R²** | 0.5072 | 69.66 | — | **−0.4876** |
@@ -292,7 +292,7 @@ adding that half back to capacity, then back-tested six months forward on 2,046 
 31% lower error, and the systematic bias disappears.
 
 **2. A federated neural forecaster does not beat repeating last month.** 2,085 series, median MASE:
-`naive` **0.510**, `mean12` 0.512, `fedavg` 0.553, `fedavg_ft` 0.568, `central` 0.665. Only **9.3%** of
+`naive` **0.510**, `mean12` 0.512, `fedavg` 0.553, `fedavg_ft` 0.568, `central` 0.730. Only **9.3%** of
 services achieve a within-series R² above zero. Reported as the null it is.
 
 **3. The metric decides the winner.** Scored on the question a board actually asks — is this department

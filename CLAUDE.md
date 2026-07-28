@@ -33,7 +33,7 @@ These are findings, not preferences. Code that contradicts them is wrong.
   **The decision rule that follows, and it is settled (D-07):** the split is on *how fast the need is*, which decides which levers exist — not on temporary-versus-sustained deciding whether to buy.
   - **Temporary spike → internal absorption only.** Reallocate within the site's own departments, then between sites in the region. Nothing external can respond in that window.
   - **Sustained growth → both levers, evaluated together.** Expand public establishment *and* contract external capacity are both legitimate answers, they operate on the same multi-year timescale, and the agent presents them as a costed choice to the board rather than picking one silently.
-- **The buy lever is specialty-specific.** Independent capacity ranges from 25.6% of public demand in ophthalmology to 0.3% in general medicine, and is **under 5% in 11 of 19 departments**. Never offer "purchase externally" as a generic option. (Entry 29.5)
+- **The buy lever is specialty-specific.** Independent capacity ranges from 26.4% of public demand in ophthalmology (C_130) to 0.4% in general medicine (C_300), and is **under 5% in 12 of 19 departments**. Never offer "purchase externally" as a generic option. (Measured and printed by `07` section 7 over the 12 months to 2024-03, since 2026-07-28; Entry 29.5's earlier 25.6%/0.3%/11-of-19 came from an ad-hoc full-window measurement no notebook reproduced. `07` gates the buy option on this 5% line per service.)
 - **Forecast skill at site × department granularity is poor.** Every baseline has a *negative* within-series R², and seasonal-naive is beaten by a trailing mean (F-38, F-39). Any rule keying on a trend-versus-transient distinction must report its classifier's error rate, not assume it. Carry forecast uncertainty into the allocation rather than hiding it behind a point estimate.
 - **The removal term is split, never lumped.** ~15% of referrals leave the list with no recorded completion; NHS's own linkage says 49% of that is treatment that happened and was filed late. That half is capacity, not attrition.
 
@@ -46,7 +46,7 @@ These are findings, not preferences. Code that contradicts them is wrong.
 - **Audit before publishing.** Extract every decimal from the document and match it against every numeric cell in every result CSV and every number printed in any notebook. Zero untraceable values, or fix it before it ships.
 - **Check the log, then the stored outputs, then write.** A notebook that ran is not a notebook that succeeded; `logs/<name>.log` says whether `nbconvert` wrote the file, and the stored outputs say what it actually produced.
 - **A figure is not a source.** A number read off a chart is a number from memory with extra steps. If a claim needs a value the notebook does not *print*, add the print and re-run the notebook — do not read it from the plot, and do not compute it in the chat and quote the result. (Added 2026-07-27, after "94,000 to 26,000" in the report turned out to be March-to-April 2020 read off a line chart.)
-- **A rate is only meaningful against the base rate of the set it was scored on.** `05`/`06` score 2,085 series and measure a 45.9% growth base rate; `08`/`10`/`11` need a 24-month lookback plus a 12-month horizon, admit 1,978 services, and measure 43.5%. Quoting one family's precision against the other's base rate silently changes what the comparison claims. State the denominator beside every rate.
+- **A rate is only meaningful against the base rate of the set it was scored on.** Every notebook's direction metrics score the same **1,978 services** - the 2,085-series evaluation set minus 107 whose 12-month reference level is zero - and the growth base rate is **45.9% everywhere** (`05`, `06`, `08`, `10`, `11`). The 43.5% that `08`/`10` printed until 2026-07-28 was a masking bug, not a different population: `NaN > BAND` evaluates to `False`, so `np.nanmean` silently averaged over all 2,085 with the 107 ineligible services counted as "not up" (F-60). The earlier F-58 "correction" installed that buggy figure in the report. State the denominator beside every rate.
 - **A metric computed over "whatever was available" is not a metric over everything.** State the denominator, and check that every row you are summarising actually has the column. This exact error has now happened twice here (Entries 24 and 44).
 
 ### Evaluation integrity — build the system, do not chase the number
@@ -130,25 +130,24 @@ This is a research project, not a product. Think and act accordingly, in ideas, 
 - **Comment what is not obvious from reading the line**: what a regex captures, what a magic constant means, why a flag is set, what an unfamiliar call returns. Skip the ones that restate the code. The reasoning that needs more than two lines belongs in the markdown cell above the section, or in `WORKLOG.md`, not inline.
 - Minimal exceptions are allowed only when they serve the data itself (e.g. downloading to a `.part` file and renaming on completion so reruns resume cleanly), not generic error handling.
 
-## Environment
+## Environment (rewritten 2026-07-28 - the old entry described the previous owner's Linux/A100 box)
 
-- Virtualenv: `fed_learning/` at the repo root. Activate with `source fed_learning/bin/activate`, or call `./fed_learning/bin/python` directly.
-- Python 3.10.12, CUDA-enabled PyTorch (torch 2.13.0+cu130), flwr 1.30.0, pandas/scikit-learn/statsmodels, Jupyter.
-- Jupyter kernel is registered as **fed_learning (CUDA)** — select it in the IDE, otherwise notebooks run against system Python which lacks these packages.
+- Windows 11 laptop; the repo is `C:\Users\heave\Documents\FedOPD`. No virtualenv.
+- System Python 3.12.10 on PATH, with pandas 3.0.5, numpy 2.5.1, torch 2.11.0+cu128 (CUDA works), matplotlib, jupyter/nbconvert.
+- Notebooks run on the default **python3** kernel. `02`/`03` still carry the old `fed_learning (CUDA)` kernelspec in their metadata from the previous box; run them with `--ExecutePreprocessor.kernel_name=python3` and they work.
+- Shell scripts that print non-ASCII must set `PYTHONIOENCODING=utf-8`; the console codepage is cp1252 and a bare `print` of a minus sign or an em-dash kills the script.
+- Re-runs on this box have reproduced trained results digit-for-digit (seed 0, same hardware and library versions), so "results unchanged after a re-run" is a meaningful check here.
 
-## Running long jobs — always tmux or nohup
+## Running long jobs
 
-- **Never run a long job in the foreground of a shell.** Anything that takes more than a minute or two — dataset downloads, training runs, full-notebook executions — must be detached so it survives a dropped SSH connection or a closed terminal.
-- Preferred, because you can reattach and watch it: `tmux new -s <job>` then run inside; detach with `Ctrl-b d`, reattach with `tmux attach -t <job>`.
-- Otherwise: `nohup ./fed_learning/bin/python ... > logs/<job>.log 2>&1 &`, then `tail -f logs/<job>.log`.
-- To run a whole notebook headless and keep the outputs in the file:
-  `tmux new -s fetch -d '../fed_learning/bin/jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=-1 --ExecutePreprocessor.kernel_name=fed_learning 01_fetch_dataset.ipynb'`
+- Run notebooks headless from `src/`, one at a time, logging to `logs/`:
+  `jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=-1 --ExecutePreprocessor.kernel_name=python3 <nb>.ipynb > ../logs/<nb>.log 2>&1`
+- Detach anything longer than a minute or two (background the shell command) rather than holding a foreground shell open.
+- A run is finished only when the log's last line says `Writing N bytes to <nb>.ipynb`; anything else means the notebook on disk still holds the previous outputs.
 - nbconvert runs in its own process, separate from the IDE kernel: its variables won't appear in the interactive session, and running the same cells manually at the same time would have both processes writing the same files.
 
-## GPU — usable through MIG
+## GPU
 
-- The box has one NVIDIA A100 80GB PCIe, driver 580.159.03, CUDA 13.0.
-- **MIG mode is Enabled.** The GPU is only usable through its MIG device, not the raw GPU — currently a single `7g.80gb` slice covering the whole card (`MIG-c196af98-196a-5e8c-af32-0eff63a870e1`).
-- Because that one slice spans the full card, PyTorch sees it as a normal single device: `cuda:0`, 80 GB. Use `torch.device("cuda")` as usual.
-- Caveats that come with MIG: pick a device by MIG UUID via `CUDA_VISIBLE_DEVICES=MIG-<uuid>` rather than an integer index if the slice layout ever changes; per-process GPU utilisation is not reported in `nvidia-smi` under MIG; and no NVLink/peer-to-peer or multi-GPU collectives across slices, so federated "clients" run sequentially or as separate processes on the same slice, not on separate GPUs.
-- Shared box: check `nvidia-smi` before launching, and run long jobs in `tmux`.
+- NVIDIA GeForce RTX 4060 Laptop GPU, 8 GB, driver-side CUDA 12.8 matching torch 2.11.0+cu128.
+- `torch.device("cuda")` as usual; no MIG, no multi-GPU. Federated clients run sequentially in one process.
+- The GPU-heavy notebooks (`06`, `08`, `10`, `11`) each take from several minutes to a few tens of minutes at the current model size; run them sequentially, not in parallel, or they contend for the 8 GB.
