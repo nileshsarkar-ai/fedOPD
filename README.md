@@ -1,5 +1,19 @@
 # fedOPD: Federated + Agentic Decision Support for NHS Waiting Lists
 
+> **Headline (verified prospectively on a sealed year): federated learning matches centralised learning at zero accuracy cost once models predict *changes* instead of *levels* — but on eight years of NHS RTT data, no model (linear or neural, local or federated) beats "next month looks like this month" by more than a rounding error. The operational deliverable is honest uncertainty bands and frozen decision rules, not a better point forecast.**
+
+## Results at a glance
+
+Every number below traces to a stored csv in `data/processed/` (all tracked in this repo); the generated full lists are [`output/RESULTS.md`](output/RESULTS.md) (headline numbers) and [`output/RUNS.md`](output/RUNS.md) (per-notebook run log and verdict prints).
+
+| question | result | evidence |
+|---|---|---|
+| Can anything beat naive persistence? (validation FY 2024-25) | **No** — persistence MAE 153.5 (n=1,407 provider-rows at C_110) unbeaten at every grain (provider / ICB / national) and horizon (1–12 months) by nine model families | `fl_summary_c110.csv`, `val_horizons_c110.csv`, `val_horizons_coarse_c110.csv` |
+| Does federation cost accuracy? | On levels, badly (FedAvg 186.5 vs pooled 153.8 — the non-IID failure). **In delta space, no**: FedAvg 154.0 ≈ pooled 153.8; median gap −0.08 across 23 specialties | `fl_summary_c110.csv`, `fl_scaleup_by_specialty.csv` |
+| Do neural (GRU) clients help? | A coin flip vs linear (11 of 23 specialties). At C_110 they gave the project's only sub-persistence scores: pooled 150.6 / FedAvg 152.4 vs 154.1 (n=1,401), confirmed across 3 declared seeds (151.5 ± 0.9 / 152.4 ± 0.0) | `fl_neural_summary.csv`, `fl_neural_c110_multiseed.csv` |
+| What do the frozen agent rules do? | v2: 457 OUT / 105 IN / 1,775 STATUS_QUO of 2,337 provider-months, classes separating cleanly (median pressure 0.723 vs 0.183) — but only 13.6% of OUT months have an in-ICB receiver, and 53.8% sit in ICBs arithmetically too small to ever have one | `agent_frozen_summary.csv`, `agent_decisions_h6_c110.csv` |
+| The sealed year (one shot, FY 2025-26) | **Persistence retook the anchor**: 151.5 vs neural pooled 151.6 at C_110 (n=1,407) — the validated neural edge did not replicate. Models still edged persistence at 14–15 of 23 specialties; persistence itself drifted by a median +4.6% year-over-year — the year moves more than the models | `sealed_year_eval.csv` |
+
 This project builds a **federated, agentic AI system** to support strategic planning and resource allocation across NHS hospitals using Referral to Treatment (RTT) waiting‑time data.
 
 **Goal:**  
