@@ -4,14 +4,9 @@ nhs_FL_agentic/
 .ipynb_checkpoints/
 __pycache__/
 
-# data tree (~8.5 GB): raw NHS downloads and derived panels, all reproducible via src/01-06.
-# The small result csvs in data/processed/ ARE tracked - every documented number traces to one -
-# but the five large derived panels (4-74 MB each) are excluded by name below.
+# data tree (~8.5 GB): raw NHS downloads, reproducible via src/01-06. The processed dataset
+# (data/processed/, incl. the derived panels up to 74 MB - under GitHub's 100 MB limit) IS tracked
+# in full: every documented number traces to a csv there.
 data/*
 !data/processed/
 !data/processed/*
-data/processed/rtt_kh03_canonical_panel.csv
-data/processed/rtt_panel_with_provider_flags.csv
-data/processed/rtt_incomplete_panel.csv
-data/processed/rtt_flows_panel.csv
-data/processed/kh03_monthly_panel.csv

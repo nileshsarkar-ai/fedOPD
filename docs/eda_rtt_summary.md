@@ -230,7 +230,7 @@ every sealed score):
 
 ## Goals vs evidence (verified 2026-07-30)
 
-Verification basis: all nineteen notebooks (01–19) re-checked programmatically — every code cell executed (8, 23, 5, 6, 5, 4, 8, 9, 4, 8, 4, 3, 19, 3, 3, 6, 4, 2, 3 cells respectively), zero stored error outputs, and every claim in this document has its implementing code line present in the notebook it cites.
+Verification basis: all nineteen notebooks (01–19) re-checked programmatically — every code cell executed (8, 23, 5, 6, 5, 4, 8, 9, 4, 8, 4, 3, 19, 3, 3, 6, 4, 3, 3 cells respectively), zero stored error outputs, and every claim in this document has its implementing code line present in the notebook it cites.
 
 | goal (README) | status | evidence |
 |---|---|---|
