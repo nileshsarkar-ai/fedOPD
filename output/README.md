@@ -17,10 +17,10 @@ No model, split, band or decision is recomputed here; `data/processed/` remains 
 | `evals/eval_c110_persistence_mae_by_month_h1.csv` | `val_forecasts_c110_public_clients.csv` | persistence MAE per forecast-origin month, FY 2024-25 |
 | `evals/eval_c110_provider_mae_h1.csv` | `val_forecasts_c110_public_clients.csv` | per-provider 1-month persistence MAE, FY 2024-25 |
 | `figures/fig_c110_provider_mae_h1.png` | `val_forecasts_c110_public_clients.csv` | distribution of per-provider 1-month persistence MAE |
-| `evals/eval_c110_agent_provider_h6.csv` | `agent_decisions_h6_c110.csv` | v1 and v2 decision counts per provider (132 providers) |
-| `evals/eval_c110_agent_icb_h6.csv` | `agent_decisions_h6_c110.csv` | v2 decision counts, provider count and in-ICB receiver share per ICB |
-| `evals/eval_c110_agent_stress_h6.csv` | `agent_decisions_h6_c110.csv` | v2 class sizes and medians in three consecutive 6-month origin windows |
-| `figures/fig_c110_agent_v2_h6.png` | `agent_decisions_h6_c110.csv` | v2 class sizes and median realized 6-month change per class |
+| `evals/eval_c110_agent_provider_h6.csv` | `agent_decisions_h6_c110.csv` | capacity (v1_) and redistribution (v2_) decision counts per provider (132 providers) |
+| `evals/eval_c110_agent_icb_h6.csv` | `agent_decisions_h6_c110.csv` | redistribution decision counts, provider count and in-ICB receiver share per ICB |
+| `evals/eval_c110_agent_stress_h6.csv` | `agent_decisions_h6_c110.csv` | redistribution class sizes and medians in three consecutive 6-month origin windows |
+| `figures/fig_c110_agent_v2_h6.png` | `agent_decisions_h6_c110.csv` | redistribution class sizes and median realized 6-month change per class |
 | `figures/fig_c110_fl_models_h1.png` | `fl_summary_c110.csv` | MAE per FL model and regime vs persistence |
 | `figures/fig_c110_fl_linear_vs_neural_h1.png` | `fl_neural_summary.csv` | linear vs neural FL at C_110, both regimes, identical eligible rows |
 | `figures/fig_fl_covid_regime_effect_h1.png` | `fl_scaleup_by_specialty.csv + fl_neural_summary.csv` | per-specialty cost of training on post-Covid data only, linear and neural FedAvg |

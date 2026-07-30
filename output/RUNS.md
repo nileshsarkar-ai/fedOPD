@@ -20,14 +20,14 @@ print. Headline numbers live in `output/RESULTS.md`; this page is the run log. T
 | 10_agent_logic | 8 | 8 | 0 | 2026-07-29 19:14 | OK |
 | 11_federated_learning | 4 | 4 | 0 | 2026-07-29 19:29 | OK |
 | 12_coarser_grain | 3 | 3 | 0 | 2026-07-29 19:29 | OK |
-| 13_report_figures | 19 | 19 | 0 | 2026-07-29 22:36 | OK |
+| 13_report_figures | 19 | 19 | 0 | 2026-07-30 14:22 | OK |
 | 14_fl_scaleup | 3 | 3 | 0 | 2026-07-29 21:23 | OK |
 | 15_agent_rules_frozen | 3 | 3 | 0 | 2026-07-29 22:05 | OK |
 | 16_fl_neural_clients | 6 | 6 | 0 | 2026-07-29 21:22 | OK |
 | 17_sealed_year_eval | 4 | 4 | 0 | 2026-07-29 22:27 | OK |
-| 18_extract_figures | 3 | 3 | 0 | 2026-07-29 22:47 | OK |
+| 18_extract_figures | 3 | 3 | 0 | 2026-07-30 14:19 | OK |
 | 19_neural_c110_multiseed | 3 | 3 | 0 | 2026-07-29 22:07 | OK |
-| 20_paper_docx | 4 | 4 | 0 | 2026-07-30 00:07 | OK |
+| 20_paper_docx | 4 | 4 | 0 | 2026-07-30 14:20 | OK |
 
 ## 01_fetch_dataset
 
@@ -205,7 +205,6 @@ C_150    38.2
 ## 18_extract_figures
 
 ```
-|---|---|---|---|---|---|
 | 01_fetch_dataset | 8 | 8 | 0 | 2026-07-29 16:41 | OK |
 | 02_eda_dataset | 23 | 23 | 0 | 2026-07-29 17:18 | OK |
 | 03_provider_flags | 5 | 5 | 0 | 2026-07-29 17:33 | OK |
@@ -218,13 +217,14 @@ C_150    38.2
 | 10_agent_logic | 8 | 8 | 0 | 2026-07-29 19:14 | OK |
 | 11_federated_learning | 4 | 4 | 0 | 2026-07-29 19:29 | OK |
 | 12_coarser_grain | 3 | 3 | 0 | 2026-07-29 19:29 | OK |
-| 13_report_figures | 19 | 19 | 0 | 2026-07-29 22:36 | OK |
+| 13_report_figures | 19 | 19 | 0 | 2026-07-30 14:19 | OK |
 | 14_fl_scaleup | 3 | 3 | 0 | 2026-07-29 21:23 | OK |
 | 15_agent_rules_frozen | 3 | 3 | 0 | 2026-07-29 22:05 | OK |
 | 16_fl_neural_clients | 6 | 6 | 0 | 2026-07-29 21:22 | OK |
 | 17_sealed_year_eval | 4 | 4 | 0 | 2026-07-29 22:27 | OK |
-| 18_extract_figures | 3 | 3 | 0 | 2026-07-29 22:46 | OK |
+| 18_extract_figures | 3 | 3 | 0 | 2026-07-30 00:09 | OK |
 | 19_neural_c110_multiseed | 3 | 3 | 0 | 2026-07-29 22:07 | OK |
+| 20_paper_docx | 4 | 4 | 0 | 2026-07-30 00:07 | OK |
 ```
 
 ## 19_neural_c110_multiseed
@@ -244,5 +244,5 @@ declared verdict, full regime, neural_fedavg: CONFIRMED (all 3 seeds below persi
 ## 20_paper_docx
 
 ```
-fedopd_paper.docx verified: 3,582 words of text (cap 4,500), 11 tables, 14 figures, all 11 headline pins found in the prose
+fedopd_paper.docx verified: 3,614 words of text (cap 4,500), 11 tables, 14 figures, all 11 headline pins found in the prose
 ```

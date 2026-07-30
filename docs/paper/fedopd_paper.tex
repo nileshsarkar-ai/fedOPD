@@ -201,10 +201,12 @@ A provider-month pressure score is a weighted within-month percentile rank,
 p_{it} = 0.2\,r_t(s^{18}_{it}) + 0.6\,r_t(s^{52}_{it}) + 0.2\,r_t(o_{it}),
 \end{equation}
 where $r_t(\cdot)$ ranks providers within month $t$ and $o$ is G\&A occupancy; the $>$52-week share
-carries the largest weight because it is the component that moved 81-fold post-Covid. Rule set v1
-combines pressure thresholds (0.70/0.40) with the 6-month conformal band (growth-risk
-$1.20\times$, stability $1.05\times$) and occupancy slack (0.80); rule set v2 classifies
-within-ICB senders and receivers by ICB-internal ranks ($\geq 0.80$ sender, $\leq 0.30$ receiver).
+carries the largest weight because it is the component that moved 81-fold post-Covid. Two rule
+sets are evaluated, named by what they decide (and keyed \texttt{v1}/\texttt{v2} in the stored
+outputs). The \emph{capacity} rule set combines pressure thresholds (0.70/0.40) with the 6-month
+conformal band (growth-risk $1.20\times$, stability $1.05\times$) and occupancy slack (0.80) to
+trigger \texttt{EXPAND\_CAPACITY}; the \emph{redistribution} rule set classifies within-ICB
+senders and receivers by ICB-internal ranks ($\geq 0.80$ sender, $\leq 0.30$ receiver).
 The constants were ratified and frozen on 2026-07-30; the freeze notebook re-derives all 2{,}337
 simulated decisions from stored components and asserts bit-for-bit equality. A minimum receiver
 group emerges arithmetically: a rank $\leq 0.30$ requires an ICB of at least
@@ -334,7 +336,7 @@ groups.}
 \footnotesize
 \begin{tabular}{llrrrrrrr}
 \toprule
-code & treatment function & $n_{\mathrm{val}}$ & clients & persistence & local & pooled & FedAvg-$\Delta$ & FedAvg-$\Delta$+local-$a$ \\
+code & treatment function & $n_{\mathrm{val}}$ & clients & persistence & local & pooled & FedAvg-$\Delta$ & FedAvg-$\Delta$+intercept \\
 \midrule
 X02 & Other: Medical & 1{,}409 & 129 & \textbf{144.2} & 158.9 & 152.6 & 153.2 & 155.2 \\
 C\_110 & Trauma \& Orthopaedics & 1{,}407 & 128 & \textbf{153.5} & 154.5 & 153.7 & 154.0 & 155.3 \\
@@ -495,40 +497,42 @@ break that dominates level models barely matters in delta space.
 \subsection{Agent rules: clean signals, starved geography}
 Table~\ref{tab:agent} summarises the frozen rules over 2{,}337 provider-months (Apr 2023--Sep
 2024, 132 providers) and Table~\ref{tab:stress} the three-window stress test; Fig.~\ref{fig:agent}
-shows the v2 classes against what happened six months later. The frozen v2 rule flags 457 sender
+shows the redistribution classes against what happened six months later. The frozen
+redistribution rule flags 457 sender
 and 105 receiver months with cleanly separated pressure (median 0.723 vs.\ 0.183, stable across all
 three disjoint windows), and sender flags precede the largest realised 6-month deteriorations
 (median $+81$ patients; $+181$ in the final window). The structural finding is geographic: only
 13.6\% of the 457 sender months have any in-ICB receiver that month, and 246 of 457 (53.8\%) occur
 in ICBs with fewer than four cohort providers, where a receiver is arithmetically impossible under
 the frozen threshold. In-ICB-only redistribution is therefore starved by design; cross-ICB or
-independent-sector receiving is a policy prerequisite, not a tuning choice. Rule set v1's receiver
-condition never fires (0 of 2{,}337): kept and documented as evidence that band-conditioned
-receiving is too strict.
+independent-sector receiving is a policy prerequisite, not a tuning choice. The capacity rule
+set's band-conditioned receiver clause never fires (0 of 2{,}337): kept and documented as
+evidence that band-conditioned receiving is too strict.
 
 \begin{table}[t]
 \caption{Frozen agent rules: decision classes over 2{,}337 provider-months
-(\texttt{agent\_frozen\_summary.csv}).}
+(\texttt{agent\_frozen\_summary.csv}; csv rule keys: \texttt{v1} = capacity,
+\texttt{v2} = redistribution).}
 \label{tab:agent}
 \centering
 \scriptsize
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{llrrrr}
 \toprule
-rule & decision & $n$ & share & press. & 6m chg. \\
+rule set & decision & $n$ & share & press. & 6m chg. \\
 \midrule
-v1 & EXPAND\_CAPACITY & 334 & 14.3\% & 0.794 & $+0.5$ \\
-v1 & STATUS\_QUO & 2{,}003 & 85.7\% & 0.451 & $+37.0$ \\
-v2 & REDISTRIBUTE\_IN & 105 & 4.5\% & 0.183 & $+5.0$ \\
-v2 & REDISTRIBUTE\_OUT & 457 & 19.6\% & 0.723 & $+81.0$ \\
-v2 & STATUS\_QUO & 1{,}775 & 76.0\% & 0.471 & $+14.0$ \\
+capacity & EXPAND\_CAPACITY & 334 & 14.3\% & 0.794 & $+0.5$ \\
+capacity & STATUS\_QUO & 2{,}003 & 85.7\% & 0.451 & $+37.0$ \\
+redistrib. & REDISTRIBUTE\_IN & 105 & 4.5\% & 0.183 & $+5.0$ \\
+redistrib. & REDISTRIBUTE\_OUT & 457 & 19.6\% & 0.723 & $+81.0$ \\
+redistrib. & STATUS\_QUO & 1{,}775 & 76.0\% & 0.471 & $+14.0$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \begin{table}[t]
-\caption{v2 stress test: three disjoint 6-month origin windows partitioning all 2{,}337 decisions
-(\texttt{eval\_c110\_agent\_stress\_h6.csv}).}
+\caption{Redistribution-rule stress test: three disjoint 6-month origin windows partitioning all
+2{,}337 decisions (\texttt{eval\_c110\_agent\_stress\_h6.csv}).}
 \label{tab:stress}
 \centering
 \scriptsize
@@ -553,8 +557,8 @@ window & class & $n$ & press. & 6m chg. \\
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{fig_c110_agent_v2_h6.png}
-\caption{v2 decision classes (left) and the median realised 6-month change that followed each class
-(right), Apr 2023--Sep 2024.}
+\caption{Redistribution decision classes (left) and the median realised 6-month change that
+followed each class (right), Apr 2023--Sep 2024.}
 \label{fig:agent}
 \end{figure}
 

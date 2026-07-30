@@ -16,12 +16,12 @@ time. Denominators are stated beside every rate. Figures live in `output/figures
 - Neural clients (GRU, seed 42): neural FedAvg beats linear FedAvg at 11 of 23 specialties (full regime); C_110 neural pooled 150.6 vs persistence 154.1 on 1,401 identical rows (fl_neural_summary.csv).
 - Multi-seed check (seeds 42, 123, 999): full-regime C_110 MAE 151.5 +/- 0.9 pooled, 152.4 +/- 0.0 FedAvg - all 6 of 6 full-regime scores below persistence 154.1 (fl_neural_c110_multiseed.csv).
 
-## Agent rules (frozen 2026-07-30, agent_frozen_summary.csv)
-- v1 EXPAND_CAPACITY: 334 of 2,337 provider-months (14.3%), median pressure 0.794, median realized 6-month change +0.5.
-- v1 STATUS_QUO: 2,003 of 2,337 provider-months (85.7%), median pressure 0.451, median realized 6-month change +37.0.
-- v2 REDISTRIBUTE_IN: 105 of 2,337 provider-months (4.5%), median pressure 0.183, median realized 6-month change +5.0.
-- v2 REDISTRIBUTE_OUT: 457 of 2,337 provider-months (19.6%), median pressure 0.723, median realized 6-month change +81.0.
-- v2 STATUS_QUO: 1,775 of 2,337 provider-months (75.9%), median pressure 0.471, median realized 6-month change +14.0.
+## Agent rules (frozen 2026-07-30, agent_frozen_summary.csv; csv rule keys: v1 = capacity, v2 = redistribution)
+- capacity EXPAND_CAPACITY: 334 of 2,337 provider-months (14.3%), median pressure 0.794, median realized 6-month change +0.5.
+- capacity STATUS_QUO: 2,003 of 2,337 provider-months (85.7%), median pressure 0.451, median realized 6-month change +37.0.
+- redistribution REDISTRIBUTE_IN: 105 of 2,337 provider-months (4.5%), median pressure 0.183, median realized 6-month change +5.0.
+- redistribution REDISTRIBUTE_OUT: 457 of 2,337 provider-months (19.6%), median pressure 0.723, median realized 6-month change +81.0.
+- redistribution STATUS_QUO: 1,775 of 2,337 provider-months (75.9%), median pressure 0.471, median realized 6-month change +14.0.
 - Receiver reachability: 13.6% of 457 OUT months have an in-ICB receiver slot; 246 of 457 OUT months sit in sub-4-provider ICBs where no local receiver is arithmetically possible.
 
 ## Sealed year FY 2025-26 (one shot, sealed_year_eval.csv)
