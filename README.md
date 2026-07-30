@@ -25,37 +25,41 @@ Use historical RTT data (2018–2026) to:
   - Recommend redistribution of demand, capacity expansion, or use of independent‑sector capacity.
 - Explore a **federated learning** setup where each hospital (or ICB) trains local models and a central “board agent” aggregates knowledge without centralising raw data.
 
-The first milestone is a **clean, audited RTT panel** and a set of reproducible notebooks that prove key data properties before any modeling.
+The first milestone was a **clean, audited RTT panel** proven by reproducible notebooks; every later stage (forecasting, agents, FL, the sealed year, the paper) builds on it and is listed in the pipeline below.
 
-## Status at a glance (from notebook stored outputs, 2026-07-29)
+## Status at a glance (from notebook stored outputs, 2026-07-30)
 
-- **Milestone 1 delivered**: audited 96-month RTT panel → flagged panel → canonical panel with capacity (`data/processed/rtt_kh03_canonical_panel.csv`, 343,441 × 24). All six notebooks run headless end-to-end with zero errors; every documented claim has its implementing code line.
-- **Sealed test year: FY 2025-26** — declared in `04_baseline_forecasting.ipynb`, excluded by assert, untouched until the one-shot final evaluation.
-- **Standing result — the forecasting question is closed at this grain**: naive persistence is unbeaten on MAE at *every* horizon from 1 to 12 months (154 / 317 / 501 / 742 on FY 2024-25 validation targets), by every signal in the raw files — linear, gradient boosting, drift, seasonality, and the `Part_3`/`Part_1` flows (notebooks 04, 07–09). Waiting lists carry no usable seasonality at any horizon. One crack: net-flow linear beats naive on RMSE at 1 month (328 vs 330).
-- **New capability**: conformal 90% bands around persistence, calibrated on FY 2023-24 and honestly covered on FY 2024-25 (87.6–89.6%): ±298 (1m) to ±1,714 (12m) patients — the uncertainty input for allocation decisions.
-- **Agent prototype built, v1 + v2** (notebook 10): declared-weight pressure score + 6-month band, 2,337 simulated decisions with known outcomes. v1 lesson: growth-risk triggers select no extra realized growth — rules must condition on *current* pressure. v2 (within-ICB OUT/IN): classes separate real populations, but only **13.6%** of OUT flags have an in-ICB receiver — redistribution needs cross-ICB or independent-sector receivers. Constants pending supervisor ratification.
-- **FL phases 1 + 2 run** (notebook 11): naive level-FedAvg actively hurts (186.5 / 228.8 — the non-IID failure, measured), but **delta-space federation repairs it completely**: fedavg-delta 154.0, within 0.2 of centralized pooling (153.8), raw data never leaving the client. Remaining: scale toward the 392-provider pool and neural clients.
-- **Coarser grains closed** (notebook 12): persistence wins at every horizon at ICB (310/657/1,077/1,523) and national grain (3,777/5,652/8,928/9,580) — **the random walk holds at provider, ICB and national level. Forecasting is closed at every grain and horizon measured.**
+- **The full arc is delivered**: audited panel → forecast layer → agent rules → federated learning (linear + neural) → frozen constants → one-shot sealed-year evaluation → conference paper. Twenty notebooks (01–20) run headless end-to-end with zero stored errors ([`output/RUNS.md`](output/RUNS.md)).
+- **The sealed test year FY 2025-26 is spent** (notebook 17, run exactly once, never re-run): **persistence retook the anchor** — 151.5 vs neural pooled 151.6 at C_110 (n=1,407 rows); the three-seed-confirmed validation edge did not replicate prospectively. Models still edged persistence at 14–15 of 23 specialties, and per-specialty persistence MAE drifted by a median +4.6% year-over-year (range −51.1% to +38.2%) — **the year moves more than the models**.
+- **Forecasting closed at every grain and horizon** (validation FY 2024-25): persistence MAE 153.5 (n=1,407 C_110 provider-rows) unbeaten by nine model families — provider 154 / 317 / 501 / 742 (h=1/3/6/12), ICB 310 / 657 / 1,077 / 1,523, national 3,777 / 5,652 / 8,928 / 9,580. One crack: net-flow linear beats naive on RMSE at 1 month (328 vs 330).
+- **Uncertainty layer**: conformal 90% bands around persistence, calibrated on FY 2023-24, honestly covered on FY 2024-25 (87.6–89.6%): ±298 (1m) to ±1,714 (12m) patients — the planning input the paper recommends over point forecasts.
+- **Federation is free in delta space**: level-space FedAvg fails on non-IID hospitals (186.5 / 228.8) but fedavg-delta 154.0 matches pooled 153.8 at the anchor; scaled to 24 specialties × 149 public clients (26,504 validation rows), the federated-minus-pooled MAE gap has median −0.08 (notebooks 11, 14).
+- **Neural clients are a coin flip, except at the anchor** (notebooks 16, 19): GRU FedAvg beats linear FedAvg at 11 of 23 specialties; at C_110 the neural family gave the project's only sub-persistence scores (pooled 150.6 / FedAvg 152.4 vs 154.1, n=1,401), confirmed across 3 declared seeds (151.5 ± 0.9 / 152.4 ± 0.0).
+- **Agent rules frozen 2026-07-30** (notebook 15, constants ratified by the project owner, bit-for-bit re-derivation asserted): v2 flags 457 OUT / 105 IN of 2,337 provider-months with cleanly separated pressure (median 0.723 vs 0.183, stable across three disjoint windows) — but only 13.6% of OUT months have an in-ICB receiver and 246 of 457 sit in sub-4-provider ICBs where none is arithmetically possible. Receiving must widen beyond the ICB.
+- **Paper built from the stored outputs**: 9-page IEEE-style PDF (`docs/paper/fedopd_paper.tex`, fact-checked cell by cell against the csvs) and a 12-page single-column DOCX generated by notebook 20 with csv-pinned asserts.
 
-Full evidence trail: `docs/eda_rtt_summary.md` (results + goals-vs-evidence table) and `docs/idea_canonical_pipeline.md` (pipeline design record).
+Full evidence trail: `docs/eda_rtt_summary.md` (results + goals-vs-evidence table), `docs/fl_experiments_register.md` (every FL run), and `docs/idea_canonical_pipeline.md` (pipeline design record).
 
 ---
 
 ## Pipeline at a glance
 
-Arrows are data flow; node labels state what was *measured*, not what was hoped — the forecast layer is persistence because nothing beat it, agents condition on current pressure because predicted growth selects nothing, and FL matches pooled training without beating persistence.
+Arrows are data flow; node labels state what was *measured*, not what was hoped — the forecast layer is persistence because nothing beat it, agents condition on current pressure because predicted growth selects nothing, federation matches pooled training without beating persistence, and the sealed year adjudicated it all exactly once. Numbers in parentheses are the notebooks (`src/NN_*.ipynb`) that produced each stage; every node's claims live in its stored csv outputs.
 
 ```mermaid
 flowchart TD
-    RTT["RTT Full CSVs<br/>96 months, Apr 2018 - Mar 2026"] --> PANEL["canonical panel<br/>rtt_kh03_canonical_panel.csv<br/>343,441 rows"]
+    RTT["RTT Full CSVs<br/>96 months, Apr 2018 - Mar 2026"] --> PANEL["canonical panel (01-06)<br/>rtt_kh03_canonical_panel.csv<br/>343,441 rows x 24 cols, 651 providers"]
     ODS["ODS trust reference<br/>is_public, ICB, flags"] --> PANEL
-    KH03["KH03 beds<br/>provider-level capacity"] --> PANEL
-    PANEL --> FC["forecast layer - final<br/>persistence + conformal 90% bands<br/>unbeaten at every grain, h = 1-12"]
-    PANEL --> FL["federated learning<br/>delta-space FedAvg matches pooled<br/>(level FedAvg fails; nothing beats persistence)"]
-    FC --> AG["agent rules v1 + v2<br/>condition on current pressure standing,<br/>not predicted growth"]
-    FC --> OUT["output/ figures + eval tables<br/>notebook 13, from stored csvs only"]
+    KH03["KH03 beds<br/>provider-level G&A occupancy"] --> PANEL
+    PANEL --> FC["forecast layer (04, 07-09, 12) - final<br/>persistence + conformal 90% bands<br/>unbeaten at every grain, h = 1-12"]
+    PANEL --> FL["federated learning, linear (11, 14)<br/>level FedAvg fails (186.5); delta-space<br/>FedAvg 154.0 matches pooled 153.8,<br/>24 specialties x 149 public clients"]
+    FL --> NN["neural clients (16, 19)<br/>GRU FedAvg vs linear: coin flip (11 of 23);<br/>anchor edge 150.6/152.4 vs 154.1,<br/>confirmed on 3 declared seeds"]
+    FC --> AG["agent rules (10), frozen (15)<br/>v2: 457 OUT / 105 IN of 2,337,<br/>pressure 0.723 vs 0.183; in-ICB<br/>receiving starved (13.6% reachable)"]
+    FC --> SEAL["sealed year FY 2025-26 (17)<br/>one shot, never re-run:<br/>persistence retakes the anchor 151.5 vs 151.6;<br/>models win 14-15 of 23; drift median +4.6%"]
+    NN --> SEAL
+    SEAL --> OUT["report layer (13, 18)<br/>14 figures + RESULTS.md + RUNS.md,<br/>from stored csvs only"]
     AG --> OUT
-    FL --> OUT
+    OUT --> PAPER["paper (20 + docs/paper)<br/>9-page IEEE PDF via Tectonic;<br/>12-page single-column DOCX,<br/>tables generated from the csvs"]
 ```
 
 ## Data sources
@@ -77,9 +81,8 @@ All data are from **NHS England**:
   - Classify providers as public vs independent.  
   [ODS Data Search & Export](https://www.england.nhs.uk/nhs-it/standards-and-guidance/organisation-data-service-ods/)
 
-- **KH03 Bed Availability & Occupancy** *(planned)*  
-  Quarterly bed‑level capacity data (available/occupied bed days) by specialty.  
-  Will be merged with RTT to add a **capacity** dimension to the demand/waiting signals.
+- **KH03 Bed Availability & Occupancy** *(merged — notebooks 05–06)*  
+  Quarterly bed capacity data (available/occupied, by sector). KH03 reports **sectors, not specialties**, so capacity joins the panel at provider level as general-and-acute occupancy.
 
 ---
 
