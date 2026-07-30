@@ -25,8 +25,9 @@ print. Headline numbers live in `output/RESULTS.md`; this page is the run log. T
 | 15_agent_rules_frozen | 3 | 3 | 0 | 2026-07-29 22:05 | OK |
 | 16_fl_neural_clients | 6 | 6 | 0 | 2026-07-29 21:22 | OK |
 | 17_sealed_year_eval | 4 | 4 | 0 | 2026-07-29 22:27 | OK |
-| 18_extract_figures | 3 | 3 | 0 | 2026-07-29 22:46 | OK |
+| 18_extract_figures | 3 | 3 | 0 | 2026-07-29 22:47 | OK |
 | 19_neural_c110_multiseed | 3 | 3 | 0 | 2026-07-29 22:07 | OK |
+| 20_paper_docx | 4 | 4 | 0 | 2026-07-30 00:07 | OK |
 
 ## 01_fetch_dataset
 
@@ -222,7 +223,7 @@ C_150    38.2
 | 15_agent_rules_frozen | 3 | 3 | 0 | 2026-07-29 22:05 | OK |
 | 16_fl_neural_clients | 6 | 6 | 0 | 2026-07-29 21:22 | OK |
 | 17_sealed_year_eval | 4 | 4 | 0 | 2026-07-29 22:27 | OK |
-| 18_extract_figures | 3 | 2 | 0 | 2026-07-29 22:46 | CHECK |
+| 18_extract_figures | 3 | 3 | 0 | 2026-07-29 22:46 | OK |
 | 19_neural_c110_multiseed | 3 | 3 | 0 | 2026-07-29 22:07 | OK |
 ```
 
@@ -238,4 +239,10 @@ post  neural_fedavg  MAE 153.6 +/- 0.2 (seeds: 153.7, 153.4, 153.6) | beats pers
 declared verdict, full regime, neural_pooled: CONFIRMED (all 3 seeds below persistence)
 declared verdict, full regime, neural_fedavg: CONFIRMED (all 3 seeds below persistence)
 (12, 6) -> ..\data\processed\fl_neural_c110_multiseed.csv
+```
+
+## 20_paper_docx
+
+```
+fedopd_paper.docx verified: 3,582 words of text (cap 4,500), 11 tables, 14 figures, all 11 headline pins found in the prose
 ```
