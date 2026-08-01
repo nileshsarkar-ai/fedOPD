@@ -8,6 +8,8 @@ No model, split, band or decision is recomputed here; `data/processed/` remains 
 | artifact | source csv | shows |
 |---|---|---|
 | `figures/fig_system_architecture.png` | `pipeline structure (src/01-17)` | monochrome system architecture: sources, panel, features, three modelling layers, sealed one-shot |
+| `figures/fig_fl_architecture.png` | `pipeline structure (src/11, 14, 16)` | federated round: local fit, parameter upload, weighted average, broadcast |
+| `figures/fig_agent_architecture.png` | `pipeline structure (src/10, 15)` | agent decision flow: pressure components, two frozen rule sets, decision classes, outcome check |
 | `figures/fig_national_trend.png` | `rtt_incomplete_panel.csv` | national waiting-list level by month |
 | `figures/fig_national_longwait_shares.png` | `rtt_incomplete_panel.csv` | monthly >18w and >52w shares |
 | `figures/fig_national_beds_kh03.png` | `kh03_monthly_panel.csv` | national G&A beds open and occupied, and the occupancy rate feeding the pressure score |
