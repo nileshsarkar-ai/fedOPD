@@ -7,8 +7,10 @@ No model, split, band or decision is recomputed here; `data/processed/` remains 
 
 | artifact | source csv | shows |
 |---|---|---|
+| `figures/fig_system_architecture.png` | `pipeline structure (src/01-17)` | monochrome system architecture: sources, panel, features, three modelling layers, sealed one-shot |
 | `figures/fig_national_trend.png` | `rtt_incomplete_panel.csv` | national waiting-list level by month |
 | `figures/fig_national_longwait_shares.png` | `rtt_incomplete_panel.csv` | monthly >18w and >52w shares |
+| `figures/fig_national_beds_kh03.png` | `kh03_monthly_panel.csv` | national G&A beds open and occupied, and the occupancy rate feeding the pressure score |
 | `evals/eval_national_pre_post.csv` | `rtt_incomplete_panel.csv` | era means of the monthly national series (pre: 23 months, post: 73) |
 | `evals/eval_specialty_pre_post.csv` | `rtt_incomplete_panel.csv` | per-specialty era summary (24 specialties) |
 | `evals/eval_provider_pre_post.csv` | `rtt_incomplete_panel.csv` | per-provider era summary (651 providers) |
@@ -24,8 +26,11 @@ No model, split, band or decision is recomputed here; `data/processed/` remains 
 | `figures/fig_c110_agent_v2_h6.png` | `agent_decisions_h6_c110.csv` | redistribution class sizes and median realized 6-month change per class |
 | `figures/fig_c110_agent_sender_split_h6.png` | `agent_decisions_h6_c110.csv` | peer-based vs lone-ICB REDISTRIBUTE_OUT flags and the pressure each group carries |
 | `figures/fig_c110_fl_models_h1.png` | `fl_summary_c110.csv` | MAE per FL model and regime vs persistence |
+| `figures/fig_fl_algorithms_by_specialty_h1.png` | `fl_scaleup_by_specialty.csv` | per-specialty gap to persistence for all four linear information regimes |
 | `figures/fig_c110_fl_linear_vs_neural_h1.png` | `fl_neural_summary.csv` | linear vs neural FL at C_110, both regimes, identical eligible rows |
+| `figures/fig_neural_vs_linear_4panel_h1.png` | `fl_neural_summary.csv` | neural vs linear MAE per specialty for pooled and FedAvg in both regimes |
 | `figures/fig_fl_covid_regime_effect_h1.png` | `fl_scaleup_by_specialty.csv + fl_neural_summary.csv` | per-specialty cost of training on post-Covid data only, linear and neural FedAvg |
+| `figures/fig_fl_regime_effect_4panel_h1.png` | `fl_scaleup_by_specialty.csv` | per-specialty post-minus-full MAE for all four linear information regimes |
 | `figures/fig_fl_neural_gap_by_specialty_h1.png` | `fl_neural_summary.csv` | per-specialty MAE gap, neural minus linear FedAvg, both regimes |
 | `figures/fig_fl_neural_gap_vs_size_h1.png` | `fl_neural_summary.csv` | relative neural-linear gap vs specialty validation size, full regime |
 | `figures/fig_c110_sealed_one_shot_h1.png` | `sealed_year_eval.csv` | C_110 validation vs sealed-year MAE for every model, one-shot verdict |
