@@ -8,9 +8,9 @@ Write like a researcher with 20 years of coding and research experience. Researc
 
 ## Structure
 
-- All code lives in Jupyter notebooks under `src/` — no standalone scripts or modules.
-- One standing exception: `docs/gentables.py` is the report build script and is checked in (decided 2026-07-28, because the report must be reproducible from the repo).
+- All code lives in Jupyter notebooks under `src/` — no standalone scripts or modules. Document builds are notebooks too (20 = paper DOCX, 21 = cohort sensitivity); the earlier `docs/gentables.py` exception is retired (2026-08-01 — the file no longer exists, superseded by notebook 20).
 - Runners, helpers and utilities go in the notebook that needs them or nowhere; `jupyter nbconvert` is invoked directly from the shell.
+- The environment is pinned in `requirements.lock.txt` (frozen from the `nhs_FL_agentic/` venv, 2026-08-01); `data/reference/` (raw-file SHA-256 manifest + the ODS snapshot defining the cohort) is tracked in git.
 
 ## No production scaffolding
 

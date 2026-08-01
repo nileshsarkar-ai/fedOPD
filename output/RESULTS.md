@@ -22,9 +22,15 @@ time. Denominators are stated beside every rate. Figures live in `output/figures
 - redistribution REDISTRIBUTE_IN: 105 of 2,337 provider-months (4.5%), median pressure 0.183, median realized 6-month change +5.0.
 - redistribution REDISTRIBUTE_OUT: 457 of 2,337 provider-months (19.6%), median pressure 0.723, median realized 6-month change +81.0.
 - redistribution STATUS_QUO: 1,775 of 2,337 provider-months (75.9%), median pressure 0.471, median realized 6-month change +14.0.
+- Sender-flag decomposition (2026-08-01 audit): 354 of 457 OUT flags are peer-based (median pressure 0.765); 103 (22.5%) come from lone-provider ICB-months where rank(pct)=1.0 flags OUT mechanically (median pressure 0.533, median realized +176.0).
 - Receiver reachability: 13.6% of 457 OUT months have an in-ICB receiver slot; 246 of 457 OUT months sit in sub-4-provider ICBs where no local receiver is arithmetically possible.
 
 ## Sealed year FY 2025-26 (one shot, sealed_year_eval.csv)
 - C_110 (n=1,407): persistence 151.5 edges neural pooled 151.6; the validation neural advantage did not replicate prospectively.
 - Aggregate: neural pooled beats persistence at 15 of 23 scored specialties, neural FedAvg 14, linear FedAvg (final) 14.
 - Year drift: per-specialty persistence MAE changed by median +4.6% vs the validation year (range -51.1% to +38.2%, 23 specialties).
+
+## Cohort-rule sensitivity (2026-08-01 audit, cohort_sensitivity.csv)
+- The original fl_client rule referenced the panel's final month (March 2026, inside the sealed year); notebook 21 re-derives eligibility at the development cut (March 2025).
+- Validation anchor: persistence 153.49 (n=1,407) under the stored rule vs 154.71 (n=1,418) prospective.
+- Sealed anchor: persistence 151.5 (n=1,407) vs 151.34 (n=1,409) - the 0.1-MAE anchor verdict is inside cohort sensitivity; model ordering is unchanged under both rules.

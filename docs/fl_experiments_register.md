@@ -137,8 +137,18 @@ persistence drift vs the validation year: +4.6% — the target year moves more t
 ## Non-gamification confirmation
 
 For every experiment above: no FY 2025-26 data touched training, validation, calibration or any
-decision — with one exception by design: notebook 17, the declared one-shot sealed-year evaluation
-(section above), which read FY 2025-26 exactly once after rules and models were frozen; the only regime boundary anywhere is Mar 2020; no threshold/split/horizon loop exists in
-any FL notebook (grep-checkable: no candidate sweeps); no experiment was dropped for performing badly
-— the two worst results in the project (level-FedAvg 228.8, X02 models losing by 9 MAE) are in the
-csvs, the docs and this register.
+decision — with three exceptions, each named. (1) By design: notebook 17, the declared one-shot
+sealed-year evaluation (section above), which read FY 2025-26 exactly once after rules and models
+were frozen. (2) **A protocol defect found by the 2026-08-01 independent audit**: notebook 03's
+`fl_client` eligibility rule requires reporting in the panel's final month (March 2026, inside the
+sealed year) and counts history over all 96 months — so cohort selection itself used sealed-year
+information (selection look-ahead; no future value entered any model). Quantified in notebook 21
+and `cohort_sensitivity.csv`: a strictly prospective rule moves the validation anchor from 153.49
+(n=1,407) to 154.71 (n=1,418) and the sealed anchor from 151.50 to 151.34; model ordering and all
+structural conclusions are unchanged; the sealed 0.1-MAE anchor verdict is a tie within this
+sensitivity. (3) Notebook 21's sensitivity itself re-read FY 2025-26 (persistence only), after and
+because of the audit; 17's csv stands verbatim as the pre-registered record. Otherwise: the only
+regime boundary anywhere is Mar 2020; no threshold/split/horizon loop exists in any FL notebook
+(grep-checkable: no candidate sweeps); no experiment was dropped for performing badly — the two
+worst results in the project (level-FedAvg 228.8, X02 models losing by 9 MAE) are in the csvs, the
+docs and this register.

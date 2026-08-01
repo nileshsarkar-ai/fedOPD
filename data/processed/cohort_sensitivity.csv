@@ -1,0 +1,13 @@
+quantity,stored_rule,prospective_rule
+fl_client providers (all sectors),392.0,377.0
+fl_client providers (public),149.0,150.0
+validation rows (C_110),1407.0,1418.0
+validation providers (C_110),128.0,129.0
+validation persistence MAE,153.49,154.71
+validation pooled MAE (full),153.76,155.04
+validation fedavg-delta MAE (full),153.98,155.29
+validation fedavg-delta+intercept MAE (full),155.28,156.56
+validation local-only MAE (full),161.86,163.2
+validation fedavg-level MAE (full),186.45,187.58
+sealed rows (C_110),1407.0,1409.0
+sealed persistence MAE,151.5,151.34

@@ -6,28 +6,32 @@ notebook file's modified time (UTC). The stdout tail below each notebook is its 
 print. Headline numbers live in `output/RESULTS.md`; this page is the run log. This notebook
 (18) lists its own previous run - nbconvert writes it after execution.
 
+Build environment: Python 3.12.10; pandas 3.0.5, numpy 2.5.1, scikit-learn 1.9.0, torch 2.11.0+cu128. Full lock:
+`requirements.lock.txt`. Notebooks 16/17/19/21 need this venv; 16/17/19 also need CUDA.
+
 | notebook | code cells | executed | errors | last run (UTC) | status |
 |---|---|---|---|---|---|
 | 01_fetch_dataset | 8 | 8 | 0 | 2026-07-29 16:41 | OK |
 | 02_eda_dataset | 23 | 23 | 0 | 2026-07-29 17:18 | OK |
 | 03_provider_flags | 5 | 5 | 0 | 2026-07-29 17:33 | OK |
 | 04_baseline_forecasting | 6 | 6 | 0 | 2026-07-29 17:34 | OK |
-| 05_kh03_beds | 5 | 5 | 0 | 2026-07-29 17:55 | OK |
+| 05_kh03_beds | 5 | 5 | 0 | 2026-08-01 22:02 | OK |
 | 06_merge_canonical | 4 | 4 | 0 | 2026-07-29 17:55 | OK |
 | 07_beat_persistence | 8 | 8 | 0 | 2026-07-29 18:20 | OK |
-| 08_part3_flows | 9 | 9 | 0 | 2026-07-29 18:36 | OK |
+| 08_part3_flows | 9 | 9 | 0 | 2026-08-01 22:01 | OK |
 | 09_longer_horizons | 4 | 4 | 0 | 2026-07-29 18:55 | OK |
 | 10_agent_logic | 8 | 8 | 0 | 2026-07-29 19:14 | OK |
 | 11_federated_learning | 4 | 4 | 0 | 2026-07-29 19:29 | OK |
-| 12_coarser_grain | 3 | 3 | 0 | 2026-07-29 19:29 | OK |
-| 13_report_figures | 19 | 19 | 0 | 2026-07-30 14:22 | OK |
+| 12_coarser_grain | 3 | 3 | 0 | 2026-08-01 22:00 | OK |
+| 13_report_figures | 19 | 19 | 0 | 2026-08-01 22:02 | OK |
 | 14_fl_scaleup | 3 | 3 | 0 | 2026-07-29 21:23 | OK |
 | 15_agent_rules_frozen | 3 | 3 | 0 | 2026-07-29 22:05 | OK |
 | 16_fl_neural_clients | 6 | 6 | 0 | 2026-07-29 21:22 | OK |
 | 17_sealed_year_eval | 4 | 4 | 0 | 2026-07-29 22:27 | OK |
-| 18_extract_figures | 3 | 3 | 0 | 2026-07-30 14:19 | OK |
+| 18_extract_figures | 3 | 2 | 0 | 2026-08-01 21:59 | CHECK |
 | 19_neural_c110_multiseed | 3 | 3 | 0 | 2026-07-29 22:07 | OK |
-| 20_paper_docx | 4 | 4 | 0 | 2026-07-30 14:20 | OK |
+| 20_paper_docx | 4 | 4 | 0 | 2026-07-30 14:22 | OK |
+| 21_cohort_sensitivity | 3 | 3 | 0 | 2026-08-01 21:56 | OK |
 
 ## 01_fetch_dataset
 
@@ -205,26 +209,12 @@ C_150    38.2
 ## 18_extract_figures
 
 ```
-| 01_fetch_dataset | 8 | 8 | 0 | 2026-07-29 16:41 | OK |
-| 02_eda_dataset | 23 | 23 | 0 | 2026-07-29 17:18 | OK |
-| 03_provider_flags | 5 | 5 | 0 | 2026-07-29 17:33 | OK |
-| 04_baseline_forecasting | 6 | 6 | 0 | 2026-07-29 17:34 | OK |
-| 05_kh03_beds | 5 | 5 | 0 | 2026-07-29 17:55 | OK |
-| 06_merge_canonical | 4 | 4 | 0 | 2026-07-29 17:55 | OK |
-| 07_beat_persistence | 8 | 8 | 0 | 2026-07-29 18:20 | OK |
-| 08_part3_flows | 9 | 9 | 0 | 2026-07-29 18:36 | OK |
-| 09_longer_horizons | 4 | 4 | 0 | 2026-07-29 18:55 | OK |
-| 10_agent_logic | 8 | 8 | 0 | 2026-07-29 19:14 | OK |
-| 11_federated_learning | 4 | 4 | 0 | 2026-07-29 19:29 | OK |
-| 12_coarser_grain | 3 | 3 | 0 | 2026-07-29 19:29 | OK |
-| 13_report_figures | 19 | 19 | 0 | 2026-07-30 14:19 | OK |
-| 14_fl_scaleup | 3 | 3 | 0 | 2026-07-29 21:23 | OK |
-| 15_agent_rules_frozen | 3 | 3 | 0 | 2026-07-29 22:05 | OK |
-| 16_fl_neural_clients | 6 | 6 | 0 | 2026-07-29 21:22 | OK |
-| 17_sealed_year_eval | 4 | 4 | 0 | 2026-07-29 22:27 | OK |
-| 18_extract_figures | 3 | 3 | 0 | 2026-07-30 00:09 | OK |
-| 19_neural_c110_multiseed | 3 | 3 | 0 | 2026-07-29 22:07 | OK |
-| 20_paper_docx | 4 | 4 | 0 | 2026-07-30 00:07 | OK |
+20 images from 4 notebooks -> ..\output\figures\from_notebooks
+notebook
+02_eda_dataset           5
+05_kh03_beds             1
+13_report_figures       13
+16_fl_neural_clients     1
 ```
 
 ## 19_neural_c110_multiseed
@@ -245,4 +235,25 @@ declared verdict, full regime, neural_fedavg: CONFIRMED (all 3 seeds below persi
 
 ```
 fedopd_paper.docx verified: 3,614 words of text (cap 4,500), 11 tables, 14 figures, all 11 headline pins found in the prose
+```
+
+## 21_cohort_sensitivity
+
+```
+                                    quantity  stored_rule  prospective_rule
+           fl_client providers (all sectors)       392.00            377.00
+                fl_client providers (public)       149.00            150.00
+                     validation rows (C_110)      1407.00           1418.00
+                validation providers (C_110)       128.00            129.00
+                  validation persistence MAE       153.49            154.71
+                validation pooled MAE (full)       153.76            155.04
+          validation fedavg-delta MAE (full)       153.98            155.29
+validation fedavg-delta+intercept MAE (full)       155.28            156.56
+            validation local-only MAE (full)       161.86            163.20
+          validation fedavg-level MAE (full)       186.45            187.58
+                         sealed rows (C_110)      1407.00           1409.00
+                      sealed persistence MAE       151.50            151.34
+
+verdict: the sealed anchor margin (persistence 151.50 vs neural pooled 151.61, gap +0.11) is smaller than the cohort-rule effect on persistence alone (-0.16) - the anchor verdict is a tie, not a win. Model ordering and all structural conclusions are unchanged (cell above).
+-> ..\data\processed\cohort_sensitivity.csv (12, 3)
 ```

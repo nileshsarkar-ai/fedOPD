@@ -112,3 +112,16 @@ validation (3 seeds); **17 ran the sealed year exactly once** — at C_110, pers
 neural pooled 151.6 (n=1,407), so the neural edge did not replicate prospectively, while in aggregate
 neural pooled beat persistence at 15 of 23 specialties. Full record: `sealed_year_eval.csv` and the
 summary md's sealed-year section. Notebook 17 is never re-run.
+
+**Audit addendum (2026-08-01):** the independent integrity audit confirmed the freeze is bit-for-bit
+sound and found no tampering, but surfaced two findings the frozen rules inherit. (1) The `fl_client`
+cohort rule in notebook 03 reads the sealed year (selection look-ahead); the agent chain is untouched
+(`fl_allocatable` is identical under the prospective rule — zero providers differ), but the forecast
+anchors carry a sensitivity, quantified in notebook 21 / `cohort_sensitivity.csv`. (2) 103 of the 457
+REDISTRIBUTE_OUT flags (22.5%) are mechanical: a lone provider in its ICB-month ranks 1.0 by
+definition and clears the 0.80 sender bar regardless of state (median pressure 0.533 vs 0.765 for the
+354 peer-based flags; asserted in 13). Per the freeze policy the frozen redistribution rules are NOT
+overwritten; any future rule version (e.g. requiring at least 2 in-ICB peers, or an explicit
+NO_PEERS_ESCALATE class) is a new dated decision for this sheet. The papers now present the pressure
+separation as by-construction, the outcome separation as the finding, and the design sequence
+(redistribution rules written after the capacity rules' outcome check, same 2,337 rows) as in-sample.
