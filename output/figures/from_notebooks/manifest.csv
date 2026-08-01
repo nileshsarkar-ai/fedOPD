@@ -9,13 +9,16 @@ notebook,cell_index,goal,file
 13_report_figures,3,fig_national_trend.png and fig_national_longwait_shares.png.,13_report_figures_cell03_img1.png
 13_report_figures,8,fig_c110_horizon_mae_by_grain.png - persistence vs challengers at provider / ICB / national grain.,13_report_figures_cell08_img0.png
 13_report_figures,10,fig + eval - how the pooled MAE 153 distributes across the providers scored in FY 2024-25.,13_report_figures_cell10_img0.png
-13_report_figures,13,fig_c110_agent_v2_h6.png - what the redistribution classes are and what actually happened to them.,13_report_figures_cell13_img0.png
-13_report_figures,15,fig_c110_fl_models_h1.png - MAE per FL model and regime vs the persistence baseline.,13_report_figures_cell15_img0.png
-13_report_figures,17,fig_c110_fl_linear_vs_neural_h1.png - the four trained model families vs persistence at C_110.,13_report_figures_cell17_img0.png
-13_report_figures,18,"fig_fl_covid_regime_effect_h1.png - what discarding pre-Covid training history costs, per specialty.",13_report_figures_cell18_img0.png
-13_report_figures,19,"fig_fl_neural_gap_by_specialty_h1.png - where neural beats linear, specialty by specialty.",13_report_figures_cell19_img0.png
-13_report_figures,20,fig_fl_neural_gap_vs_size_h1.png - is dataset size what separates neural winners from losers?,13_report_figures_cell20_img0.png
-13_report_figures,22,"fig_c110_sealed_one_shot_h1.png - the one-shot verdict at the anchor, both years side by side.",13_report_figures_cell22_img0.png
-13_report_figures,23,fig_sealed_gap_by_specialty_h1.png - where each final-cut model beats persistence on the sealed year.,13_report_figures_cell23_img0.png
-13_report_figures,24,"fig_sealed_persistence_drift_h1.png - how much harder or easier FY 2025-26 was, per specialty.",13_report_figures_cell24_img0.png
+13_report_figures,11,"fig_c110_conformal_bands_h1.png - the width and the honesty of the 90% persistence band,",13_report_figures_cell11_img0.png
+13_report_figures,14,fig_c110_agent_v2_h6.png - what the redistribution classes are and what actually happened to them.,13_report_figures_cell14_img0.png
+13_report_figures,15,fig_c110_agent_sender_split_h6.png - how much of the sender signal is real. The audit found,13_report_figures_cell15_img0.png
+13_report_figures,17,fig_c110_fl_models_h1.png - MAE per FL model and regime vs the persistence baseline.,13_report_figures_cell17_img0.png
+13_report_figures,19,fig_c110_fl_linear_vs_neural_h1.png - the four trained model families vs persistence at C_110.,13_report_figures_cell19_img0.png
+13_report_figures,20,"fig_fl_covid_regime_effect_h1.png - what discarding pre-Covid training history costs, per specialty.",13_report_figures_cell20_img0.png
+13_report_figures,21,"fig_fl_neural_gap_by_specialty_h1.png - where neural beats linear, specialty by specialty.",13_report_figures_cell21_img0.png
+13_report_figures,22,fig_fl_neural_gap_vs_size_h1.png - is dataset size what separates neural winners from losers?,13_report_figures_cell22_img0.png
+13_report_figures,24,"fig_c110_sealed_one_shot_h1.png - the one-shot verdict at the anchor, both years side by side.",13_report_figures_cell24_img0.png
+13_report_figures,25,fig_sealed_gap_by_specialty_h1.png - where each final-cut model beats persistence on the sealed year.,13_report_figures_cell25_img0.png
+13_report_figures,26,"fig_sealed_persistence_drift_h1.png - how much harder or easier FY 2025-26 was, per specialty.",13_report_figures_cell26_img0.png
+13_report_figures,27,fig_c110_cohort_sensitivity_h1.png - the audit's cohort question in one picture: every model,13_report_figures_cell27_img0.png
 16_fl_neural_clients,6,"the comparison figure - per specialty, neural vs linear FedAvg MAE, one panel per regime.",16_fl_neural_clients_cell06_img0.png

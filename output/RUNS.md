@@ -19,18 +19,18 @@ Build environment: Python 3.12.10; pandas 3.0.5, numpy 2.5.1, scikit-learn 1.9.0
 | 06_merge_canonical | 4 | 4 | 0 | 2026-07-29 17:55 | OK |
 | 07_beat_persistence | 8 | 8 | 0 | 2026-07-29 18:20 | OK |
 | 08_part3_flows | 9 | 9 | 0 | 2026-08-01 22:01 | OK |
-| 09_longer_horizons | 4 | 4 | 0 | 2026-07-29 18:55 | OK |
+| 09_longer_horizons | 4 | 4 | 0 | 2026-08-01 22:25 | OK |
 | 10_agent_logic | 8 | 8 | 0 | 2026-07-29 19:14 | OK |
 | 11_federated_learning | 4 | 4 | 0 | 2026-07-29 19:29 | OK |
 | 12_coarser_grain | 3 | 3 | 0 | 2026-08-01 22:00 | OK |
-| 13_report_figures | 19 | 19 | 0 | 2026-08-01 22:02 | OK |
+| 13_report_figures | 22 | 22 | 0 | 2026-08-01 22:28 | OK |
 | 14_fl_scaleup | 3 | 3 | 0 | 2026-07-29 21:23 | OK |
 | 15_agent_rules_frozen | 3 | 3 | 0 | 2026-07-29 22:05 | OK |
 | 16_fl_neural_clients | 6 | 6 | 0 | 2026-07-29 21:22 | OK |
 | 17_sealed_year_eval | 4 | 4 | 0 | 2026-07-29 22:27 | OK |
-| 18_extract_figures | 3 | 2 | 0 | 2026-08-01 21:59 | CHECK |
+| 18_extract_figures | 3 | 3 | 0 | 2026-08-01 22:02 | OK |
 | 19_neural_c110_multiseed | 3 | 3 | 0 | 2026-07-29 22:07 | OK |
-| 20_paper_docx | 4 | 4 | 0 | 2026-07-30 14:22 | OK |
+| 20_paper_docx | 4 | 4 | 0 | 2026-08-01 22:40 | OK |
 | 21_cohort_sensitivity | 3 | 3 | 0 | 2026-08-01 21:56 | OK |
 
 ## 01_fetch_dataset
@@ -116,17 +116,16 @@ median per-client MAE: local 113 | fedavg 134 | naive 113
 ## 13_report_figures
 
 ```
-  evals/eval_specialty_pre_post.csv  <-  rtt_incomplete_panel.csv
-  evals/eval_provider_pre_post.csv  <-  rtt_incomplete_panel.csv
-  evals/eval_provider_specialty_pre_post.csv  <-  rtt_incomplete_panel.csv
   figures/fig_c110_horizon_mae_by_grain.png  <-  val_horizons_c110.csv + val_horizons_coarse_c110.csv
   evals/eval_c110_persistence_mae_by_month_h1.csv  <-  val_forecasts_c110_public_clients.csv
   evals/eval_c110_provider_mae_h1.csv  <-  val_forecasts_c110_public_clients.csv
   figures/fig_c110_provider_mae_h1.png  <-  val_forecasts_c110_public_clients.csv
+  figures/fig_c110_conformal_bands_h1.png  <-  val_conformal_bands_c110.csv
   evals/eval_c110_agent_provider_h6.csv  <-  agent_decisions_h6_c110.csv
   evals/eval_c110_agent_icb_h6.csv  <-  agent_decisions_h6_c110.csv
   evals/eval_c110_agent_stress_h6.csv  <-  agent_decisions_h6_c110.csv
   figures/fig_c110_agent_v2_h6.png  <-  agent_decisions_h6_c110.csv
+  figures/fig_c110_agent_sender_split_h6.png  <-  agent_decisions_h6_c110.csv
   figures/fig_c110_fl_models_h1.png  <-  fl_summary_c110.csv
   figures/fig_c110_fl_linear_vs_neural_h1.png  <-  fl_neural_summary.csv
   figures/fig_fl_covid_regime_effect_h1.png  <-  fl_scaleup_by_specialty.csv + fl_neural_summary.csv
@@ -135,6 +134,7 @@ median per-client MAE: local 113 | fedavg 134 | naive 113
   figures/fig_c110_sealed_one_shot_h1.png  <-  sealed_year_eval.csv
   figures/fig_sealed_gap_by_specialty_h1.png  <-  sealed_year_eval.csv
   figures/fig_sealed_persistence_drift_h1.png  <-  sealed_year_eval.csv
+  figures/fig_c110_cohort_sensitivity_h1.png  <-  cohort_sensitivity.csv
   RESULTS.md  <-  all result csvs
 ```
 
@@ -209,12 +209,26 @@ C_150    38.2
 ## 18_extract_figures
 
 ```
-20 images from 4 notebooks -> ..\output\figures\from_notebooks
-notebook
-02_eda_dataset           5
-05_kh03_beds             1
-13_report_figures       13
-16_fl_neural_clients     1
+| 02_eda_dataset | 23 | 23 | 0 | 2026-07-29 17:18 | OK |
+| 03_provider_flags | 5 | 5 | 0 | 2026-07-29 17:33 | OK |
+| 04_baseline_forecasting | 6 | 6 | 0 | 2026-07-29 17:34 | OK |
+| 05_kh03_beds | 5 | 5 | 0 | 2026-08-01 22:02 | OK |
+| 06_merge_canonical | 4 | 4 | 0 | 2026-07-29 17:55 | OK |
+| 07_beat_persistence | 8 | 8 | 0 | 2026-07-29 18:20 | OK |
+| 08_part3_flows | 9 | 9 | 0 | 2026-08-01 22:01 | OK |
+| 09_longer_horizons | 4 | 4 | 0 | 2026-07-29 18:55 | OK |
+| 10_agent_logic | 8 | 8 | 0 | 2026-07-29 19:14 | OK |
+| 11_federated_learning | 4 | 4 | 0 | 2026-07-29 19:29 | OK |
+| 12_coarser_grain | 3 | 3 | 0 | 2026-08-01 22:00 | OK |
+| 13_report_figures | 19 | 19 | 0 | 2026-08-01 22:02 | OK |
+| 14_fl_scaleup | 3 | 3 | 0 | 2026-07-29 21:23 | OK |
+| 15_agent_rules_frozen | 3 | 3 | 0 | 2026-07-29 22:05 | OK |
+| 16_fl_neural_clients | 6 | 6 | 0 | 2026-07-29 21:22 | OK |
+| 17_sealed_year_eval | 4 | 4 | 0 | 2026-07-29 22:27 | OK |
+| 18_extract_figures | 3 | 2 | 0 | 2026-08-01 21:59 | CHECK |
+| 19_neural_c110_multiseed | 3 | 3 | 0 | 2026-07-29 22:07 | OK |
+| 20_paper_docx | 4 | 4 | 0 | 2026-07-30 14:22 | OK |
+| 21_cohort_sensitivity | 3 | 3 | 0 | 2026-08-01 21:56 | OK |
 ```
 
 ## 19_neural_c110_multiseed
@@ -234,7 +248,7 @@ declared verdict, full regime, neural_fedavg: CONFIRMED (all 3 seeds below persi
 ## 20_paper_docx
 
 ```
-fedopd_paper.docx verified: 3,614 words of text (cap 4,500), 11 tables, 14 figures, all 11 headline pins found in the prose
+fedopd_paper.docx verified: 4,287 words of text (cap 4,500), 12 tables, 17 figures, all 23 headline pins found in the prose
 ```
 
 ## 21_cohort_sensitivity
